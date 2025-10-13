@@ -119,9 +119,17 @@ class LLMOutput:
     content: Dict[str, Any]
 
 
+
+
+class MaterialGenerationRequest(GenerationRequest):
+    prompt_id: str = Field(
+        ..., description="Identifier of the prompt definition to execute."
+    )
+
+
 @lru_cache(maxsize=1)
 def _get_openai_client() -> OpenAI:
-    api_key = os.environ.get("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")
+    api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY environment variable must be set for generation.")
     return OpenAI(api_key=api_key)
@@ -167,6 +175,35 @@ def _build_messages(prompt_id: str, payload: GenerationRequest) -> List[Dict[str
             }
         )
     return rendered_messages
+
+
+def _generate_material_payload(prompt_id: str, payload: GenerationRequest, preview: bool) -> Dict[str, Any]:
+    definition = PROMPT_DEFINITIONS.get(prompt_id)
+    if not definition:
+        raise HTTPException(status_code=404, detail=f"Prompt '{prompt_id}' not found.")
+
+    messages = _build_messages(prompt_id, payload)
+
+    if preview:
+        preview_payload = PromptPreviewResponse(
+            prompt_id=prompt_id,
+            description=definition.description,
+            messages=messages,
+            response_format=definition.response_format,
+        )
+        return preview_payload.dict()
+
+    llm_output = _call_openai(prompt_id, payload, messages, definition.response_format)
+    response = MaterialResponse(
+        prompt_id=prompt_id,
+        description=definition.description,
+        messages=messages,
+        response_format=definition.response_format,
+        model=llm_output.model,
+        content=llm_output.content,
+        raw_text=llm_output.raw_text,
+    )
+    return response.dict()
 
 
 def _call_openai(
@@ -234,58 +271,20 @@ def _call_openai(
 
 @app.post("/materials/{prompt_id}", tags=["materials"])
 def generate_material(prompt_id: str, payload: GenerationRequest, preview: bool = False) -> Dict[str, Any]:
-    definition = PROMPT_DEFINITIONS.get(prompt_id)
-    if not definition:
-        raise HTTPException(status_code=404, detail=f"Prompt '{prompt_id}' not found.")
+    return _generate_material_payload(prompt_id, payload, preview)
 
-    messages = _build_messages(prompt_id, payload)
 
-    if preview:
-        preview_payload = PromptPreviewResponse(
-            prompt_id=prompt_id,
-            description=definition.description,
-            messages=messages,
-            response_format=definition.response_format,
-        )
-        return preview_payload.dict()
-
-    llm_output = _call_openai(prompt_id, payload, messages, definition.response_format)
-    response = MaterialResponse(
-        prompt_id=prompt_id,
-        description=definition.description,
-        messages=messages,
-        response_format=definition.response_format,
-        model=llm_output.model,
-        content=llm_output.content,
-        raw_text=llm_output.raw_text,
-    )
-    return response.dict()
+@app.post("/materials", tags=["materials"])
+def generate_material_from_request(request: MaterialGenerationRequest, preview: bool = False) -> Dict[str, Any]:
+    payload = GenerationRequest(**request.dict(exclude={"prompt_id"}))
+    return _generate_material_payload(request.prompt_id, payload, preview)
 
 
 @app.post("/materials/all", tags=["materials"])
 def generate_all_materials(payload: GenerationRequest, preview: bool = False) -> Dict[str, Any]:
     prompts: Dict[str, Dict[str, Any]] = {}
-    for prompt_id, definition in PROMPT_DEFINITIONS.items():
-        messages = _build_messages(prompt_id, payload)
-        if preview:
-            prompts[prompt_id] = PromptPreviewResponse(
-                prompt_id=prompt_id,
-                description=definition.description,
-                messages=messages,
-                response_format=definition.response_format,
-            ).dict()
-            continue
-
-        llm_output = _call_openai(prompt_id, payload, messages, definition.response_format)
-        prompts[prompt_id] = MaterialResponse(
-            prompt_id=prompt_id,
-            description=definition.description,
-            messages=messages,
-            response_format=definition.response_format,
-            model=llm_output.model,
-            content=llm_output.content,
-            raw_text=llm_output.raw_text,
-        ).dict()
+    for prompt_id in PROMPT_DEFINITIONS.keys():
+        prompts[prompt_id] = _generate_material_payload(prompt_id, payload, preview)
 
     return {
         "course_title": payload.course_title,
