@@ -14,6 +14,9 @@ from openai import OpenAI
 from pydantic import BaseModel, Field
 
 
+from dotenv import load_dotenv
+
+
 class GenerationRequest(BaseModel):
     course_title: str = Field(..., description="Name of the course we are building.")
     learning_outcomes: List[str] = Field(
@@ -127,8 +130,11 @@ class MaterialGenerationRequest(GenerationRequest):
     )
 
 
+load_dotenv(dotenv_path=".env", override=True)
+
 @lru_cache(maxsize=1)
 def _get_openai_client() -> OpenAI:
+    load_dotenv(dotenv_path=".env", override=True)
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY environment variable must be set for generation.")
