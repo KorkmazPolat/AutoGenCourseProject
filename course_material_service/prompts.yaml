@@ -1,0 +1,400 @@
+video_script:
+  description: "Generates a JSON-formatted brief for a video lesson."
+  response_format: &video_script_format
+    type: object
+    properties:
+      hook:
+        type: string
+        description: "Two-sentence hook that captures attention."
+      outline:
+        type: array
+        items:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              description: "Time code in mm:ss format."
+            topic:
+              type: string
+              description: "Segment topic."
+      narration:
+        type: array
+        items:
+          type: object
+          properties:
+            section:
+              type: string
+              description: "Section heading."
+            summary:
+              type: string
+              description: "Short description."
+            script:
+              type: string
+              description: "Narration text."
+      recap:
+        type: string
+        description: "Closing recap summarizing all outcomes."
+      call_to_action:
+        type: string
+        description: "Suggested next step for learners."
+    required:
+      - hook
+      - outline
+      - narration
+      - recap
+      - call_to_action
+  messages:
+    - role: system
+      template: |
+        You are an expert instructional designer crafting an energetic video lesson plan.
+        Always respond in minified JSON and strictly follow this schema:
+        {
+          "hook": "string",
+          "outline": [
+            {"timestamp": "mm:ss", "topic": "string"}
+          ],
+          "narration": [
+            {"section": "string", "summary": "string", "script": "string"}
+          ],
+          "recap": "string",
+          "call_to_action": "string"
+        }
+        Ensure each learning outcome is covered in the narration.
+    - role: user
+      template: |
+        Course Title: {{ course_title }}
+        Audience: {{ audience or "General learners" }}
+        Desired Tone: {{ tone or "Professional and friendly" }}
+        Target Video Duration: {{ duration_minutes or "10" }} minutes
+        Learning Outcomes:
+        {% for outcome in learning_outcomes %}
+        - {{ outcome }}
+        {% endfor %}
+        Produce the JSON response now.
+
+quiz_questions:
+  description: "Produces JSON with multiple-choice quiz questions."
+  response_format: &quiz_format
+    type: object
+    properties:
+      questions:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              description: "Stable identifier for the question."
+            learning_outcome:
+              type: string
+              description: "Outcome the question assesses."
+            stem:
+              type: string
+              description: "Question text."
+            choices:
+              type: array
+              items:
+                type: object
+                properties:
+                  label:
+                    type: string
+                    description: "Option label (A, B, C, D)."
+                  text:
+                    type: string
+                    description: "Option text."
+            answer:
+              type: string
+              description: "Correct option label."
+            rationale:
+              type: string
+              description: "Why the answer is correct."
+        minItems: 5
+      remediation:
+        type: string
+        description: "Advice for learners scoring poorly."
+    required:
+      - questions
+      - remediation
+  messages:
+    - role: system
+      template: |
+        You are a learning scientist designing diagnostic multiple-choice questions.
+        Generate 5 rigorous questions that each assess a single learning outcome.
+        Output must be valid minified JSON following this schema:
+        {
+          "questions": [
+            {
+              "id": "q1",
+              "learning_outcome": "string",
+              "stem": "string",
+              "choices": [
+                {"label": "A", "text": "string"},
+                {"label": "B", "text": "string"},
+                {"label": "C", "text": "string"},
+                {"label": "D", "text": "string"}
+              ],
+              "answer": "A",
+              "rationale": "string"
+            }
+          ],
+          "remediation": "string"
+        }
+        Ensure answer labels are unique per question and include the rationale.
+    - role: user
+      template: |
+        Course Title: {{ course_title }}
+        Audience: {{ audience or "General learners" }}
+        Tone: {{ tone or "Supportive" }}
+        Learning Outcomes:
+        {% for outcome in learning_outcomes %}
+        - {{ outcome }}
+        {% endfor %}
+        Return the JSON response now.
+
+reading_material:
+  description: "Generates a structured reading handout in JSON."
+  response_format: &reading_format
+    type: object
+    properties:
+      summary:
+        type: string
+        description: "Short executive summary."
+      sections:
+        type: array
+        items:
+          type: object
+          properties:
+            heading:
+              type: string
+              description: "Section title."
+            key_points:
+              type: array
+              items:
+                type: string
+              description: "Bullet-style highlights."
+            content:
+              type: string
+              description: "Concise explanation paragraph."
+            outcome_alignment:
+              type: array
+              items:
+                type: string
+              description: "Learning outcomes covered."
+      examples:
+        type: array
+        items:
+          type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            outcome_alignment:
+              type: array
+              items:
+                type: string
+      glossary:
+        type: array
+        items:
+          type: object
+          properties:
+            term:
+              type: string
+            definition:
+              type: string
+      reflections:
+        type: array
+        items:
+          type: string
+    required:
+      - summary
+      - sections
+      - glossary
+      - reflections
+  messages:
+    - role: system
+      template: |
+        You are a technical writer producing an accessible yet rigorous handout.
+        Respond only with minified JSON conforming to this schema:
+        {
+          "summary": "string",
+          "sections": [
+            {
+              "heading": "string",
+              "key_points": ["string"],
+              "content": "string",
+              "outcome_alignment": ["string"]
+            }
+          ],
+          "examples": [
+            {
+              "title": "string",
+              "description": "string",
+              "outcome_alignment": ["string"]
+            }
+          ],
+          "glossary": [
+            {"term": "string", "definition": "string"}
+          ],
+          "reflections": ["string"]
+        }
+        Cover every learning outcome across sections and examples.
+    - role: user
+      template: |
+        Course Title: {{ course_title }}
+        Audience: {{ audience or "General learners" }}
+        Tone: {{ tone or "Approachable yet authoritative" }}
+        Learning Outcomes:
+        {% for outcome in learning_outcomes %}
+        - {{ outcome }}
+        {% endfor %}
+        Provide the JSON handout now.
+
+project_assignment:
+  description: "Creates a JSON brief for a practical assignment."
+  response_format: &project_format
+    type: object
+    properties:
+      scenario:
+        type: string
+        description: "Narrative framing for the project."
+      tasks:
+        type: array
+        items:
+          type: object
+          properties:
+            step:
+              type: integer
+            instructions:
+              type: string
+            outcome_alignment:
+              type: string
+      deliverables:
+        type: array
+        items:
+          type: string
+      rubric:
+        type: array
+        items:
+          type: object
+          properties:
+            criterion:
+              type: string
+            levels:
+              type: array
+              items:
+                type: object
+                properties:
+                  level:
+                    type: string
+                  description:
+                    type: string
+      stretch_goal:
+        type: string
+      checklist:
+        type: array
+        items:
+          type: string
+    required:
+      - scenario
+      - tasks
+      - deliverables
+      - rubric
+      - checklist
+  messages:
+    - role: system
+      template: |
+        You are designing a project brief that drives applied mastery.
+        Return ONLY minified JSON that matches this schema:
+        {
+          "scenario": "string",
+          "tasks": [{"step": 1, "instructions": "string", "outcome_alignment": "string"}],
+          "deliverables": ["string"],
+          "rubric": [
+            {
+              "criterion": "string",
+              "levels": [
+                {"level": "Exceeds", "description": "string"},
+                {"level": "Meets", "description": "string"},
+                {"level": "Needs Improvement", "description": "string"}
+              ]
+            }
+          ],
+          "stretch_goal": "string",
+          "checklist": ["string"]
+        }
+        Align each task with a learning outcome.
+    - role: user
+      template: |
+        Course Title: {{ course_title }}
+        Audience: {{ audience or "General learners" }}
+        Expected Effort: {{ project_duration or "6-8 hours" }}
+        Learning Outcomes:
+        {% for outcome in learning_outcomes %}
+        - {{ outcome }}
+        {% endfor %}
+        Produce the JSON brief now.
+
+combined_course:
+  description: "Compiles all course assets into a single JSON payload."
+  response_format:
+    type: object
+    properties:
+      course:
+        type: object
+        properties:
+          title:
+            type: string
+          audience:
+            type: string
+          tone:
+            type: string
+          learning_outcomes:
+            type: array
+            items:
+              type: string
+        required:
+          - title
+          - audience
+          - tone
+          - learning_outcomes
+      video_script: *video_script_format
+      reading_material: *reading_format
+      quiz_questions: *quiz_format
+      project_assignment: *project_format
+    required:
+      - course
+      - video_script
+      - reading_material
+      - quiz_questions
+      - project_assignment
+  messages:
+    - role: system
+      template: |
+        You are compiling a complete asynchronous course package.
+        Output must be valid minified JSON with this top-level shape:
+        {
+          "course": {
+            "title": "string",
+            "audience": "string",
+            "tone": "string",
+            "learning_outcomes": ["string"]
+          },
+          "video_script": { ... },
+          "reading_material": { ... },
+          "quiz_questions": { ... },
+          "project_assignment": { ... }
+        }
+        Each nested section MUST follow the schemas used in their dedicated prompts.
+    - role: user
+      template: |
+        Course Title: {{ course_title }}
+        Audience: {{ audience or "General learners" }}
+        Tone: {{ tone or "Professional and friendly" }}
+        Target Video Duration: {{ duration_minutes or "10" }} minutes
+        Project Effort: {{ project_duration or "6-8 hours" }}
+        Learning Outcomes:
+        {% for outcome in learning_outcomes %}
+        - {{ outcome }}
+        {% endfor %}
+        Produce the complete JSON package now.
