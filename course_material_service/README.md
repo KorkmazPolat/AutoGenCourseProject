@@ -43,6 +43,26 @@ curl -X POST http://localhost:8000/materials/video_script \
   }'
 ```
 
+Veya aynı isteği gövdeye `prompt_id` ekleyerek tek uç noktadan yapabilirsiniz:
+
+```bash
+curl -X POST http://localhost:8000/materials \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt_id": "video_script",
+    "course_title": "AI Product Management Fundamentals",
+    "learning_outcomes": [
+      "Define the stages of an AI product lifecycle",
+      "Identify ethical risks in data collection",
+      "Craft a success metric for an AI feature"
+    ],
+    "audience": "Mid-level product managers transitioning into AI products",
+    "tone": "Pragmatic and encouraging",
+    "duration_minutes": 12,
+    "project_duration": "6-8 hours"
+  }'
+```
+
 Örnek dönen değer:
 
 ```json
