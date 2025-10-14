@@ -31,6 +31,25 @@ video_script:
             script:
               type: string
               description: "Narration text."
+      presentation:
+        type: array
+        description: "Key presentation pages pairing visuals with narration."
+        items:
+          type: object
+          properties:
+            page:
+              type: integer
+              description: "Page number in the presentation sequence."
+            heading:
+              type: string
+              description: "Slide or page heading."
+            content:
+              type: string
+              description: "On-screen text or bullet points for the page."
+          required:
+            - page
+            - heading
+            - content
       recap:
         type: string
         description: "Closing recap summarizing all outcomes."
@@ -41,6 +60,7 @@ video_script:
       - hook
       - outline
       - narration
+      - presentation
       - recap
       - call_to_action
   messages:
@@ -56,16 +76,22 @@ video_script:
           "narration": [
             {"section": "string", "summary": "string", "script": "string"}
           ],
+          "presentation": [
+            {"page": 1, "heading": "string", "content": "string"}
+          ],
           "recap": "string",
           "call_to_action": "string"
         }
-        Ensure each learning outcome is covered in the narration.
+        Ensure each learning outcome is covered in the narration and that every presentation page pairs heading and on-screen content with the spoken script.
+        Use the target duration to determine depth: include at least {{ target_segment_count }} outline segments and produce narration totaling no fewer than {{ target_word_count }} words (≈130 spoken words per minute). Each script entry must be 5+ sentences and include vivid examples, transitions, and reinforcements so the final voiceover comfortably fills the allotted time.
     - role: user
       template: |
         Course Title: {{ course_title }}
         Audience: {{ audience or "General learners" }}
         Desired Tone: {{ tone or "Professional and friendly" }}
         Target Video Duration: {{ duration_minutes or "10" }} minutes
+        Minimum Narration Word Count: {{ target_word_count }}
+        Minimum Outline Segments: {{ target_segment_count }}
         Learning Outcomes:
         {% for outcome in learning_outcomes %}
         - {{ outcome }}

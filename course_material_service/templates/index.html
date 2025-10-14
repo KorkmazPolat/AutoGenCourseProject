@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Course Video Studio</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background: #0f172a;
+        color: #f8fafc;
+      }
+      main {
+        max-width: 720px;
+        margin: auto;
+      }
+      form {
+        padding: 24px;
+        background: #1e293b;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      input,
+      textarea,
+      button {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 18px;
+        border-radius: 8px;
+        border: none;
+        font-size: 1rem;
+      }
+      input,
+      textarea {
+        background: #334155;
+        color: #f8fafc;
+      }
+      textarea {
+        resize: vertical;
+      }
+      button {
+        background: #38bdf8;
+        color: #0f172a;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      button:hover {
+        background: #0ea5e9;
+      }
+      .hint {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        margin-top: -12px;
+        margin-bottom: 16px;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Turn Your Course Outline Into a Video</h1>
+      <form method="post" action="/create-course-video">
+        <label for="course_title">Course Title</label>
+        <input
+          id="course_title"
+          name="course_title"
+          type="text"
+          required
+          placeholder="AI Product Management Fundamentals"
+        />
+
+        <label for="audience">Audience</label>
+        <input id="audience" name="audience" type="text" placeholder="General learners" />
+
+        <label for="tone">Tone</label>
+        <input id="tone" name="tone" type="text" placeholder="Professional and friendly" />
+
+        <label for="duration_minutes">Target Video Duration (minutes)</label>
+        <input id="duration_minutes" name="duration_minutes" type="number" min="1" placeholder="10" />
+
+        <label for="learning_outcomes">Learning Outcomes</label>
+        <textarea
+          id="learning_outcomes"
+          name="learning_outcomes"
+          rows="6"
+          required
+          placeholder="- Define core concepts
+- Apply the technique
+- Evaluate success"
+        ></textarea>
+        <div class="hint">One outcome per line. Bullets prefixed with "-" or "•" are fine.</div>
+
+        <label for="voice">Voice (optional)</label>
+        <input id="voice" name="voice" type="text" placeholder="alloy" />
+
+        <label for="tts_model">TTS Model (optional)</label>
+        <input id="tts_model" name="tts_model" type="text" placeholder="gpt-4o-mini-tts" />
+
+        <button type="submit">Create Video</button>
+      </form>
+    </main>
+  </body>
+</html>

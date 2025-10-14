@@ -1,6 +1,6 @@
-# Course Material Prompt Service
+# Course Material Prompt Service & Video Studio
 
-FastAPI tabanlı bu servis, çevrim içi kurs materyallerini otomatik üretmek için kullanılacak prompt şablonlarını üretir. Her bir materyal tipi için ayrı promptlar ve hepsini aynı anda oluşturan tek bir prompt sağlar.
+FastAPI tabanlı bu uygulama hem kurs materyali üretmek için REST API uç noktaları hem de temel bir web arayüzü sunar. Kullanıcılar kurs bilgilerini girip otomatik olarak oluşturulan video çıktısını hem API üzerinden alabilir hem de tarayıcıda izleyebilir.
 
 ## Kurulum
 
@@ -10,21 +10,28 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+> **Not:** `OPENAI_API_KEY` ortam değişkenini ayarlamadan uygulama içerik üretemez.
+>
+> ```bash
+> export OPENAI_API_KEY="sk-..."
+> ```
+
 ## Çalıştırma
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Ardından servis `http://localhost:8000` adresinden ulaşılabilir.
+Uygulama `http://localhost:8000` adresinde çalışır.
 
-> **Not:** Servisin OpenAI ile içerik üretebilmesi için `OPENAI_API_KEY` ortam değişkeninin ayarlı olması gerekir.
->
-> ```bash
-> export OPENAI_API_KEY="sk-..."
-> ```
+## REST API Kullanımı
 
-## Örnek İstek
+- `GET /prompts` — Kullanılabilir prompt listesini döndürür.
+- `POST /materials/{prompt_id}` — İlgili prompt için içerik üretir.
+- `POST /materials` — `{"prompt_id": "...", ...}` formatındaki gövde ile aynı işlemi yapar.
+- `POST /materials/all` — Tüm prompt çıktılarının tek seferde alınmasını sağlar.
+
+### Video Script Örneği
 
 ```bash
 curl -X POST http://localhost:8000/materials/video_script \
@@ -38,63 +45,34 @@ curl -X POST http://localhost:8000/materials/video_script \
     ],
     "audience": "Mid-level product managers transitioning into AI products",
     "tone": "Pragmatic and encouraging",
-    "duration_minutes": 12,
-    "project_duration": "6-8 hours"
+    "duration_minutes": 12
   }'
 ```
 
-Veya aynı isteği gövdeye `prompt_id` ekleyerek tek uç noktadan yapabilirsiniz:
+`video_script` isteği sırasında otomatik olarak `generated_videos/` dizininde mp4 dosyası üretilir ve yanıta `video_file` alanı eklenir. Video üretimini kapatmak için `create_video=false` sorgu parametresini veya gövde alanını kullanabilirsiniz. Farklı bir ses/model için `voice` ve `tts_model` parametrelerini ayarlayın.
 
-```bash
-curl -X POST http://localhost:8000/materials \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt_id": "video_script",
-    "course_title": "AI Product Management Fundamentals",
-    "learning_outcomes": [
-      "Define the stages of an AI product lifecycle",
-      "Identify ethical risks in data collection",
-      "Craft a success metric for an AI feature"
-    ],
-    "audience": "Mid-level product managers transitioning into AI products",
-    "tone": "Pragmatic and encouraging",
-    "duration_minutes": 12,
-    "project_duration": "6-8 hours"
-  }'
+## Web Arayüzü
+
+Tarayıcıdan `http://localhost:8000/` adresine giderek formu doldurun:
+
+1. Kurs başlığı, hedef kitle, ton ve öğrenme çıktıları (satır satır) girin.
+2. Opsiyonel olarak ses (örn. `alloy`) ve TTS modeli (`gpt-4o-mini-tts`) seçin.
+3. “Create Video” düğmesine tıklayın.
+
+Arka planda `video_script` promptu çalıştırılır, slayt görselleri ve seslendirme üretildikten sonra video oynatıcıya gömülür. Dosya aynı zamanda `/videos/<dosya_adı>` yolundan indirilebilir durumdadır.
+
+## Gereksinimler
+
+- `ffmpeg` sisteminizde kurulu olmalı (MoviePy video render işlemleri için).
+- OpenAI TTS modellerine erişim (`gpt-4o-mini-tts` vb.).
+
+## Dizin Yapısı
+
 ```
-
-Örnek dönen değer:
-
-```json
-{
-  "prompt_id": "video_script",
-  "description": "Generates a JSON-formatted brief for a video lesson.",
-  "messages": [
-    {"role": "system", "content": "..."},
-    {"role": "user", "content": "..."}
-  ],
-  "response_format": {
-    "type": "object",
-    "properties": {
-      "hook": {"type": "string"},
-      "outline": {"type": "array"},
-      "narration": {"type": "array"},
-      "recap": {"type": "string"},
-      "call_to_action": {"type": "string"}
-    },
-    "required": ["hook", "outline", "narration", "recap", "call_to_action"]
-  }
-}
+course_material_service/
+├── main.py                # FastAPI uygulaması (REST + Web)
+├── prompts.yaml           # Prompt tanımları
+├── video_builder.py       # Slayt + seslendirme üzerinden video üretimi
+├── templates/             # Basit HTML şablonları
+└── generated_videos/      # Çıktı videoları (çalışma sırasında oluşur)
 ```
-
-Tüm promptları aynı anda almak için `POST /materials/all` uç noktasını kullanabilirsiniz.
-
-- Yalnızca prompt metnini görmek isterseniz `preview=true` sorgu parametresi ekleyin:
-
-  ```bash
-  curl -X POST "http://localhost:8000/materials/video_script?preview=true" \
-    -H "Content-Type: application/json" \
-    -d '{"course_title":"...", "learning_outcomes":["..."]}'
-  ```
-
-- Varsayılan model `gpt-4o-mini`’dir; istekte `model` alanı ile değiştirebilirsiniz.

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ course_title }} | Course Video</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background: #0f172a;
+        color: #f8fafc;
+      }
+      a {
+        color: #38bdf8;
+        text-decoration: none;
+      }
+      .container {
+        max-width: 960px;
+        margin: auto;
+      }
+      .card {
+        background: #1e293b;
+        padding: 28px;
+        border-radius: 14px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+        margin-top: 24px;
+      }
+      video {
+        width: 100%;
+        border-radius: 16px;
+        margin-top: 24px;
+      }
+      ul {
+        padding-left: 20px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      .meta {
+        color: #94a3b8;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="/">&larr; Back</a>
+      <div class="card">
+        <h1>{{ course_title }}</h1>
+        {% if hook %}
+        <p><strong>Hook:</strong> {{ hook }}</p>
+        {% endif %}
+        {% if recap %}
+        <p><strong>Recap:</strong> {{ recap }}</p>
+        {% endif %}
+        {% if outline %}
+        <h2>Outline</h2>
+        <ul>
+          {% for item in outline %}
+          <li><strong>{{ item.timestamp }}</strong> — {{ item.topic }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if video_url %}
+        <video controls src="{{ video_url }}"></video>
+        <p class="meta">
+          Narrated with <code>{{ voice }}</code> (model: <code>{{ model }}</code>). Saved as
+          <code>{{ video_file }}</code>.
+        </p>
+        {% else %}
+        <p>No video file was generated.</p>
+        {% endif %}
+      </div>
+    </div>
+  </body>
+</html>
