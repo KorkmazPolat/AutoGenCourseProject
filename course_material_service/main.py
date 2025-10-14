@@ -3,18 +3,21 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
-from fastapi import FastAPI, HTTPException
+from dotenv import load_dotenv
+from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 from jinja2 import Template
 from openai import OpenAI
 from pydantic import BaseModel, Field
 
-
-from dotenv import load_dotenv
+from video_builder import VideoGenerationError, generate_video_from_script
 
 
 class GenerationRequest(BaseModel):
@@ -31,23 +34,6 @@ class GenerationRequest(BaseModel):
         description="Optional OpenAI model override (defaults to gpt-4o-mini).",
     )
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "course_title": "AI Product Management Fundamentals",
-                "learning_outcomes": [
-                    "Define the stages of an AI product lifecycle",
-                    "Identify ethical risks in data collection",
-                    "Craft a success metric for an AI feature",
-                ],
-                "audience": "Mid-level product managers transitioning into AI products",
-                "tone": "Pragmatic and encouraging",
-                "duration_minutes": 12,
-                "project_duration": "6-8 hours",
-                "model": "gpt-4o-mini",
-            }
-        }
-
 
 @dataclass
 class PromptMessage:
@@ -62,7 +48,57 @@ class PromptDefinition:
     response_format: Optional[Dict[str, Any]] = None
 
 
+class PromptPreviewResponse(BaseModel):
+    prompt_id: str
+    description: str
+    messages: List[Dict[str, str]]
+    response_format: Optional[Dict[str, Any]]
+
+
+class MaterialResponse(PromptPreviewResponse):
+    model: str
+    content: Dict[str, Any]
+    raw_text: str
+
+
+@dataclass
+class LLMOutput:
+    model: str
+    raw_text: str
+    content: Dict[str, Any]
+
+
+class MaterialGenerationRequest(GenerationRequest):
+    prompt_id: str = Field(
+        ..., description="Identifier of the prompt definition to execute."
+    )
+    create_video: Optional[bool] = Field(
+        None,
+        description="When true and the prompt is 'video_script', automatically render a narrated video asset.",
+    )
+    voice: Optional[str] = Field(
+        None,
+        description="Voice identifier supported by the configured TTS model (video generation only).",
+    )
+    tts_model: Optional[str] = Field(
+        None,
+        description="Text-to-speech model for narration synthesis (video generation only).",
+    )
+
+
 DEFAULT_MODEL = "gpt-4o-mini"
+VIDEO_PROMPT_ID = "video_script"
+VIDEO_OUTPUT_DIR = Path(__file__).resolve().parent / "generated_videos"
+TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+
+def _build_video_output_path(course_title: str) -> Path:
+    safe_title = "".join(ch.lower() if ch.isalnum() else "_" for ch in course_title)
+    safe_title = "_".join(filter(None, safe_title.split("_"))) or "course_video"
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    return (VIDEO_OUTPUT_DIR / f"{safe_title}_{timestamp}").with_suffix(".mp4")
 
 
 def _load_prompt_definitions() -> Dict[str, PromptDefinition]:
@@ -101,40 +137,11 @@ def _load_prompt_definitions() -> Dict[str, PromptDefinition]:
 
 PROMPT_DEFINITIONS = _load_prompt_definitions()
 
-
-class PromptPreviewResponse(BaseModel):
-    prompt_id: str
-    description: str
-    messages: List[Dict[str, str]]
-    response_format: Optional[Dict[str, Any]]
-
-
-class MaterialResponse(PromptPreviewResponse):
-    model: str
-    content: Dict[str, Any]
-    raw_text: str
-
-
-@dataclass
-class LLMOutput:
-    model: str
-    raw_text: str
-    content: Dict[str, Any]
-
-
-
-
-class MaterialGenerationRequest(GenerationRequest):
-    prompt_id: str = Field(
-        ..., description="Identifier of the prompt definition to execute."
-    )
-
-
 load_dotenv(dotenv_path=".env", override=True)
+
 
 @lru_cache(maxsize=1)
 def _get_openai_client() -> OpenAI:
-    load_dotenv(dotenv_path=".env", override=True)
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY environment variable must be set for generation.")
@@ -143,8 +150,8 @@ def _get_openai_client() -> OpenAI:
 
 app = FastAPI(
     title="Course Material Prompt Service",
-    description="Servis, kurs materyali üretimi için prompt şablonlarını sağlar.",
-    version="0.1.0",
+    description="FastAPI service providing course content prompts plus a simple web UI for generating narrated videos.",
+    version="0.2.0",
 )
 
 
@@ -170,7 +177,14 @@ def _build_messages(prompt_id: str, payload: GenerationRequest) -> List[Dict[str
         raise HTTPException(status_code=404, detail=f"Prompt '{prompt_id}' not found.")
 
     context = payload.dict()
-    # Remove empty optional fields so templates don't render 'None'.
+    duration = context.get("duration_minutes")
+    if not duration:
+        duration = 10
+    target_word_count = max(400, int(duration * 135))
+    target_segment_count = max(4, int(round(duration)))
+    context["target_word_count"] = target_word_count
+    context["target_segment_count"] = target_segment_count
+
     context = {key: value for key, value in context.items() if value not in (None, "", [])}
     rendered_messages = []
     for message in definition.messages:
@@ -181,35 +195,6 @@ def _build_messages(prompt_id: str, payload: GenerationRequest) -> List[Dict[str
             }
         )
     return rendered_messages
-
-
-def _generate_material_payload(prompt_id: str, payload: GenerationRequest, preview: bool) -> Dict[str, Any]:
-    definition = PROMPT_DEFINITIONS.get(prompt_id)
-    if not definition:
-        raise HTTPException(status_code=404, detail=f"Prompt '{prompt_id}' not found.")
-
-    messages = _build_messages(prompt_id, payload)
-
-    if preview:
-        preview_payload = PromptPreviewResponse(
-            prompt_id=prompt_id,
-            description=definition.description,
-            messages=messages,
-            response_format=definition.response_format,
-        )
-        return preview_payload.dict()
-
-    llm_output = _call_openai(prompt_id, payload, messages, definition.response_format)
-    response = MaterialResponse(
-        prompt_id=prompt_id,
-        description=definition.description,
-        messages=messages,
-        response_format=definition.response_format,
-        model=llm_output.model,
-        content=llm_output.content,
-        raw_text=llm_output.raw_text,
-    )
-    return response.dict()
 
 
 def _call_openai(
@@ -275,24 +260,199 @@ def _call_openai(
     )
 
 
+def _generate_material_payload(
+    prompt_id: str,
+    payload: GenerationRequest,
+    preview: bool,
+    *,
+    create_video: Optional[bool] = None,
+    voice: Optional[str] = None,
+    tts_model: Optional[str] = None,
+) -> Dict[str, Any]:
+    definition = PROMPT_DEFINITIONS.get(prompt_id)
+    if not definition:
+        raise HTTPException(status_code=404, detail=f"Prompt '{prompt_id}' not found.")
+
+    messages = _build_messages(prompt_id, payload)
+
+    if preview:
+        preview_payload = PromptPreviewResponse(
+            prompt_id=prompt_id,
+            description=definition.description,
+            messages=messages,
+            response_format=definition.response_format,
+        )
+        return preview_payload.dict()
+
+    llm_output = _call_openai(prompt_id, payload, messages, definition.response_format)
+    response = MaterialResponse(
+        prompt_id=prompt_id,
+        description=definition.description,
+        messages=messages,
+        response_format=definition.response_format,
+        model=llm_output.model,
+        content=llm_output.content,
+        raw_text=llm_output.raw_text,
+    )
+    result = response.dict()
+
+    auto_video = create_video if create_video is not None else (prompt_id == VIDEO_PROMPT_ID)
+    if auto_video:
+        if preview:
+            raise HTTPException(status_code=400, detail="Preview mode cannot render video assets.")
+        if prompt_id != VIDEO_PROMPT_ID:
+            raise HTTPException(status_code=400, detail="Video creation is only supported for the 'video_script' prompt.")
+        try:
+            VIDEO_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+            client = _get_openai_client()
+            output_path = _build_video_output_path(payload.course_title)
+            video_path = generate_video_from_script(
+                video_payload=response.content,
+                output_path=output_path,
+                client=client,
+                voice=voice or "alloy",
+                tts_model=tts_model or "gpt-4o-mini-tts",
+            )
+        except VideoGenerationError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        except Exception as exc:  # pragma: no cover
+            raise HTTPException(status_code=500, detail=f"Unexpected video generation failure: {exc}") from exc
+        result["video_file"] = str(video_path)
+
+    return result
+
+
 @app.post("/materials/{prompt_id}", tags=["materials"])
-def generate_material(prompt_id: str, payload: GenerationRequest, preview: bool = False) -> Dict[str, Any]:
-    return _generate_material_payload(prompt_id, payload, preview)
+def generate_material(
+    prompt_id: str,
+    payload: GenerationRequest,
+    preview: bool = False,
+    create_video: Optional[bool] = None,
+    voice: Optional[str] = None,
+    tts_model: Optional[str] = None,
+) -> Dict[str, Any]:
+    return _generate_material_payload(
+        prompt_id,
+        payload,
+        preview,
+        create_video=create_video,
+        voice=voice,
+        tts_model=tts_model,
+    )
 
 
 @app.post("/materials", tags=["materials"])
 def generate_material_from_request(request: MaterialGenerationRequest, preview: bool = False) -> Dict[str, Any]:
-    payload = GenerationRequest(**request.dict(exclude={"prompt_id"}))
-    return _generate_material_payload(request.prompt_id, payload, preview)
+    payload = GenerationRequest(**request.dict(exclude={"prompt_id", "create_video", "voice", "tts_model"}))
+    return _generate_material_payload(
+        request.prompt_id,
+        payload,
+        preview,
+        create_video=request.create_video,
+        voice=request.voice,
+        tts_model=request.tts_model,
+    )
 
 
 @app.post("/materials/all", tags=["materials"])
-def generate_all_materials(payload: GenerationRequest, preview: bool = False) -> Dict[str, Any]:
+def generate_all_materials(
+    payload: GenerationRequest,
+    preview: bool = False,
+    create_video: Optional[bool] = None,
+    voice: Optional[str] = None,
+    tts_model: Optional[str] = None,
+) -> Dict[str, Any]:
     prompts: Dict[str, Dict[str, Any]] = {}
     for prompt_id in PROMPT_DEFINITIONS.keys():
-        prompts[prompt_id] = _generate_material_payload(prompt_id, payload, preview)
+        prompts[prompt_id] = _generate_material_payload(
+            prompt_id,
+            payload,
+            preview,
+            create_video=create_video if prompt_id == VIDEO_PROMPT_ID else False if create_video is not None else None,
+            voice=voice,
+            tts_model=tts_model,
+        )
 
     return {
         "course_title": payload.course_title,
         "materials": prompts,
     }
+
+
+@app.get("/", response_class=HTMLResponse, tags=["web"])
+def render_form(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@app.post("/create-course-video", response_class=HTMLResponse, tags=["web"])
+def create_course_video(
+    request: Request,
+    course_title: str = Form(...),
+    learning_outcomes: str = Form(...),
+    audience: Optional[str] = Form(None),
+    tone: Optional[str] = Form(None),
+    duration_minutes: Optional[int] = Form(None),
+    voice: Optional[str] = Form(None),
+    tts_model: Optional[str] = Form(None),
+) -> HTMLResponse:
+    outcomes = [
+        line.lstrip("-• ").strip()
+        for line in learning_outcomes.splitlines()
+        if line.strip()
+    ]
+    if not outcomes:
+        raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+
+    payload = GenerationRequest(
+        course_title=course_title,
+        learning_outcomes=outcomes,
+        audience=audience,
+        tone=tone,
+        duration_minutes=duration_minutes,
+    )
+
+    result = _generate_material_payload(
+        VIDEO_PROMPT_ID,
+        payload,
+        preview=False,
+        create_video=True,
+        voice=voice,
+        tts_model=tts_model,
+    )
+
+    video_path = result.get("video_file")
+    video_url = ""
+    if video_path:
+        path_obj = Path(video_path)
+        video_url = f"/videos/{path_obj.name}"
+
+    content = result.get("content", {})
+
+    return templates.TemplateResponse(
+        "result.html",
+        {
+            "request": request,
+            "course_title": course_title,
+            "hook": content.get("hook", ""),
+            "recap": content.get("recap", ""),
+            "outline": content.get("outline", []),
+            "video_url": video_url,
+            "voice": voice or "alloy",
+            "model": result.get("model"),
+            "video_file": Path(video_path).name if video_path else None,
+        },
+    )
+
+
+@app.get("/videos/{filename}", tags=["web"])
+def serve_video(filename: str) -> FileResponse:
+    safe_name = Path(filename).name
+    file_path = VIDEO_OUTPUT_DIR / safe_name
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found.")
+    return FileResponse(file_path, media_type="video/mp4")
