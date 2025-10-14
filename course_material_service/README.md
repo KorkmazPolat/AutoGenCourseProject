@@ -15,6 +15,7 @@ pip install -r requirements.txt
 > ```bash
 > export OPENAI_API_KEY="sk-..."
 > ```
+> 2. yol:  bir .env dosyası oluşturun ve içine ekleyin OPENAI_API_KEY=sk-...
 
 ## Çalıştırma
 
