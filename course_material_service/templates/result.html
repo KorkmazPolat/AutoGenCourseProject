@@ -4,64 +4,152 @@
     <meta charset="UTF-8" />
     <title>{{ course_title }} | Course Video</title>
     <style>
+      :root {
+        --bg: #0f172a;
+        --bg-alt: #1e293b;
+        --bg-highlight: rgba(56, 189, 248, 0.12);
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-strong: #0ea5e9;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
       body {
-        font-family: Arial, sans-serif;
-        margin: 40px;
-        background: #0f172a;
-        color: #f8fafc;
+        font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, rgba(56, 189, 248, 0.12), transparent 55%), var(--bg);
+        color: var(--text);
       }
-      a {
-        color: #38bdf8;
-        text-decoration: none;
-      }
-      .container {
+      main {
         max-width: 960px;
-        margin: auto;
+        margin: 0 auto;
+        padding: 44px 24px 72px;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--accent);
+        font-weight: 600;
+        text-decoration: none;
+        letter-spacing: 0.01em;
+        margin-bottom: 24px;
+      }
+      .back-link svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
+      header {
+        margin-bottom: 32px;
+      }
+      header .label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: rgba(148, 163, 184, 0.75);
+        margin-bottom: 12px;
+      }
+      header h1 {
+        font-size: 2.3rem;
+        margin: 0;
+      }
+      header p {
+        margin: 16px 0 0;
+        max-width: 640px;
+        color: var(--text-muted);
+        line-height: 1.6;
       }
       .card {
-        background: #1e293b;
+        background: var(--bg-alt);
+        border-radius: 18px;
         padding: 28px;
-        border-radius: 14px;
-        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
-        margin-top: 24px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.45);
+      }
+      .video-card {
+        margin-bottom: 32px;
       }
       video {
         width: 100%;
         border-radius: 16px;
-        margin-top: 24px;
-      }
-      ul {
-        padding-left: 20px;
-      }
-      li {
-        margin-bottom: 6px;
+        margin-top: 18px;
+        box-shadow: 0 20px 40px rgba(8, 47, 73, 0.35);
       }
       .meta {
-        color: #94a3b8;
+        margin-top: 18px;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 24px;
+      }
+      h2 {
+        margin: 0 0 16px;
+        font-size: 1.4rem;
+      }
+      ul {
+        margin: 0;
+        padding-left: 18px;
+        line-height: 1.6;
+      }
+      li {
+        margin-bottom: 10px;
+      }
+      strong {
+        color: rgba(226, 232, 240, 0.92);
+      }
+      .empty-state {
+        font-style: italic;
+        color: rgba(148, 163, 184, 0.75);
+      }
+      footer {
+        margin-top: 56px;
+        text-align: center;
+        color: var(--text-muted);
         font-size: 0.9rem;
+      }
+      @media (max-width: 960px) {
+        main {
+          padding: 36px 20px 64px;
+        }
+        header h1 {
+          font-size: 2rem;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <a href="/">&larr; Back</a>
-      <div class="card">
-        <h1>{{ course_title }}</h1>
-        {% if hook %}
-        <p><strong>Hook:</strong> {{ hook }}</p>
-        {% endif %}
-        {% if recap %}
-        <p><strong>Recap:</strong> {{ recap }}</p>
-        {% endif %}
-        {% if outline %}
-        <h2>Outline</h2>
-        <ul>
-          {% for item in outline %}
-          <li><strong>{{ item.timestamp }}</strong> — {{ item.topic }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
+    <main>
+      <a class="back-link" href="/">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.707 12.707a1 1 0 0 1-1.414 0l-3.999-4a1 1 0 0 1 0-1.414l3.999-4a1 1 0 0 1 1.414 1.414L4.414 7H14a1 1 0 1 1 0 2H4.414l2.293 2.293a1 1 0 0 1 0 1.414Z"/></svg>
+        Back to editor
+      </a>
 
+      <header>
+        <div class="label">Video ready</div>
+        <h1>{{ course_title }}</h1>
+        {% if recap %}
+        <p>{{ recap }}</p>
+        {% elif hook %}
+        <p>{{ hook }}</p>
+        {% endif %}
+      </header>
+
+      <section class="card video-card">
         {% if video_url %}
         <video controls src="{{ video_url }}"></video>
         <p class="meta">
@@ -69,9 +157,39 @@
           <code>{{ video_file }}</code>.
         </p>
         {% else %}
-        <p>No video file was generated.</p>
+        <p class="empty-state">No video file was generated for this run.</p>
         {% endif %}
+      </section>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Hook &amp; Recap</h2>
+          {% if hook %}
+          <p><strong>Hook:</strong> {{ hook }}</p>
+          {% endif %}
+          {% if recap %}
+          <p><strong>Recap:</strong> {{ recap }}</p>
+          {% endif %}
+          {% if not hook and not recap %}
+          <p class="empty-state">The generator did not add a hook or recap for this script.</p>
+          {% endif %}
+        </section>
+
+        <section class="card">
+          <h2>Outline</h2>
+          {% if outline %}
+          <ul>
+            {% for item in outline %}
+            <li><strong>{{ item.timestamp }}</strong> &mdash; {{ item.topic }}</li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p class="empty-state">No outline items were returned.</p>
+          {% endif %}
+        </section>
       </div>
-    </div>
+
+      <footer>Ready for another pass? Jump back to the editor to iterate on your course inputs.</footer>
+    </main>
   </body>
 </html>
