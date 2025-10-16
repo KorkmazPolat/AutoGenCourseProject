@@ -449,6 +449,73 @@ def create_course_video(
     )
 
 
+@app.post("/create-course-package", response_class=HTMLResponse, tags=["web"])
+def create_course_package(
+    request: Request,
+    course_title: str = Form(...),
+    learning_outcomes: str = Form(...),
+    audience: Optional[str] = Form(None),
+    tone: Optional[str] = Form(None),
+    duration_minutes: Optional[int] = Form(None),
+    voice: Optional[str] = Form(None),
+    tts_model: Optional[str] = Form(None),
+    include_video: Optional[str] = Form(None),
+) -> HTMLResponse:
+    outcomes = [
+        line.lstrip("-• ").strip()
+        for line in learning_outcomes.splitlines()
+        if line.strip()
+    ]
+    if not outcomes:
+        raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+
+    payload = GenerationRequest(
+        course_title=course_title,
+        learning_outcomes=outcomes,
+        audience=audience,
+        tone=tone,
+        duration_minutes=duration_minutes,
+    )
+
+    should_create_video = include_video is not None
+
+    package = generate_all_materials(
+        payload=payload,
+        preview=False,
+        create_video=should_create_video,
+        voice=voice,
+        tts_model=tts_model,
+    )
+
+    materials = package.get("materials", {})
+    video_material = materials.get(VIDEO_PROMPT_ID, {})
+    video_path = video_material.get("video_file")
+    video_url = ""
+    if video_path:
+        path_obj = Path(video_path)
+        video_url = f"/videos/{path_obj.name}"
+
+    return templates.TemplateResponse(
+        "course_package.html",
+        {
+            "request": request,
+            "course_title": course_title,
+            "audience": audience,
+            "tone": tone,
+            "duration_minutes": duration_minutes,
+            "package": package,
+            "materials": materials,
+            "blueprint": materials.get("course_blueprint", {}).get("content"),
+            "video_material": video_material,
+            "learning_outcomes": outcomes,
+            "video_url": video_url,
+            "voice": voice or "alloy",
+            "model": video_material.get("model"),
+            "video_file": Path(video_path).name if video_path else None,
+        },
+    )
+
+
 @app.get("/videos/{filename}", tags=["web"])
 def serve_video(filename: str) -> FileResponse:
     safe_name = Path(filename).name

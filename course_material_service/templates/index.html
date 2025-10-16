@@ -105,6 +105,19 @@
         resize: vertical;
         min-height: 160px;
       }
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        margin-top: 6px;
+      }
+      .checkbox-label input {
+        width: auto;
+        margin: 0;
+        accent-color: var(--accent);
+      }
       .hint {
         font-size: 0.85rem;
         color: var(--text-muted);
@@ -167,6 +180,22 @@
         color: rgba(226, 232, 240, 0.9);
         line-height: 1.6;
       }
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .actions button.secondary {
+        background: transparent;
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        color: var(--accent);
+        box-shadow: none;
+      }
+      .actions button.secondary:hover {
+        filter: none;
+        background: rgba(56, 189, 248, 0.12);
+        transform: translateY(-1px);
+      }
       footer {
         margin-top: 60px;
         text-align: center;
@@ -192,10 +221,8 @@
   <body>
     <main>
       <header>
-        <h1>Turn Your Course Outline Into a Video</h1>
+        <h1>Design a Complete Course Package</h1>
         <p>
-          Paste the essentials of your lesson, pick an optional voice, and let the studio produce a narrated walkthrough
-          with slides. It is built for quick iteration on your first draft.
         </p>
       </header>
 
@@ -246,29 +273,28 @@
 
             <label for="tts_model">TTS Model <span class="optional">(optional)</span></label>
             <input id="tts_model" name="tts_model" type="text" placeholder="gpt-4o-mini-tts" />
+
+            <label class="checkbox-label">
+              <input id="include_video" name="include_video" type="checkbox" />
+              <span>Render narrated video when building the full course package</span>
+            </label>
           </fieldset>
 
-          <button type="submit">
-            Generate my video
-            <span>~2 minutes</span>
-          </button>
+          <div class="actions">
+            <button type="submit">
+              Generate my video
+              <span>~2 minutes</span>
+            </button>
+            <button type="submit" class="secondary" formaction="/create-course-package">
+              Build full course package
+              <span>Video optional</span>
+            </button>
+          </div>
         </form>
-
-        <aside class="side-panel">
-          <h2>Quick Tips</h2>
-          <p>Guide the AI toward a convincing script by framing the essentials clearly.</p>
-          <ul>
-            <li>Lead with a short, benefit-driven course title.</li>
-            <li>Keep learning outcomes measurable and action oriented.</li>
-            <li>Match the tone to how you would speak to your learners.</li>
-            <li>Leave voice/model blank to use the default studio narrator.</li>
-            <li>Need to iterate? Submit again&mdash;the newest video replaces the previous one.</li>
-          </ul>
-        </aside>
       </div>
 
       <footer>
-        Looking for the last video you rendered? Check the results page &mdash; the back link downloads it again.
+        Check the results page &mdash; the back link downloads it again.
       </footer>
     </main>
   </body>

@@ -361,6 +361,170 @@ project_assignment:
         {% endfor %}
         Produce the JSON brief now.
 
+course_blueprint:
+  description: "Designs a multi-module course roadmap aligned to learning outcomes."
+  response_format:
+    type: object
+    properties:
+      overview:
+        type: object
+        properties:
+          positioning:
+            type: string
+            description: "Why this course matters for the stated audience."
+          target_audience:
+            type: string
+            description: "Audience reiterated with nuance for delivery."
+          total_duration_hours:
+            type: string
+            description: "Estimated total completion time for the full course."
+          pacing_strategy:
+            type: string
+            description: "How modules build on each other week-by-week or session-by-session."
+          prerequisites:
+            type: array
+            items:
+              type: string
+            description: "Recommended learner preparation."
+        required:
+          - positioning
+          - target_audience
+          - total_duration_hours
+          - pacing_strategy
+          - prerequisites
+      modules:
+        type: array
+        description: "List of modules that collectively satisfy all learning outcomes."
+        items:
+          type: object
+          properties:
+            number:
+              type: integer
+              description: "Module sequence number."
+            title:
+              type: string
+              description: "Module title."
+            summary:
+              type: string
+              description: "High-level purpose of the module."
+            outcomes:
+              type: array
+              items:
+                type: string
+              description: "Subset of learning outcomes emphasized here."
+            key_topics:
+              type: array
+              items:
+                type: string
+              description: "Essential concepts or skills covered."
+            learning_activities:
+              type: array
+              description: "Recommended learning assets within this module."
+              items:
+                type: object
+                properties:
+                  activity_type:
+                    type: string
+                    description: "Format (video, reading, workshop, discussion, etc.)."
+                  description:
+                    type: string
+                  duration_minutes:
+                    type: integer
+                    description: "Approximate time commitment."
+                  outcome_alignment:
+                    type: string
+                    description: "Outcome reinforced by the activity."
+            assessment:
+              type: object
+              properties:
+                format:
+                  type: string
+                description:
+                  type: string
+              required:
+                - format
+                - description
+            resources:
+              type: array
+              items:
+                type: string
+              description: "Supplemental resources or job aids."
+            project_milestone:
+              type: string
+              description: "How the capstone or practical assignment advances during this module."
+        minItems: 3
+      capstone:
+        type: object
+        properties:
+          description:
+            type: string
+          deliverables:
+            type: array
+            items:
+              type: string
+          evaluation:
+            type: string
+        required:
+          - description
+          - deliverables
+          - evaluation
+    required:
+      - overview
+      - modules
+      - capstone
+  messages:
+    - role: system
+      template: |
+        You are an award-winning curriculum architect.
+        Respond only with minified JSON matching this schema:
+        {
+          "overview": {
+            "positioning": "string",
+            "target_audience": "string",
+            "total_duration_hours": "string",
+            "pacing_strategy": "string",
+            "prerequisites": ["string"]
+          },
+          "modules": [
+            {
+              "number": 1,
+              "title": "string",
+              "summary": "string",
+              "outcomes": ["string"],
+              "key_topics": ["string"],
+              "learning_activities": [
+                {
+                  "activity_type": "string",
+                  "description": "string",
+                  "duration_minutes": 45,
+                  "outcome_alignment": "string"
+                }
+              ],
+              "assessment": {"format": "string", "description": "string"},
+              "resources": ["string"],
+              "project_milestone": "string"
+            }
+          ],
+          "capstone": {
+            "description": "string",
+            "deliverables": ["string"],
+            "evaluation": "string"
+          }
+        }
+        Design enough modules to fully cover every learning outcome, blending foundational sequencing, practice, and assessment.
+        Spread outcomes across modules thoughtfully—avoid duplicating the exact same list in each module.
+    - role: user
+      template: |
+        Course Title: {{ course_title }}
+        Audience: {{ audience or "General learners" }}
+        Tone: {{ tone or "Professional and supportive" }}
+        Target Session Duration: {{ duration_minutes or "60" }} minutes
+        Learning Outcomes:
+        {% for outcome in learning_outcomes %}
+        - {{ outcome }}
+        {% endfor %}
+        Produce the JSON course roadmap now.
+
 combined_course:
   description: "Compiles all course assets into a single JSON payload."
   response_format:

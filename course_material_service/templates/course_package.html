@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ course_title }} | Course Package</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --bg-alt: #111c30;
+        --bg-card: rgba(30, 41, 59, 0.88);
+        --border: rgba(148, 163, 184, 0.18);
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-strong: #0ea5e9;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, rgba(14, 116, 144, 0.18), transparent 55%), var(--bg);
+        color: var(--text);
+      }
+      main {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 40px 26px 80px;
+      }
+      a.back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--accent);
+        font-weight: 600;
+        text-decoration: none;
+        letter-spacing: 0.01em;
+        margin-bottom: 24px;
+      }
+      a.back-link svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
+      header {
+        margin-bottom: 32px;
+      }
+      header .label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: rgba(148, 163, 184, 0.75);
+        margin-bottom: 12px;
+      }
+      header h1 {
+        font-size: 2.4rem;
+        margin: 0;
+      }
+      header p {
+        margin: 16px 0 0;
+        max-width: 720px;
+        color: var(--text-muted);
+        line-height: 1.6;
+      }
+      section.card {
+        background: var(--bg-card);
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        padding: 28px;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.45);
+      }
+      section.card h2 {
+        margin: 0 0 18px;
+        font-size: 1.5rem;
+      }
+      section.card h3 {
+        margin: 24px 0 12px;
+        font-size: 1.15rem;
+        color: rgba(224, 231, 255, 0.9);
+      }
+      ul {
+        margin: 0;
+        padding-left: 18px;
+        line-height: 1.6;
+      }
+      li {
+        margin-bottom: 10px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.1);
+        color: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      .module {
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: rgba(15, 23, 42, 0.45);
+      }
+      .module header {
+        margin: 0 0 14px;
+      }
+      .module header h3 {
+        margin: 0;
+      }
+      .module header .meta {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 6px;
+      }
+      .meta {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 8px;
+      }
+      .activities {
+        margin-top: 12px;
+      }
+      .activities li {
+        margin-bottom: 8px;
+      }
+      .empty-state {
+        font-style: italic;
+        color: rgba(148, 163, 184, 0.75);
+      }
+      footer {
+        margin-top: 56px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      @media (max-width: 1024px) {
+        main {
+          padding: 32px 20px 64px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back-link" href="/">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.707 12.707a1 1 0 0 1-1.414 0l-3.999-4a1 1 0 0 1 0-1.414l3.999-4a1 1 0 0 1 1.414 1.414L4.414 7H14a1 1 0 1 1 0 2H4.414l2.293 2.293a1 1 0 0 1 0 1.414Z"/></svg>
+        Back to editor
+      </a>
+
+      <header>
+        <div class="label">Course package ready</div>
+        <h1>{{ course_title }}</h1>
+      </header>
+
+      <section class="card">
+        <h2>Module Roadmap</h2>
+        {% if blueprint and blueprint.modules %}
+        {% for module in blueprint.modules %}
+        <div class="module">
+          <header>
+            <div class="pill">Module {{ module.number }}</div>
+            <h3>{{ module.title }}</h3>
+            {% if module.summary %}
+            <p class="meta">{{ module.summary }}</p>
+            {% endif %}
+          </header>
+          <div class="meta-grid">
+            {% if module.outcomes %}
+            <div>
+              <strong>Outcomes</strong>
+              <ul>
+                {% for outcome in module.outcomes %}
+                <li>{{ outcome }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+            {% if module.key_topics %}
+            <div>
+              <strong>Key Topics</strong>
+              <ul>
+                {% for topic in module.key_topics %}
+                <li>{{ topic }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+          {% if module.learning_activities %}
+          <h4>Learning Activities</h4>
+          <ul class="activities">
+            {% for activity in module.learning_activities %}
+            <li>
+              <strong>{{ activity.activity_type }}</strong> — {{ activity.description }}
+              {% if activity.duration_minutes %} ({{ activity.duration_minutes }} min){% endif %}
+              {% if activity.outcome_alignment %}<br /><span class="meta">Outcome: {{ activity.outcome_alignment }}</span>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if module.assessment %}
+          <h4>Assessment</h4>
+          <p><strong>{{ module.assessment.format }}</strong> — {{ module.assessment.description }}</p>
+          {% endif %}
+          {% if module.resources %}
+          <h4>Resources</h4>
+          <ul>
+            {% for resource in module.resources %}
+            <li>{{ resource }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if module.project_milestone %}
+          <h4>Project Milestone</h4>
+          <p>{{ module.project_milestone }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="empty-state">No module blueprint was generated.</p>
+        {% endif %}
+      </section>
+
+      <footer>Need to iterate? Jump back to the editor and regenerate with updated inputs.</footer>
+    </main>
+  </body>
+</html>

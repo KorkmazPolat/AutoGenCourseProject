@@ -163,19 +163,6 @@
 
       <div class="grid">
         <section class="card">
-          <h2>Hook &amp; Recap</h2>
-          {% if hook %}
-          <p><strong>Hook:</strong> {{ hook }}</p>
-          {% endif %}
-          {% if recap %}
-          <p><strong>Recap:</strong> {{ recap }}</p>
-          {% endif %}
-          {% if not hook and not recap %}
-          <p class="empty-state">The generator did not add a hook or recap for this script.</p>
-          {% endif %}
-        </section>
-
-        <section class="card">
           <h2>Outline</h2>
           {% if outline %}
           <ul>
