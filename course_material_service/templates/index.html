@@ -2,300 +2,118 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Course Video Studio</title>
+    <title>Course Builder (alpha)</title>
     <style>
-      :root {
-        --bg: #0f172a;
-        --bg-alt: #1e293b;
-        --bg-highlight: rgba(56, 189, 248, 0.1);
-        --text: #f8fafc;
-        --text-muted: #94a3b8;
-        --accent: #38bdf8;
-        --accent-strong: #0ea5e9;
-      }
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
       body {
-        font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        font-family: Arial, sans-serif;
         margin: 0;
-        min-height: 100vh;
-        background: radial-gradient(circle at top, rgba(56, 189, 248, 0.12), transparent 55%), var(--bg);
-        color: var(--text);
+        padding: 24px;
+        background: #f5f5f5;
+        color: #1f2933;
       }
       main {
-        max-width: 960px;
+        max-width: 720px;
         margin: 0 auto;
-        padding: 56px 24px 80px;
+        background: #ffffff;
+        border: 1px solid #d2d6dc;
+        padding: 24px;
       }
-      header {
-        text-align: center;
-        margin-bottom: 40px;
-      }
-      header h1 {
-        font-size: 2.4rem;
-        margin: 0 0 14px;
-      }
-      header p {
-        margin: 0 auto;
-        max-width: 640px;
-        color: var(--text-muted);
-        font-size: 1.05rem;
-        line-height: 1.55;
-      }
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-        gap: 32px;
+      h1 {
+        margin-top: 0;
       }
       form {
-        padding: 28px;
-        background: var(--bg-alt);
-        border-radius: 18px;
-        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.45);
-        border: 1px solid rgba(148, 163, 184, 0.1);
-      }
-      fieldset {
-        border: none;
-        padding: 0;
-        margin: 0 0 28px;
-      }
-      fieldset:last-of-type {
-        margin-bottom: 0;
-      }
-      legend {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: var(--text-muted);
-        margin-bottom: 16px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-      label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-      }
-      input,
-      textarea {
-        width: 100%;
-        padding: 12px 14px;
-        border-radius: 10px;
-        border: 1px solid rgba(148, 163, 184, 0.12);
-        background: rgba(51, 65, 85, 0.65);
-        color: inherit;
-        font-size: 1rem;
-        margin-bottom: 18px;
-        transition: border 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-      }
-      input::placeholder,
-      textarea::placeholder {
-        color: rgba(148, 163, 184, 0.76);
-      }
-      input:focus,
-      textarea:focus {
-        outline: none;
-        border-color: rgba(56, 189, 248, 0.55);
-        background: rgba(15, 23, 42, 0.9);
-        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
-      }
-      textarea {
-        resize: vertical;
-        min-height: 160px;
-      }
-      .checkbox-label {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.95rem;
-        color: var(--text-muted);
-        margin-top: 6px;
-      }
-      .checkbox-label input {
-        width: auto;
-        margin: 0;
-        accent-color: var(--accent);
-      }
-      .hint {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-        margin-top: -12px;
-        margin-bottom: 20px;
-      }
-      .optional {
-        font-size: 0.85rem;
-        color: rgba(148, 163, 184, 0.7);
-      }
-      button {
-        width: 100%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        padding: 14px 16px;
-        border-radius: 12px;
-        border: none;
-        font-size: 1.05rem;
-        font-weight: 600;
-        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-        color: var(--bg);
-        cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-        box-shadow: 0 18px 32px rgba(14, 165, 233, 0.32);
-      }
-      button:hover {
-        transform: translateY(-1px);
-        filter: brightness(1.05);
-      }
-      button:active {
-        transform: translateY(0);
-        filter: brightness(0.98);
-      }
-      button span {
-        font-size: 0.92rem;
-        font-weight: 500;
-        letter-spacing: 0.01em;
-      }
-      .side-panel {
-        padding: 28px;
-        border-radius: 18px;
-        background: var(--bg-highlight);
-        border: 1px solid rgba(56, 189, 248, 0.2);
-        box-shadow: 0 20px 40px rgba(8, 47, 73, 0.3);
-      }
-      .side-panel h2 {
-        margin: 0;
-        font-size: 1.4rem;
-      }
-      .side-panel p {
-        margin: 12px 0 0;
-        color: rgba(226, 232, 240, 0.88);
-        line-height: 1.55;
-      }
-      .side-panel ul {
-        margin: 18px 0 0;
-        padding-left: 18px;
-        color: rgba(226, 232, 240, 0.9);
-        line-height: 1.6;
-      }
-      .actions {
         display: flex;
         flex-direction: column;
         gap: 12px;
       }
-      .actions button.secondary {
+      label {
+        font-weight: bold;
+      }
+      input,
+      textarea {
+        font: inherit;
+        padding: 8px;
+        border: 1px solid #cbd2d9;
+        background: #ffffff;
+      }
+      textarea {
+        min-height: 140px;
+      }
+      small {
+        color: #52606d;
+      }
+      button {
+        padding: 10px;
+        font: inherit;
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+        border: none;
+      }
+      button.secondary {
         background: transparent;
-        border: 1px solid rgba(56, 189, 248, 0.4);
-        color: var(--accent);
-        box-shadow: none;
+        color: #2563eb;
+        border: 1px solid #2563eb;
       }
-      .actions button.secondary:hover {
-        filter: none;
-        background: rgba(56, 189, 248, 0.12);
-        transform: translateY(-1px);
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
       }
-      footer {
-        margin-top: 60px;
-        text-align: center;
-        color: var(--text-muted);
+      p.note {
+        margin-top: 24px;
         font-size: 0.9rem;
-      }
-      @media (max-width: 960px) {
-        main {
-          padding: 44px 20px 72px;
-        }
-        header h1 {
-          font-size: 2rem;
-        }
-        .layout {
-          grid-template-columns: 1fr;
-        }
-        .side-panel {
-          order: -1;
-        }
+        color: #52606d;
       }
     </style>
   </head>
   <body>
     <main>
-      <header>
-        <h1>Design a Complete Course Package</h1>
-        <p>
-        </p>
-      </header>
+      <h1>Course Builder (very early draft)</h1>
+      <p>Enter a working title and a few learning outcomes. We'll sketch the rest for you.</p>
 
-      <div class="layout">
-        <form method="post" action="/create-course-video">
-          <fieldset>
-            <legend>Course Basics</legend>
+      <form method="post" action="/create-course-video">
+        <label for="course_title">Course title</label>
+        <input id="course_title" name="course_title" type="text" required placeholder="Intro to Prompt Engineering" />
 
-            <label for="course_title">Course Title</label>
-            <input
-              id="course_title"
-              name="course_title"
-              type="text"
-              required
-              placeholder="AI Product Management Fundamentals"
-            />
+        <label for="audience">Audience (optional)</label>
+        <input id="audience" name="audience" type="text" placeholder="New product managers" />
 
-            <label for="audience">Audience <span class="optional">(optional)</span></label>
-            <input id="audience" name="audience" type="text" placeholder="Mid-level PMs exploring AI" />
+        <label for="tone">Tone (optional)</label>
+        <input id="tone" name="tone" type="text" placeholder="Practical and friendly" />
 
-            <label for="tone">Tone <span class="optional">(optional)</span></label>
-            <input id="tone" name="tone" type="text" placeholder="Professional and friendly" />
+        <label for="duration_minutes">Target video duration (minutes)</label>
+        <input id="duration_minutes" name="duration_minutes" type="number" min="1" placeholder="10" />
 
-            <label for="duration_minutes">Target Video Duration (minutes)</label>
-            <input id="duration_minutes" name="duration_minutes" type="number" min="1" placeholder="10" />
-          </fieldset>
+        <label for="learning_outcomes">Learning outcomes (one per line)</label>
+        <textarea
+          id="learning_outcomes"
+          name="learning_outcomes"
+          required
+          placeholder="- Explain why prompt design matters
+- Compare prompting patterns
+- Use prompts to debug failures"
+        ></textarea>
 
-          <fieldset>
-            <legend>Learning Outcomes</legend>
-            <label for="learning_outcomes">What should learners walk away with?</label>
-            <textarea
-              id="learning_outcomes"
-              name="learning_outcomes"
-              rows="6"
-              required
-              placeholder="- Define core concepts
-- Apply the technique
-- Evaluate success"
-            ></textarea>
-            <div class="hint">One outcome per line. Bullets prefixed with "-" or "•" are great.</div>
-          </fieldset>
+        <label for="voice">Voice (optional)</label>
+        <input id="voice" name="voice" type="text" placeholder="alloy" />
 
-          <fieldset>
-            <legend>Voice &amp; Rendering</legend>
+        <label for="tts_model">TTS model (optional)</label>
+        <input id="tts_model" name="tts_model" type="text" placeholder="gpt-4o-mini-tts" />
 
-            <label for="voice">Voice <span class="optional">(optional)</span></label>
-            <input id="voice" name="voice" type="text" placeholder="alloy" />
+        <label>
+          <input id="include_video" name="include_video" type="checkbox" />
+          Include narrated video when building the full course
+        </label>
 
-            <label for="tts_model">TTS Model <span class="optional">(optional)</span></label>
-            <input id="tts_model" name="tts_model" type="text" placeholder="gpt-4o-mini-tts" />
+        <div class="actions">
+          <button type="submit">Generate video only</button>
+          <button type="submit" class="secondary" formaction="/create-course-package">Create full course bundle</button>
+        </div>
+      </form>
 
-            <label class="checkbox-label">
-              <input id="include_video" name="include_video" type="checkbox" />
-              <span>Render narrated video when building the full course package</span>
-            </label>
-          </fieldset>
-
-          <div class="actions">
-            <button type="submit">
-              Generate my video
-              <span>~2 minutes</span>
-            </button>
-            <button type="submit" class="secondary" formaction="/create-course-package">
-              Build full course package
-              <span>Video optional</span>
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <footer>
-        Check the results page &mdash; the back link downloads it again.
-      </footer>
+      <p class="note">This interface is intentionally simple while we test the workflow.</p>
     </main>
   </body>
 </html>

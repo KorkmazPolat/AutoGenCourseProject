@@ -2,240 +2,311 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>{{ course_title }} | Course Package</title>
+    <title>{{ course_title }} | Course Bundle</title>
     <style>
-      :root {
-        --bg: #0f172a;
-        --bg-alt: #111c30;
-        --bg-card: rgba(30, 41, 59, 0.88);
-        --border: rgba(148, 163, 184, 0.18);
-        --text: #f8fafc;
-        --text-muted: #94a3b8;
-        --accent: #38bdf8;
-        --accent-strong: #0ea5e9;
-      }
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
       body {
-        font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        font-family: Arial, sans-serif;
         margin: 0;
-        min-height: 100vh;
-        background: radial-gradient(circle at top, rgba(14, 116, 144, 0.18), transparent 55%), var(--bg);
-        color: var(--text);
+        padding: 24px;
+        background: #f0f4f8;
+        color: #1f2933;
       }
       main {
-        max-width: 1080px;
+        max-width: 900px;
         margin: 0 auto;
-        padding: 40px 26px 80px;
+        background: #ffffff;
+        padding: 24px;
+        border: 1px solid #d2d6dc;
       }
-      a.back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        color: var(--accent);
-        font-weight: 600;
-        text-decoration: none;
-        letter-spacing: 0.01em;
-        margin-bottom: 24px;
+      h1,
+      h2,
+      h3 {
+        margin-top: 24px;
       }
-      a.back-link svg {
-        width: 16px;
-        height: 16px;
-        fill: currentColor;
+      h1 {
+        margin-top: 0;
       }
-      header {
+      section {
         margin-bottom: 32px;
       }
-      header .label {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: rgba(148, 163, 184, 0.75);
-        margin-bottom: 12px;
-      }
-      header h1 {
-        font-size: 2.4rem;
-        margin: 0;
-      }
-      header p {
-        margin: 16px 0 0;
-        max-width: 720px;
-        color: var(--text-muted);
-        line-height: 1.6;
-      }
-      section.card {
-        background: var(--bg-card);
-        border-radius: 18px;
-        border: 1px solid var(--border);
-        padding: 28px;
-        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.45);
-      }
-      section.card h2 {
-        margin: 0 0 18px;
-        font-size: 1.5rem;
-      }
-      section.card h3 {
-        margin: 24px 0 12px;
-        font-size: 1.15rem;
-        color: rgba(224, 231, 255, 0.9);
-      }
       ul {
-        margin: 0;
         padding-left: 18px;
-        line-height: 1.6;
       }
-      li {
-        margin-bottom: 10px;
-      }
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        background: rgba(56, 189, 248, 0.1);
-        color: var(--accent);
-        font-size: 0.85rem;
-        font-weight: 600;
-        letter-spacing: 0.02em;
+      .muted {
+        color: #52606d;
+        font-size: 0.9rem;
       }
       .module {
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 20px;
-        background: rgba(15, 23, 42, 0.45);
+        border: 1px solid #d2d6dc;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: #f8fafc;
       }
-      .module header {
-        margin: 0 0 14px;
-      }
-      .module header h3 {
-        margin: 0;
-      }
-      .module header .meta {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        margin-top: 6px;
-      }
-      .meta {
-        color: var(--text-muted);
-        font-size: 0.9rem;
+      video {
+        max-width: 100%;
         margin-top: 8px;
       }
-      .activities {
+      table {
+        width: 100%;
+        border-collapse: collapse;
         margin-top: 12px;
       }
-      .activities li {
-        margin-bottom: 8px;
+      table th,
+      table td {
+        border: 1px solid #d2d6dc;
+        padding: 8px;
+        text-align: left;
       }
-      .empty-state {
-        font-style: italic;
-        color: rgba(148, 163, 184, 0.75);
-      }
-      footer {
-        margin-top: 56px;
-        text-align: center;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-      }
-      @media (max-width: 1024px) {
-        main {
-          padding: 32px 20px 64px;
-        }
-        .grid {
-          grid-template-columns: 1fr;
-        }
+      a.back {
+        text-decoration: none;
+        color: #2563eb;
       }
     </style>
   </head>
   <body>
     <main>
-      <a class="back-link" href="/">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.707 12.707a1 1 0 0 1-1.414 0l-3.999-4a1 1 0 0 1 0-1.414l3.999-4a1 1 0 0 1 1.414 1.414L4.414 7H14a1 1 0 1 1 0 2H4.414l2.293 2.293a1 1 0 0 1 0 1.414Z"/></svg>
-        Back to editor
-      </a>
+      <a class="back" href="/">&larr; back</a>
+      <h1>{{ course_title }}</h1>
+      <p class="muted">This is an early draft view with all the generated pieces laid out simply.</p>
 
-      <header>
-        <div class="label">Course package ready</div>
-        <h1>{{ course_title }}</h1>
-      </header>
+      <section>
+        <h2>Course basics</h2>
+        <ul>
+          {% if audience %}<li><strong>Audience:</strong> {{ audience }}</li>{% endif %}
+          {% if tone %}<li><strong>Tone:</strong> {{ tone }}</li>{% endif %}
+          {% if duration_minutes %}<li><strong>Target video length:</strong> {{ duration_minutes }} minutes</li>{% endif %}
+        </ul>
+        {% if learning_outcomes %}
+        <h3>Learning outcomes</h3>
+        <ul>
+          {% for outcome in learning_outcomes %}
+          <li>{{ outcome }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </section>
 
-      <section class="card">
-        <h2>Module Roadmap</h2>
+      <section>
+        <h2>Module roadmap</h2>
         {% if blueprint and blueprint.modules %}
         {% for module in blueprint.modules %}
         <div class="module">
-          <header>
-            <div class="pill">Module {{ module.number }}</div>
-            <h3>{{ module.title }}</h3>
-            {% if module.summary %}
-            <p class="meta">{{ module.summary }}</p>
-            {% endif %}
-          </header>
-          <div class="meta-grid">
-            {% if module.outcomes %}
-            <div>
-              <strong>Outcomes</strong>
-              <ul>
-                {% for outcome in module.outcomes %}
-                <li>{{ outcome }}</li>
-                {% endfor %}
-              </ul>
-            </div>
-            {% endif %}
-            {% if module.key_topics %}
-            <div>
-              <strong>Key Topics</strong>
-              <ul>
-                {% for topic in module.key_topics %}
-                <li>{{ topic }}</li>
-                {% endfor %}
-              </ul>
-            </div>
-            {% endif %}
-          </div>
+          <h3>Module {{ module.number }}: {{ module.title }}</h3>
+          {% if module.summary %}<p>{{ module.summary }}</p>{% endif %}
+          {% if module.outcomes %}
+          <p><strong>Focus outcomes:</strong> {{ module.outcomes | join(", ") }}</p>
+          {% endif %}
+          {% if module.key_topics %}
+          <p><strong>Key topics:</strong> {{ module.key_topics | join(", ") }}</p>
+          {% endif %}
           {% if module.learning_activities %}
-          <h4>Learning Activities</h4>
-          <ul class="activities">
+          <p><strong>Activities:</strong></p>
+          <ul>
             {% for activity in module.learning_activities %}
             <li>
-              <strong>{{ activity.activity_type }}</strong> — {{ activity.description }}
-              {% if activity.duration_minutes %} ({{ activity.duration_minutes }} min){% endif %}
-              {% if activity.outcome_alignment %}<br /><span class="meta">Outcome: {{ activity.outcome_alignment }}</span>{% endif %}
+              {{ activity.activity_type }} — {{ activity.description }}
+              {% if activity.duration_minutes %}({{ activity.duration_minutes }} min){% endif %}
+              {% if activity.outcome_alignment %}<br /><span class="muted">Outcome: {{ activity.outcome_alignment }}</span>{% endif %}
             </li>
             {% endfor %}
           </ul>
           {% endif %}
           {% if module.assessment %}
-          <h4>Assessment</h4>
-          <p><strong>{{ module.assessment.format }}</strong> — {{ module.assessment.description }}</p>
+          <p><strong>Assessment:</strong> {{ module.assessment.format }} — {{ module.assessment.description }}</p>
           {% endif %}
           {% if module.resources %}
-          <h4>Resources</h4>
-          <ul>
-            {% for resource in module.resources %}
-            <li>{{ resource }}</li>
-            {% endfor %}
-          </ul>
+          <p><strong>Resources:</strong> {{ module.resources | join(", ") }}</p>
           {% endif %}
           {% if module.project_milestone %}
-          <h4>Project Milestone</h4>
-          <p>{{ module.project_milestone }}</p>
+          <p><strong>Project milestone:</strong> {{ module.project_milestone }}</p>
           {% endif %}
         </div>
         {% endfor %}
         {% else %}
-        <p class="empty-state">No module blueprint was generated.</p>
+        <p>No module outline was generated.</p>
         {% endif %}
       </section>
 
-      <footer>Need to iterate? Jump back to the editor and regenerate with updated inputs.</footer>
+      {% set video = video_material.get("content") if video_material else None %}
+      {% if video %}
+      <section>
+        <h2>Video script</h2>
+        {% if video_url %}
+        <video controls src="{{ video_url }}"></video>
+        {% elif video_material.get("video_file") %}
+        <p><a href="{{ video_url }}">Download video</a></p>
+        {% endif %}
+        {% if video.hook %}<p><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
+        {% if video.outline %}
+        <h3>Outline</h3>
+        <ul>
+          {% for item in video.outline %}
+          <li>{{ item.timestamp }} — {{ item.topic }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if video.narration %}
+        <h3>Narration</h3>
+        <ul>
+          {% for block in video.narration %}
+          <li><strong>{{ block.section }}</strong>: {{ block.summary }}<br />{{ block.script }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if video.recap %}<p><strong>Recap:</strong> {{ video.recap }}</p>{% endif %}
+        {% if video.call_to_action %}<p><strong>Call to action:</strong> {{ video.call_to_action }}</p>{% endif %}
+      </section>
+      {% endif %}
+
+      {% set reading = materials.get("reading_material", {}).get("content") %}
+      {% if reading %}
+      <section>
+        <h2>Reading handout</h2>
+        {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
+        {% if reading.sections %}
+        <h3>Sections</h3>
+        <ul>
+          {% for section in reading.sections %}
+          <li>
+            <strong>{{ section.heading }}</strong>
+            {% if section.key_points %}
+            <ul>
+              {% for point in section.key_points %}
+              <li>{{ point }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            <p>{{ section.content }}</p>
+            {% if section.outcome_alignment %}
+            <p class="muted">Outcomes: {{ section.outcome_alignment | join(", ") }}</p>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if reading.examples %}
+        <h3>Examples</h3>
+        <ul>
+          {% for example in reading.examples %}
+          <li>
+            <strong>{{ example.title }}</strong> — {{ example.description }}
+            {% if example.outcome_alignment %}
+            <span class="muted">(Outcomes: {{ example.outcome_alignment | join(", ") }})</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if reading.glossary %}
+        <h3>Glossary</h3>
+        <ul>
+          {% for term in reading.glossary %}
+          <li><strong>{{ term.term }}</strong>: {{ term.definition }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if reading.reflections %}
+        <h3>Reflection prompts</h3>
+        <ul>
+          {% for prompt in reading.reflections %}
+          <li>{{ prompt }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      {% set quiz = materials.get("quiz_questions", {}).get("content") %}
+      {% if quiz %}
+      <section>
+        <h2>Quiz questions</h2>
+        {% if quiz.questions %}
+        <ol>
+          {% for question in quiz.questions %}
+          <li>
+            <p><strong>{{ question.stem }}</strong></p>
+            <ul>
+              {% for choice in question.choices %}
+              <li>{{ choice.label }}. {{ choice.text }}</li>
+              {% endfor %}
+            </ul>
+            <p class="muted">Answer: {{ question.answer }} — {{ question.rationale }}</p>
+            {% if question.learning_outcome %}<p class="muted">Outcome: {{ question.learning_outcome }}</p>{% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+        {% endif %}
+        {% if quiz.remediation %}
+        <p><strong>Remediation tip:</strong> {{ quiz.remediation }}</p>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      {% set project = materials.get("project_assignment", {}).get("content") %}
+      {% if project %}
+      <section>
+        <h2>Project assignment</h2>
+        <p>{{ project.scenario }}</p>
+        {% if project.tasks %}
+        <h3>Tasks</h3>
+        <ol>
+          {% for task in project.tasks %}
+          <li>
+            {{ task.instructions }}
+            {% if task.outcome_alignment %}
+            <span class="muted">(Outcome: {{ task.outcome_alignment }})</span>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+        {% endif %}
+        {% if project.deliverables %}
+        <h3>Deliverables</h3>
+        <ul>
+          {% for item in project.deliverables %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if project.rubric %}
+        <h3>Rubric</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Criterion</th>
+              <th>Levels</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for criterion in project.rubric %}
+            <tr>
+              <td>{{ criterion.criterion }}</td>
+              <td>
+                {% for level in criterion.levels %}
+                <div><strong>{{ level.level }}:</strong> {{ level.description }}</div>
+                {% endfor %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        {% if project.checklist %}
+        <h3>Checklist</h3>
+        <ul>
+          {% for item in project.checklist %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if project.stretch_goal %}
+        <h3>Stretch goal</h3>
+        <p>{{ project.stretch_goal }}</p>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      <p class="muted">All content is generated automatically. Adjust inputs and regenerate as needed.</p>
     </main>
   </body>
 </html>
