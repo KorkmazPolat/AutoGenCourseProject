@@ -67,6 +67,15 @@ Arka planda `video_script` promptu çalıştırılır, slayt görselleri ve sesl
 - `ffmpeg` sisteminizde kurulu olmalı (MoviePy video render işlemleri için).
 - OpenAI TTS modellerine erişim (`gpt-4o-mini-tts` vb.).
 
+### ffmpeg Kurulumu (Örnekler)
+
+- macOS (Homebrew): `brew install ffmpeg`
+- Ubuntu/Debian: `sudo apt update && sudo apt install -y ffmpeg`
+- Fedora: `sudo dnf install -y ffmpeg`
+- Windows: Statik ffmpeg build indirip `ffmpeg.exe` yolunu `PATH`'e ekleyin (PowerShell: Sistem Ortam Değişkenleri > PATH).
+
+Kurulum doğrulama: `ffmpeg -version` çıktısı görülmeli. MoviePy, `imageio-ffmpeg` aracılığıyla sistemdeki ffmpeg’i bulur. Ağ kısıtlı ortamlarda otomatik indirme başarısız olursa sistem ffmpeg’i kurmak en sağlam çözümdür.
+
 ## Dizin Yapısı
 
 ```

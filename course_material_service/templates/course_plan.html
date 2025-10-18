@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ course_title }} | Course Plan</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 24px;
+        background: #f0f4f8;
+        color: #1f2933;
+      }
+      main {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 24px;
+        border: 1px solid #d2d6dc;
+      }
+      h1,
+      h2,
+      h3 {
+        margin-top: 24px;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      ul {
+        padding-left: 18px;
+      }
+      .module {
+        border: 1px solid #d2d6dc;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: #f8fafc;
+      }
+      a.back {
+        text-decoration: none;
+        color: #2563eb;
+      }
+      .muted {
+        color: #52606d;
+        font-size: 0.9rem;
+      }
+      form {
+        margin-top: 24px;
+      }
+      button {
+        padding: 10px 16px;
+        font: inherit;
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="/">&larr; back</a>
+      <h1>{{ course_title }}</h1>
+      {% if blueprint.overview %}
+      <p class="muted">{{ blueprint.overview.positioning }}</p>
+      <ul>
+        <li><strong>Audience:</strong> {{ blueprint.overview.target_audience }}</li>
+        <li><strong>Total time:</strong> {{ blueprint.overview.total_duration_hours }}</li>
+        <li><strong>Pacing:</strong> {{ blueprint.overview.pacing_strategy }}</li>
+      </ul>
+      {% if blueprint.overview.prerequisites %}
+      <p><strong>Prerequisites:</strong> {{ blueprint.overview.prerequisites | join(", ") }}</p>
+      {% endif %}
+      {% endif %}
+
+      {% if learning_outcomes %}
+      <h2>Learning outcomes</h2>
+      <ul>
+        {% for outcome in learning_outcomes %}
+        <li>{{ outcome }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      <h2>Modules</h2>
+      {% if blueprint.modules %}
+      {% for module in blueprint.modules %}
+      <div class="module">
+        <h3>Module {{ module.number }}: {{ module.title }}</h3>
+        {% if module.summary %}<p>{{ module.summary }}</p>{% endif %}
+        {% if module.outcomes %}
+        <p><strong>Outcomes:</strong> {{ module.outcomes | join(", ") }}</p>
+        {% endif %}
+        {% if module.key_topics %}
+        <p><strong>Key topics:</strong> {{ module.key_topics | join(", ") }}</p>
+        {% endif %}
+        {% if module.learning_activities %}
+        <p><strong>Activities:</strong></p>
+        <ul>
+          {% for activity in module.learning_activities %}
+          <li>
+            {{ activity.activity_type }} — {{ activity.description }}
+            {% if activity.duration_minutes %}({{ activity.duration_minutes }} min){% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if module.assessment %}
+        <p><strong>Assessment:</strong> {{ module.assessment.format }} — {{ module.assessment.description }}</p>
+        {% endif %}
+        {% if module.project_milestone %}
+        <p><strong>Project milestone:</strong> {{ module.project_milestone }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% else %}
+      <p>No modules were generated.</p>
+      {% endif %}
+
+      <form method="post" action="/create-course-pages">
+        <input type="hidden" name="course_title" value="{{ course_title }}" />
+        <input type="hidden" name="audience" value="{{ audience or '' }}" />
+        <input type="hidden" name="tone" value="{{ tone or '' }}" />
+        <input type="hidden" name="duration_minutes" value="{{ duration_minutes or '' }}" />
+        <textarea name="learning_outcomes" hidden>{{ learning_outcomes_text }}</textarea>
+        <textarea name="blueprint_json" hidden>{{ blueprint | tojson }}</textarea>
+        <button type="submit">Build module pages</button>
+      </form>
+
+      <p class="muted">When you continue, we'll generate simple materials for each module based on this plan.</p>
+    </main>
+  </body>
+</html>

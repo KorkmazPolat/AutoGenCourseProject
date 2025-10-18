@@ -90,6 +90,18 @@ video_script:
         Audience: {{ audience or "General learners" }}
         Desired Tone: {{ tone or "Professional and friendly" }}
         Target Video Duration: {{ duration_minutes or "10" }} minutes
+        {% if module_title %}
+        Module Focus: {{ module_title }}
+        {% endif %}
+        {% if module_summary %}
+        Module Summary: {{ module_summary }}
+        {% endif %}
+        {% if module_topics %}
+        Key Topics:
+        {% for topic in module_topics %}
+        - {{ topic }}
+        {% endfor %}
+        {% endif %}
         Minimum Narration Word Count: {{ target_word_count }}
         Minimum Outline Segments: {{ target_segment_count }}
         Learning Outcomes:
@@ -171,6 +183,18 @@ quiz_questions:
         Course Title: {{ course_title }}
         Audience: {{ audience or "General learners" }}
         Tone: {{ tone or "Supportive" }}
+        {% if module_title %}
+        Module Focus: {{ module_title }}
+        {% endif %}
+        {% if module_summary %}
+        Module Summary: {{ module_summary }}
+        {% endif %}
+        {% if module_topics %}
+        Key Topics:
+        {% for topic in module_topics %}
+        - {{ topic }}
+        {% endfor %}
+        {% endif %}
         Learning Outcomes:
         {% for outcome in learning_outcomes %}
         - {{ outcome }}
@@ -270,6 +294,18 @@ reading_material:
         Course Title: {{ course_title }}
         Audience: {{ audience or "General learners" }}
         Tone: {{ tone or "Approachable yet authoritative" }}
+        {% if module_title %}
+        Module Focus: {{ module_title }}
+        {% endif %}
+        {% if module_summary %}
+        Module Summary: {{ module_summary }}
+        {% endif %}
+        {% if module_topics %}
+        Key Topics:
+        {% for topic in module_topics %}
+        - {{ topic }}
+        {% endfor %}
+        {% endif %}
         Learning Outcomes:
         {% for outcome in learning_outcomes %}
         - {{ outcome }}
