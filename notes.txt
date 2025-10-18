@@ -12,3 +12,5 @@ Bugs:
 
 - Vİdeoda ileri geri yapılmıyor.(DB OLMADIĞI İÇİN SANIRIM)
 -
+
+kmdsfkksdflmsmdl
