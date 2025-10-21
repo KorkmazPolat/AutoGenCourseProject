@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from jinja2 import Template
 from openai import OpenAI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from video_builder import VideoGenerationError, generate_video_from_script
 
@@ -39,6 +39,19 @@ class GenerationRequest(BaseModel):
         None,
         description="Optional OpenAI model override (defaults to gpt-4o-mini).",
     )
+
+    # Accept numeric strings or empty strings for duration_minutes in JSON bodies
+    @field_validator("duration_minutes", mode="before")
+    @classmethod
+    def _coerce_duration_minutes(cls, v: Any) -> Optional[int]:
+        if v is None or v == "":
+            return None
+        if isinstance(v, int):
+            return v
+        try:
+            return int(v)
+        except Exception as exc:  # pragma: no cover
+            raise ValueError("duration_minutes must be an integer") from exc
 
 
 @dataclass
@@ -171,6 +184,15 @@ app = FastAPI(
     description="FastAPI service providing course content prompts plus a simple web UI for generating narrated videos.",
     version="0.2.0",
 )
+
+
+def _coerce_optional_int(value: Optional[str]) -> Optional[int]:
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except Exception as exc:  # pragma: no cover
+        raise HTTPException(status_code=400, detail="duration_minutes must be an integer") from exc
 
 
 @app.get("/health", tags=["system"])
@@ -414,7 +436,7 @@ def create_course_video(
     learning_outcomes: str = Form(...),
     audience: Optional[str] = Form(None),
     tone: Optional[str] = Form(None),
-    duration_minutes: Optional[int] = Form(None),
+    duration_minutes: Optional[str] = Form(None),
     voice: Optional[str] = Form(None),
     tts_model: Optional[str] = Form(None),
 ) -> HTMLResponse:
@@ -425,7 +447,7 @@ def create_course_video(
         learning_outcomes=outcomes,
         audience=audience,
         tone=tone,
-        duration_minutes=duration_minutes,
+        duration_minutes=_coerce_optional_int(duration_minutes),
     )
 
     result = _generate_material_payload(
@@ -468,7 +490,7 @@ def create_course_plan(
     learning_outcomes: str = Form(...),
     audience: Optional[str] = Form(None),
     tone: Optional[str] = Form(None),
-    duration_minutes: Optional[int] = Form(None),
+    duration_minutes: Optional[str] = Form(None),
     voice: Optional[str] = Form(None),  # unused but accepted so the form can submit same fields
     tts_model: Optional[str] = Form(None),  # unused but accepted so the form can submit same fields
 ) -> HTMLResponse:
@@ -478,7 +500,7 @@ def create_course_plan(
         learning_outcomes=outcomes,
         audience=audience,
         tone=tone,
-        duration_minutes=duration_minutes,
+        duration_minutes=_coerce_optional_int(duration_minutes),
     )
 
     blueprint_result = _generate_material_payload(
@@ -511,7 +533,7 @@ def create_course_pages(
     learning_outcomes: str = Form(...),
     audience: Optional[str] = Form(None),
     tone: Optional[str] = Form(None),
-    duration_minutes: Optional[int] = Form(None),
+    duration_minutes: Optional[str] = Form(None),
     blueprint_json: Optional[str] = Form(None),
     voice: Optional[str] = Form(None),
     tts_model: Optional[str] = Form(None),
@@ -523,7 +545,7 @@ def create_course_pages(
         learning_outcomes=outcomes,
         audience=audience,
         tone=tone,
-        duration_minutes=duration_minutes,
+        duration_minutes=_coerce_optional_int(duration_minutes),
     )
 
     blueprint_content: Dict[str, Any]
@@ -608,7 +630,7 @@ def create_full_course(
     learning_outcomes: str = Form(...),
     audience: Optional[str] = Form(None),
     tone: Optional[str] = Form(None),
-    duration_minutes: Optional[int] = Form(None),
+    duration_minutes: Optional[str] = Form(None),
     voice: Optional[str] = Form(None),
     tts_model: Optional[str] = Form(None),
 ) -> HTMLResponse:
@@ -620,7 +642,7 @@ def create_full_course(
         learning_outcomes=outcomes,
         audience=audience,
         tone=tone,
-        duration_minutes=duration_minutes,
+        duration_minutes=_coerce_optional_int(duration_minutes),
     )
 
     # 1) Generate blueprint
