@@ -73,7 +73,7 @@
       <h1>Course Builder (very early draft)</h1>
       <p>Enter a working title and a few learning outcomes. We'll sketch the rest for you.</p>
 
-      <form method="post" action="/create-course-video">
+      <form method="post" action="/create-course-plan">
         <label for="course_title">Course title</label>
         <input id="course_title" name="course_title" type="text" required placeholder="Intro to Prompt Engineering" />
 
@@ -102,14 +102,11 @@
         <label for="tts_model">TTS model (optional)</label>
         <input id="tts_model" name="tts_model" type="text" placeholder="gpt-4o-mini-tts" />
 
-        <label>
-          <input id="include_video" name="include_video" type="checkbox" />
-          Include narrated video when building the full course
-        </label>
-
         <div class="actions">
-          <button type="submit">Generate video only</button>
-          <button type="submit" class="secondary" formaction="/create-course-package">Create full course bundle</button>
+          <button type="submit">Create course plan</button>
+          <button type="submit" class="secondary" formaction="/create-course-pages">Build module pages</button>
+          <button type="submit" class="secondary" formaction="/create-course-video">Generate video only</button>
+          <button type="submit" class="secondary" formaction="/create-full-course">Build full course (with videos)</button>
         </div>
       </form>
 

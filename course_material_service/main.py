@@ -29,6 +29,12 @@ class GenerationRequest(BaseModel):
     tone: Optional[str] = Field(None, description="Preferred tone of voice.")
     duration_minutes: Optional[int] = Field(None, gt=0, description="Target duration in minutes for the video lesson.")
     project_duration: Optional[str] = Field(None, description="Expected effort for the project assignment.")
+    module_number: Optional[int] = Field(None, description="Module sequence number when generating per-module assets.")
+    module_title: Optional[str] = Field(None, description="Module-specific title when generating per-module assets.")
+    module_summary: Optional[str] = Field(None, description="Short description for the module focus.")
+    module_topics: Optional[List[str]] = Field(
+        None, description="Key topics or themes covered inside this module."
+    )
     model: Optional[str] = Field(
         None,
         description="Optional OpenAI model override (defaults to gpt-4o-mini).",
@@ -138,6 +144,18 @@ def _load_prompt_definitions() -> Dict[str, PromptDefinition]:
 PROMPT_DEFINITIONS = _load_prompt_definitions()
 
 load_dotenv(dotenv_path=".env", override=True)
+
+
+def _parse_learning_outcomes(raw_text: str) -> List[str]:
+    """Split the textarea input into clean outcome lines."""
+    outcomes = [
+        line.lstrip("-• ").strip()
+        for line in (raw_text or "").splitlines()
+        if line.strip()
+    ]
+    if not outcomes:
+        raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+    return outcomes
 
 
 @lru_cache(maxsize=1)
@@ -400,13 +418,7 @@ def create_course_video(
     voice: Optional[str] = Form(None),
     tts_model: Optional[str] = Form(None),
 ) -> HTMLResponse:
-    outcomes = [
-        line.lstrip("-• ").strip()
-        for line in learning_outcomes.splitlines()
-        if line.strip()
-    ]
-    if not outcomes:
-        raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+    outcomes = _parse_learning_outcomes(learning_outcomes)
 
     payload = GenerationRequest(
         course_title=course_title,
@@ -449,25 +461,62 @@ def create_course_video(
     )
 
 
-@app.post("/create-course-package", response_class=HTMLResponse, tags=["web"])
-def create_course_package(
+@app.post("/create-course-plan", response_class=HTMLResponse, tags=["web"])
+def create_course_plan(
     request: Request,
     course_title: str = Form(...),
     learning_outcomes: str = Form(...),
     audience: Optional[str] = Form(None),
     tone: Optional[str] = Form(None),
     duration_minutes: Optional[int] = Form(None),
+    voice: Optional[str] = Form(None),  # unused but accepted so the form can submit same fields
+    tts_model: Optional[str] = Form(None),  # unused but accepted so the form can submit same fields
+) -> HTMLResponse:
+    outcomes = _parse_learning_outcomes(learning_outcomes)
+    payload = GenerationRequest(
+        course_title=course_title,
+        learning_outcomes=outcomes,
+        audience=audience,
+        tone=tone,
+        duration_minutes=duration_minutes,
+    )
+
+    blueprint_result = _generate_material_payload(
+        "course_blueprint",
+        payload,
+        preview=False,
+        create_video=False,
+    )
+    blueprint_content = blueprint_result.get("content", {})
+
+    return templates.TemplateResponse(
+        "course_plan.html",
+        {
+            "request": request,
+            "course_title": course_title,
+            "audience": audience,
+            "tone": tone,
+            "duration_minutes": duration_minutes,
+            "learning_outcomes": outcomes,
+            "learning_outcomes_text": learning_outcomes,
+            "blueprint": blueprint_content,
+        },
+    )
+
+
+@app.post("/create-course-pages", response_class=HTMLResponse, tags=["web"])
+def create_course_pages(
+    request: Request,
+    course_title: str = Form(...),
+    learning_outcomes: str = Form(...),
+    audience: Optional[str] = Form(None),
+    tone: Optional[str] = Form(None),
+    duration_minutes: Optional[int] = Form(None),
+    blueprint_json: Optional[str] = Form(None),
     voice: Optional[str] = Form(None),
     tts_model: Optional[str] = Form(None),
-    include_video: Optional[str] = Form(None),
 ) -> HTMLResponse:
-    outcomes = [
-        line.lstrip("-• ").strip()
-        for line in learning_outcomes.splitlines()
-        if line.strip()
-    ]
-    if not outcomes:
-        raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+    outcomes = _parse_learning_outcomes(learning_outcomes)
 
     payload = GenerationRequest(
         course_title=course_title,
@@ -477,41 +526,68 @@ def create_course_package(
         duration_minutes=duration_minutes,
     )
 
-    should_create_video = include_video is not None
+    blueprint_content: Dict[str, Any]
+    if blueprint_json:
+        try:
+            blueprint_content = json.loads(blueprint_json)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid blueprint data: {exc}") from exc
+    else:
+        blueprint_result = _generate_material_payload(
+            "course_blueprint",
+            payload,
+            preview=False,
+            create_video=False,
+        )
+        blueprint_content = blueprint_result.get("content", {})
 
-    package = generate_all_materials(
-        payload=payload,
-        preview=False,
-        create_video=should_create_video,
-        voice=voice,
-        tts_model=tts_model,
-    )
+    modules = blueprint_content.get("modules") or []
+    module_assets: List[Dict[str, Any]] = []
 
-    materials = package.get("materials", {})
-    video_material = materials.get(VIDEO_PROMPT_ID, {})
-    video_path = video_material.get("video_file")
-    video_url = ""
-    if video_path:
-        path_obj = Path(video_path)
-        video_url = f"/videos/{path_obj.name}"
+    for module in modules:
+        module_number = module.get("number")
+        module_title = module.get("title") or f"Module {module_number}"
+        module_outcomes = module.get("outcomes") or outcomes
+        module_payload = GenerationRequest(
+            course_title=f"{course_title} - Module {module_number}: {module_title}",
+            learning_outcomes=module_outcomes,
+            audience=audience,
+            tone=tone,
+            duration_minutes=duration_minutes,
+            module_number=module_number,
+            module_title=module_title,
+            module_summary=module.get("summary"),
+            module_topics=module.get("key_topics"),
+        )
+
+        assets_for_module: Dict[str, Any] = {}
+        for prompt_id in ("video_script", "reading_material", "quiz_questions"):
+            assets_for_module[prompt_id] = _generate_material_payload(
+                prompt_id,
+                module_payload,
+                preview=False,
+                create_video=False,
+                voice=voice,
+                tts_model=tts_model,
+            )
+        module_assets.append(
+            {
+                "info": module,
+                "assets": assets_for_module,
+            }
+        )
 
     return templates.TemplateResponse(
-        "course_package.html",
+        "course_pages.html",
         {
             "request": request,
             "course_title": course_title,
             "audience": audience,
             "tone": tone,
             "duration_minutes": duration_minutes,
-            "package": package,
-            "materials": materials,
-            "blueprint": materials.get("course_blueprint", {}).get("content"),
-            "video_material": video_material,
             "learning_outcomes": outcomes,
-            "video_url": video_url,
-            "voice": voice or "alloy",
-            "model": video_material.get("model"),
-            "video_file": Path(video_path).name if video_path else None,
+            "blueprint": blueprint_content,
+            "modules_output": module_assets,
         },
     )
 
@@ -523,3 +599,115 @@ def serve_video(filename: str) -> FileResponse:
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Video not found.")
     return FileResponse(file_path, media_type="video/mp4")
+
+
+@app.post("/create-full-course", response_class=HTMLResponse, tags=["web"])
+def create_full_course(
+    request: Request,
+    course_title: str = Form(...),
+    learning_outcomes: str = Form(...),
+    audience: Optional[str] = Form(None),
+    tone: Optional[str] = Form(None),
+    duration_minutes: Optional[int] = Form(None),
+    voice: Optional[str] = Form(None),
+    tts_model: Optional[str] = Form(None),
+) -> HTMLResponse:
+    """Build a complete course: blueprint + per-module videos, readings, and quizzes."""
+    outcomes = _parse_learning_outcomes(learning_outcomes)
+
+    payload = GenerationRequest(
+        course_title=course_title,
+        learning_outcomes=outcomes,
+        audience=audience,
+        tone=tone,
+        duration_minutes=duration_minutes,
+    )
+
+    # 1) Generate blueprint
+    blueprint_result = _generate_material_payload(
+        "course_blueprint",
+        payload,
+        preview=False,
+        create_video=False,
+    )
+    blueprint_content = blueprint_result.get("content", {})
+
+    # 2) For each module, generate assets and render a video
+    modules = blueprint_content.get("modules") or []
+    module_assets: List[Dict[str, Any]] = []
+
+    for module in modules:
+        module_number = module.get("number")
+        module_title = module.get("title") or f"Module {module_number}"
+        module_outcomes = module.get("outcomes") or outcomes
+        module_payload = GenerationRequest(
+            course_title=f"{course_title} - Module {module_number}: {module_title}",
+            learning_outcomes=module_outcomes,
+            audience=audience,
+            tone=tone,
+            duration_minutes=duration_minutes,
+            module_number=module_number,
+            module_title=module_title,
+            module_summary=module.get("summary"),
+            module_topics=module.get("key_topics"),
+        )
+
+        assets_for_module: Dict[str, Any] = {}
+
+        # Generate and render video for this module
+        video_result = _generate_material_payload(
+            "video_script",
+            module_payload,
+            preview=False,
+            create_video=True,
+            voice=voice,
+            tts_model=tts_model,
+        )
+        video_file = video_result.get("video_file")
+        video_url = ""
+        if video_file:
+            video_url = f"/videos/{Path(video_file).name}"
+        video_result["video_url"] = video_url
+        assets_for_module["video_script"] = video_result
+
+        # Reading material
+        assets_for_module["reading_material"] = _generate_material_payload(
+            "reading_material",
+            module_payload,
+            preview=False,
+            create_video=False,
+            voice=voice,
+            tts_model=tts_model,
+        )
+
+        # Quiz questions
+        assets_for_module["quiz_questions"] = _generate_material_payload(
+            "quiz_questions",
+            module_payload,
+            preview=False,
+            create_video=False,
+            voice=voice,
+            tts_model=tts_model,
+        )
+
+        module_assets.append(
+            {
+                "info": module,
+                "assets": assets_for_module,
+            }
+        )
+
+    return templates.TemplateResponse(
+        "full_course.html",
+        {
+            "request": request,
+            "course_title": course_title,
+            "audience": audience,
+            "tone": tone,
+            "duration_minutes": duration_minutes,
+            "learning_outcomes": outcomes,
+            "blueprint": blueprint_content,
+            "modules_output": module_assets,
+            "voice": voice or "alloy",
+        },
+    )

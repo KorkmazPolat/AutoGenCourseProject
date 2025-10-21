@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ course_title }} | Full Course</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #eef2f7; color: #1f2933; }
+      main { max-width: 980px; margin: 0 auto; background: #ffffff; padding: 24px; border: 1px solid #d2d6dc; }
+      h1, h2, h3, h4 { margin-top: 24px; }
+      h1 { margin-top: 0; }
+      ul, ol { padding-left: 20px; }
+      .module { border: 1px solid #d2d6dc; padding: 16px; margin-bottom: 24px; background: #f8fafc; }
+      .muted { color: #52606d; font-size: 0.9rem; }
+      a.back { text-decoration: none; color: #2563eb; }
+      video { width: 100%; height: auto; margin-top: 12px; background: #000; }
+      .asset-block { margin-top: 16px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+      table th, table td { border: 1px solid #d2d6dc; padding: 8px; text-align: left; }
+      .meta { margin: 8px 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="/">&larr; back</a>
+      <h1>{{ course_title }}</h1>
+      <p class="muted">Full course build: blueprint, per-module videos, readings, and quizzes.</p>
+
+      {% if learning_outcomes %}
+      <h2>Course outcomes</h2>
+      <ul>
+        {% for outcome in learning_outcomes %}
+        <li>{{ outcome }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if blueprint %}
+      <h2>Blueprint overview</h2>
+      {% if blueprint.overview %}
+      <p><strong>Positioning:</strong> {{ blueprint.overview.positioning }}</p>
+      <p class="meta"><strong>Audience:</strong> {{ blueprint.overview.target_audience }}</p>
+      <p class="meta"><strong>Total duration:</strong> {{ blueprint.overview.total_duration_hours }}</p>
+      <p class="meta"><strong>Pacing:</strong> {{ blueprint.overview.pacing_strategy }}</p>
+      {% if blueprint.overview.prerequisites %}
+      <p class="meta"><strong>Prerequisites:</strong> {{ blueprint.overview.prerequisites | join(", ") }}</p>
+      {% endif %}
+      {% endif %}
+      {% endif %}
+
+      {% if modules_output %}
+      {% for module in modules_output %}
+      {% set info = module.info %}
+      {% set assets = module.assets %}
+      {% set video_pack = assets.get("video_script", {}) %}
+      {% set video = video_pack.get("content") %}
+      {% set video_url = video_pack.get("video_url") %}
+      {% set reading = assets.get("reading_material", {}).get("content") %}
+      {% set quiz = assets.get("quiz_questions", {}).get("content") %}
+      <div class="module">
+        <h2>Module {{ info.number }}: {{ info.title }}</h2>
+        {% if info.summary %}<p>{{ info.summary }}</p>{% endif %}
+        {% if info.outcomes %}<p><strong>Module outcomes:</strong> {{ info.outcomes | join(", ") }}</p>{% endif %}
+        {% if info.key_topics %}<p><strong>Key topics:</strong> {{ info.key_topics | join(", ") }}</p>{% endif %}
+
+        {% if video_url %}
+        <div class="asset-block">
+          <h3>Lesson Video</h3>
+          <video controls preload="metadata">
+            <source src="{{ video_url }}" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <p class="muted">Narration voice: {{ voice }}</p>
+        </div>
+        {% endif %}
+
+        {% if video %}
+        <div class="asset-block">
+          <h3>Video script</h3>
+          {% if video.hook %}<p><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
+          {% if video.outline %}
+          <h4>Outline</h4>
+          <ul>
+            {% for item in video.outline %}
+            <li>{{ item.timestamp }} — {{ item.topic }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if video.narration %}
+          <h4>Narration</h4>
+          <ul>
+            {% for block in video.narration %}
+            <li>
+              <strong>{{ block.section }}</strong>: {{ block.summary }}<br />
+              {{ block.script }}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if video.recap %}<p><strong>Recap:</strong> {{ video.recap }}</p>{% endif %}
+          {% if video.call_to_action %}<p><strong>Call to action:</strong> {{ video.call_to_action }}</p>{% endif %}
+        </div>
+        {% endif %}
+
+        {% if reading %}
+        <div class="asset-block">
+          <h3>Reading companion</h3>
+          {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
+          {% if reading.sections %}
+          <h4>Sections</h4>
+          <ul>
+            {% for section in reading.sections %}
+            <li>
+              <strong>{{ section.heading }}</strong>
+              {% if section.key_points %}
+              <ul>
+                {% for point in section.key_points %}
+                <li>{{ point }}</li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+              <p>{{ section.content }}</p>
+              {% if section.outcome_alignment %}
+              <p class="muted">Outcomes: {{ section.outcome_alignment | join(", ") }}</p>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if reading.examples %}
+          <h4>Examples</h4>
+          <ul>
+            {% for example in reading.examples %}
+            <li>
+              <strong>{{ example.title }}</strong> — {{ example.description }}
+              {% if example.outcome_alignment %}
+              <span class="muted">(Outcomes: {{ example.outcome_alignment | join(", ") }})</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if reading.glossary %}
+          <h4>Glossary</h4>
+          <ul>
+            {% for term in reading.glossary %}
+            <li><strong>{{ term.term }}</strong>: {{ term.definition }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if reading.reflections %}
+          <h4>Reflection prompts</h4>
+          <ul>
+            {% for prompt in reading.reflections %}
+            <li>{{ prompt }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if quiz %}
+        <div class="asset-block">
+          <h3>Quiz</h3>
+          {% if quiz.questions %}
+          <ol>
+            {% for question in quiz.questions %}
+            <li>
+              <strong>{{ question.stem }}</strong>
+              <ul>
+                {% for choice in question.choices %}
+                <li>{{ choice.label }}. {{ choice.text }}</li>
+                {% endfor %}
+              </ul>
+              <p class="muted">Answer: {{ question.answer }} — {{ question.rationale }}</p>
+              {% if question.learning_outcome %}
+              <p class="muted">Outcome: {{ question.learning_outcome }}</p>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ol>
+          {% endif %}
+          {% if quiz.remediation %}
+          <p><strong>Remediation tip:</strong> {{ quiz.remediation }}</p>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% else %}
+      <p>No modules were produced.</p>
+      {% endif %}
+
+      <p class="muted">All materials are auto-generated drafts. Refine prompts and regenerate as needed.</p>
+    </main>
+  </body>
+  </html>
