@@ -111,7 +111,7 @@ video_script:
         Produce the JSON response now.
 
 quiz_questions:
-  description: "Produces JSON with multiple-choice quiz questions."
+  description: "Generates high-quality, contextually aligned multiple-choice quiz questions."
   response_format: &quiz_format
     type: object
     properties:
@@ -156,9 +156,15 @@ quiz_questions:
   messages:
     - role: system
       template: |
-        You are a learning scientist designing diagnostic multiple-choice questions.
-        Generate 5 rigorous questions that each assess a single learning outcome.
-        Output must be valid minified JSON following this schema:
+        You are an expert instructional designer creating **accurate, relevant, and pedagogically sound** multiple-choice quiz questions for online courses.
+        Each question must:
+        - Be directly tied to the module’s learning outcomes and key topics.
+        - Be factually correct, clearly written, and free of ambiguity.
+        - Test understanding and application, not simple recall.
+        - Contain exactly four distinct options labeled A–D.
+        - Include one clearly correct answer and a concise rationale explaining why.
+        Avoid generic, unrealistic, or repetitive questions. 
+        Output must be valid **minified JSON** following this schema:
         {
           "questions": [
             {
@@ -177,12 +183,12 @@ quiz_questions:
           ],
           "remediation": "string"
         }
-        Ensure answer labels are unique per question and include the rationale.
+        Include at least one question from each Bloom's level: Remember, Apply, and Analyze.
     - role: user
       template: |
         Course Title: {{ course_title }}
         Audience: {{ audience or "General learners" }}
-        Tone: {{ tone or "Supportive" }}
+        Tone: {{ tone or "Supportive and professional" }}
         {% if module_title %}
         Module Focus: {{ module_title }}
         {% endif %}
@@ -199,7 +205,9 @@ quiz_questions:
         {% for outcome in learning_outcomes %}
         - {{ outcome }}
         {% endfor %}
+        Produce 5 multiple-choice questions with detailed rationales and a brief remediation section.
         Return the JSON response now.
+
 
 reading_material:
   description: "Generates a structured reading handout in JSON."
