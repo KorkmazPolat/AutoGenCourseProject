@@ -42,7 +42,15 @@
       {% if hook %}<p>{{ hook }}</p>{% endif %}
 
       {% if video_url %}
-      <video controls src="{{ video_url }}"></video>
+      <video controls preload="metadata">
+        <source src="{{ video_url }}" type="video/mp4" />
+        {% if captions_url %}
+        <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
+        {% endif %}
+        {% if chapters_url %}
+        <track kind="chapters" src="{{ chapters_url }}" srclang="en" label="Chapters" />
+        {% endif %}
+      </video>
       <p class="muted">
         Voice: {{ voice }} | Model: {{ model }} | File: {{ video_file }}
       </p>

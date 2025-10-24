@@ -358,6 +358,13 @@ def _generate_material_payload(
         except Exception as exc:  # pragma: no cover
             raise HTTPException(status_code=500, detail=f"Unexpected video generation failure: {exc}") from exc
         result["video_file"] = str(video_path)
+        # Attach sidecar caption/chapter files when present
+        captions_file = video_path.with_suffix(".vtt")
+        chapters_file = video_path.with_name(video_path.stem + ".chapters.vtt")
+        if captions_file.exists():
+            result["captions_file"] = str(captions_file)
+        if chapters_file.exists():
+            result["chapters_file"] = str(chapters_file)
 
     return result
 
@@ -461,9 +468,17 @@ def create_course_video(
 
     video_path = result.get("video_file")
     video_url = ""
+    captions_url = ""
+    chapters_url = ""
     if video_path:
         path_obj = Path(video_path)
         video_url = f"/videos/{path_obj.name}"
+        cap_file = result.get("captions_file")
+        chap_file = result.get("chapters_file")
+        if cap_file:
+            captions_url = f"/videos/{Path(cap_file).name}"
+        if chap_file:
+            chapters_url = f"/videos/{Path(chap_file).name}"
 
     content = result.get("content", {})
 
@@ -476,6 +491,8 @@ def create_course_video(
             "recap": content.get("recap", ""),
             "outline": content.get("outline", []),
             "video_url": video_url,
+            "captions_url": captions_url,
+            "chapters_url": chapters_url,
             "voice": voice or "alloy",
             "model": result.get("model"),
             "video_file": Path(video_path).name if video_path else None,
@@ -620,7 +637,15 @@ def serve_video(filename: str) -> FileResponse:
     file_path = VIDEO_OUTPUT_DIR / safe_name
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Video not found.")
-    return FileResponse(file_path, media_type="video/mp4")
+    suffix = file_path.suffix.lower()
+    media = "application/octet-stream"
+    if suffix == ".mp4":
+        media = "video/mp4"
+    elif suffix == ".vtt":
+        media = "text/vtt"
+    elif suffix == ".mp3":
+        media = "audio/mpeg"
+    return FileResponse(file_path, media_type=media)
 
 
 @app.post("/create-full-course", response_class=HTMLResponse, tags=["web"])
@@ -687,9 +712,21 @@ def create_full_course(
         )
         video_file = video_result.get("video_file")
         video_url = ""
+        captions_url = ""
+        chapters_url = ""
         if video_file:
             video_url = f"/videos/{Path(video_file).name}"
+        cap_file = video_result.get("captions_file")
+        chap_file = video_result.get("chapters_file")
+        if cap_file:
+            captions_url = f"/videos/{Path(cap_file).name}"
+        if chap_file:
+            chapters_url = f"/videos/{Path(chap_file).name}"
         video_result["video_url"] = video_url
+        if captions_url:
+            video_result["captions_url"] = captions_url
+        if chapters_url:
+            video_result["chapters_url"] = chapters_url
         assets_for_module["video_script"] = video_result
 
         # Reading material

@@ -83,7 +83,11 @@ video_script:
           "call_to_action": "string"
         }
         Ensure each learning outcome is covered in the narration and that every presentation page pairs heading and on-screen content with the spoken script.
-        Use the target duration to determine depth: include at least {{ target_segment_count }} outline segments and produce narration totaling no fewer than {{ target_word_count }} words (≈130 spoken words per minute). Each script entry must be 5+ sentences and include vivid examples, transitions, and reinforcements so the final voiceover comfortably fills the allotted time.
+        Content quality requirements:
+        - Use the target duration to determine depth: include at least {{ target_segment_count }} outline segments and produce narration totaling no fewer than {{ target_word_count }} words (≈130 spoken words per minute).
+        - Each narration "script" entry must be 5+ sentences and include: concrete examples, brief caselets, numbers where appropriate, and smooth transitions. Use rhetorical questions and summaries to reinforce key points.
+        - For each presentation page, keep the heading snappy (3–6 words) and write 3–6 concise bullet lines for "content". Each bullet ≤ 12 words, written for on-screen readability (no full sentences, no jargon, active phrasing).
+        - Avoid filler; emphasize clarity, structure, and learner outcomes.
     - role: user
       template: |
         Course Title: {{ course_title }}
