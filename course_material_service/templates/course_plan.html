@@ -129,4 +129,39 @@
       <p class="muted">When you continue, we'll generate simple materials for each module based on this plan.</p>
     </main>
   </body>
+  <script>
+    (function () {
+      const form = document.querySelector('form[action="/create-course-pages"]');
+      if (!form) return;
+      function overlay() {
+        const el = document.createElement('div');
+        el.style.position = 'fixed';
+        el.style.inset = '0';
+        el.style.background = 'rgba(255,255,255,0.9)';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
+        el.style.zIndex = '9999';
+        const inner = document.createElement('div');
+        inner.style.padding = '20px';
+        inner.style.border = '1px solid #d2d6dc';
+        inner.style.background = '#fff';
+        inner.innerHTML = '<strong>Building module pages…</strong><div style="height:10px;background:#eef2f7;border:1px solid #d2d6dc;margin-top:8px;position:relative;border-radius:6px;overflow:hidden"><div id="pb" style="height:100%;width:0;background:#2563eb;transition:width 250ms ease"></div></div><div id="pt" style="margin-top:6px;color:#52606d;font-family:monospace">0%</div>';
+        el.appendChild(inner);
+        document.body.appendChild(el);
+        return el;
+      }
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const ov = overlay();
+        const bar = ov.querySelector('#pb');
+        const txt = ov.querySelector('#pt');
+        let p = 0; const t = setInterval(() => { p = Math.min(95, p + 2); bar.style.width = p + '%'; txt.textContent = p + '%'; }, 200);
+        fetch('/create-course-pages', { method: 'POST', body: new FormData(form), credentials: 'same-origin' })
+          .then(r => r.text())
+          .then(html => { clearInterval(t); bar.style.width = '100%'; txt.textContent = '100%'; document.open(); document.write(html); document.close(); })
+          .catch(() => { clearInterval(t); txt.textContent = 'Error. Please retry.'; txt.style.color = '#b91c1c'; });
+      });
+    })();
+  </script>
 </html>
