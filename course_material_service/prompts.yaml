@@ -46,6 +46,31 @@ video_script:
             content:
               type: string
               description: "On-screen text or bullet points for the page."
+            visual_hints:
+              type: array
+              description: "Up to 3 short visual hints (e.g., icon or imagery keywords)."
+              items:
+                type: string
+            content_blocks:
+              type: array
+              description: "Structured blocks to render richer on-screen content."
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: "One of: bullets, checklist, callout, quote, example."
+                  items:
+                    type: array
+                    items:
+                      type: string
+                    description: "List items for bullets/checklist."
+                  text:
+                    type: string
+                    description: "Text content for callout/quote/example."
+                  title:
+                    type: string
+                    description: "Optional title for example blocks."
           required:
             - page
             - heading
@@ -77,7 +102,13 @@ video_script:
             {"section": "string", "summary": "string", "script": "string"}
           ],
           "presentation": [
-            {"page": 1, "heading": "string", "content": "string"}
+            {"page": 1, "heading": "string", "content": "string", "visual_hints": ["string"], "content_blocks": [
+              {"type": "bullets", "items": ["string"]},
+              {"type": "checklist", "items": ["string"]},
+              {"type": "callout", "text": "string"},
+              {"type": "quote", "text": "string"},
+              {"type": "example", "title": "string", "text": "string"}
+            ]}
           ],
           "recap": "string",
           "call_to_action": "string"
@@ -87,6 +118,14 @@ video_script:
         - Use the target duration to determine depth: include at least {{ target_segment_count }} outline segments and produce narration totaling no fewer than {{ target_word_count }} words (≈130 spoken words per minute).
         - Each narration "script" entry must be 5+ sentences and include: concrete examples, brief caselets, numbers where appropriate, and smooth transitions. Use rhetorical questions and summaries to reinforce key points.
         - For each presentation page, keep the heading snappy (3–6 words) and write 3–6 concise bullet lines for "content". Each bullet ≤ 12 words, written for on-screen readability (no full sentences, no jargon, active phrasing).
+        - Include an optional "visual_hints" array (max 3) with short keywords for visuals/icons (e.g., "timeline", "bar chart", "warning").
+        - Additionally include a "content_blocks" array to structure on‑screen elements. Prefer:
+          - bullets: short items aligned to the section’s goal
+          - checklist: 3–5 actionable steps
+          - callout: 1–2 sentence tip or caution with a verb
+          - quote: a memorable, attribution‑free line reinforcing the point
+          - example: a brief real‑world case with numbers
+        - Ensure content is directly relevant to the learning outcomes and key topics for the module; avoid generic filler.
         - Avoid filler; emphasize clarity, structure, and learner outcomes.
     - role: user
       template: |

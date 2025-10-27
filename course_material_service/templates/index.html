@@ -74,7 +74,6 @@
       <p>Enter a working title and a few learning outcomes. We'll sketch the rest for you.</p>
 
       <form method="post" action="/create-course-plan">
-      <form method="post" action="/create-course-plan">
         <label for="course_title">Course title</label>
         <input id="course_title" name="course_title" type="text" required placeholder="Intro to Prompt Engineering" />
 
@@ -102,6 +101,16 @@
 
         <label for="tts_model">TTS model (optional)</label>
         <input id="tts_model" name="tts_model" type="text" placeholder="gpt-4o-mini-tts" />
+
+        <label for="theme">Theme (optional)</label>
+        <select id="theme" name="theme">
+          <option value="">Default (dark)</option>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+
+        <label for="logo_path">Logo path (optional)</label>
+        <input id="logo_path" name="logo_path" type="text" placeholder="/path/to/logo.png" />
 
         <div class="actions">
           <button type="submit">Create course plan</button>

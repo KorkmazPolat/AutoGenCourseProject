@@ -103,6 +103,14 @@ class MaterialGenerationRequest(GenerationRequest):
         None,
         description="Text-to-speech model for narration synthesis (video generation only).",
     )
+    theme: Optional[str] = Field(
+        None,
+        description="Visual theme for slides: 'dark' or 'light' (video generation only).",
+    )
+    logo_path: Optional[str] = Field(
+        None,
+        description="Optional path to a logo image to watermark slides (video generation only).",
+    )
 
 
 DEFAULT_MODEL = "gpt-4o-mini"
@@ -308,6 +316,8 @@ def _generate_material_payload(
     create_video: Optional[bool] = None,
     voice: Optional[str] = None,
     tts_model: Optional[str] = None,
+    theme: Optional[str] = None,
+    logo_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     definition = PROMPT_DEFINITIONS.get(prompt_id)
     if not definition:
@@ -352,6 +362,9 @@ def _generate_material_payload(
                 client=client,
                 voice=voice or "alloy",
                 tts_model=tts_model or "gpt-4o-mini-tts",
+                course_title=payload.course_title,
+                theme=(theme or "dark"),
+                logo_path=logo_path,
             )
         except VideoGenerationError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -377,6 +390,8 @@ def generate_material(
     create_video: Optional[bool] = None,
     voice: Optional[str] = None,
     tts_model: Optional[str] = None,
+    theme: Optional[str] = None,
+    logo_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     return _generate_material_payload(
         prompt_id,
@@ -385,12 +400,14 @@ def generate_material(
         create_video=create_video,
         voice=voice,
         tts_model=tts_model,
+        theme=theme,
+        logo_path=logo_path,
     )
 
 
 @app.post("/materials", tags=["materials"])
 def generate_material_from_request(request: MaterialGenerationRequest, preview: bool = False) -> Dict[str, Any]:
-    payload = GenerationRequest(**request.dict(exclude={"prompt_id", "create_video", "voice", "tts_model"}))
+    payload = GenerationRequest(**request.dict(exclude={"prompt_id", "create_video", "voice", "tts_model", "theme", "logo_path"}))
     return _generate_material_payload(
         request.prompt_id,
         payload,
@@ -398,6 +415,8 @@ def generate_material_from_request(request: MaterialGenerationRequest, preview: 
         create_video=request.create_video,
         voice=request.voice,
         tts_model=request.tts_model,
+        theme=request.theme,
+        logo_path=request.logo_path,
     )
 
 
@@ -408,6 +427,8 @@ def generate_all_materials(
     create_video: Optional[bool] = None,
     voice: Optional[str] = None,
     tts_model: Optional[str] = None,
+    theme: Optional[str] = None,
+    logo_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     prompts: Dict[str, Dict[str, Any]] = {}
     for prompt_id in PROMPT_DEFINITIONS.keys():
@@ -418,6 +439,8 @@ def generate_all_materials(
             create_video=create_video if prompt_id == VIDEO_PROMPT_ID else False if create_video is not None else None,
             voice=voice,
             tts_model=tts_model,
+            theme=theme,
+            logo_path=logo_path,
         )
 
     return {
@@ -446,6 +469,8 @@ def create_course_video(
     duration_minutes: Optional[str] = Form(None),
     voice: Optional[str] = Form(None),
     tts_model: Optional[str] = Form(None),
+    theme: Optional[str] = Form(None),
+    logo_path: Optional[str] = Form(None),
 ) -> HTMLResponse:
     outcomes = _parse_learning_outcomes(learning_outcomes)
 
@@ -464,6 +489,8 @@ def create_course_video(
         create_video=True,
         voice=voice,
         tts_model=tts_model,
+        theme=theme,
+        logo_path=logo_path,
     )
 
     video_path = result.get("video_file")
@@ -554,6 +581,8 @@ def create_course_pages(
     blueprint_json: Optional[str] = Form(None),
     voice: Optional[str] = Form(None),
     tts_model: Optional[str] = Form(None),
+    theme: Optional[str] = Form(None),
+    logo_path: Optional[str] = Form(None),
 ) -> HTMLResponse:
     outcomes = _parse_learning_outcomes(learning_outcomes)
 
@@ -608,6 +637,8 @@ def create_course_pages(
                 create_video=False,
                 voice=voice,
                 tts_model=tts_model,
+                theme=theme,
+                logo_path=logo_path,
             )
         module_assets.append(
             {
@@ -658,6 +689,8 @@ def create_full_course(
     duration_minutes: Optional[str] = Form(None),
     voice: Optional[str] = Form(None),
     tts_model: Optional[str] = Form(None),
+    theme: Optional[str] = Form(None),
+    logo_path: Optional[str] = Form(None),
 ) -> HTMLResponse:
     """Build a complete course: blueprint + per-module videos, readings, and quizzes."""
     outcomes = _parse_learning_outcomes(learning_outcomes)
@@ -709,6 +742,8 @@ def create_full_course(
             create_video=True,
             voice=voice,
             tts_model=tts_model,
+            theme=theme,
+            logo_path=logo_path,
         )
         video_file = video_result.get("video_file")
         video_url = ""
