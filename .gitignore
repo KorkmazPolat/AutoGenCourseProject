@@ -16,3 +16,7 @@ venv/
 
 
 .DS_Store
+
+venv/
+course_material_service/.venv/
+course_material_service/generated_videos/
