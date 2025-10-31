@@ -13,11 +13,13 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from jinja2 import Template
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
 
 from video_builder import VideoGenerationError, generate_video_from_script
+
 
 
 class GenerationRequest(BaseModel):
@@ -116,9 +118,9 @@ class MaterialGenerationRequest(GenerationRequest):
 DEFAULT_MODEL = "gpt-4o-mini"
 VIDEO_PROMPT_ID = "video_script"
 VIDEO_OUTPUT_DIR = Path(__file__).resolve().parent / "generated_videos"
-TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
-
+TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
 
 
 def _build_video_output_path(course_title: str) -> Path:
@@ -192,6 +194,9 @@ app = FastAPI(
     description="FastAPI service providing course content prompts plus a simple web UI for generating narrated videos.",
     version="0.2.0",
 )
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
 
 
 def _coerce_optional_int(value: Optional[str]) -> Optional[int]:
@@ -449,14 +454,19 @@ def generate_all_materials(
     }
 
 
-@app.get("/", response_class=HTMLResponse, tags=["web"])
-def render_form(request: Request) -> HTMLResponse:
+@app.get("/", response_class=HTMLResponse)
+def render_form(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "values": {}})
+
+
+# main.py
+@app.get("/dashboard", response_class=HTMLResponse)
+def render_dashboard(request: Request):
     return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-        },
+        "index.html",  # artık dashboard ayrı değil
+        {"request": request, "values": {}}
     )
+
 
 
 @app.post("/create-course-video", response_class=HTMLResponse, tags=["web"])
