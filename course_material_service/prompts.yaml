@@ -114,6 +114,10 @@ video_script:
           "call_to_action": "string"
         }
         Ensure each learning outcome is covered in the narration and that every presentation page pairs heading and on-screen content with the spoken script.
+        Critical structural requirements:
+        - The number of items in "presentation" MUST equal the number of items in "narration" (1:1 alignment by index).
+        - For every presentation page there is exactly one narration entry at the same index.
+        - Presentation pages must be numbered sequentially starting at 1.
         Content quality requirements:
         - Use the target duration to determine depth: include at least {{ target_segment_count }} outline segments and produce narration totaling no fewer than {{ target_word_count }} words (≈130 spoken words per minute).
         - Each narration "script" entry must be 5+ sentences and include: concrete examples, brief caselets, numbers where appropriate, and smooth transitions. Use rhetorical questions and summaries to reinforce key points.

@@ -433,10 +433,15 @@ def _pair_presentation_and_narration(
         key=lambda slide: slide.page,
     )
 
+    # If lengths differ, align to the shorter list to avoid hard failure
     if len(ordered_presentation) != len(narration):
-        raise VideoGenerationError(
-            f"Presentation pages ({len(ordered_presentation)}) and narration sections ({len(narration)}) differ."
-        )
+        min_len = min(len(ordered_presentation), len(narration))
+        if min_len == 0:
+            raise VideoGenerationError(
+                f"Presentation pages ({len(ordered_presentation)}) and narration sections ({len(narration)}) are not usable."
+            )
+        ordered_presentation = ordered_presentation[:min_len]
+        narration = narration[:min_len]
 
     pairs: List[Tuple[SlideSpec, str]] = []
     for idx, slide in enumerate(ordered_presentation):
