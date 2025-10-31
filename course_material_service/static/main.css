@@ -1,0 +1,21 @@
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+/* Card Hover Shadow */
+.card-hover:hover {
+  transform: translateY(-4px) scale(1.02);
+  transition: all 0.3s ease;
+}
+
+/* Input focus */
+input:focus, textarea:focus {
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.3);
+  outline: none;
+}
