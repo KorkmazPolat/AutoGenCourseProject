@@ -152,6 +152,9 @@ def _create_slide_image(
     panel_left = margin_x - 12
     panel_right = W - margin_x + 12
     panel_bottom = H - margin_y + 8
+    # Guard against inverted rectangle coordinates when heading consumes too much space
+    if panel_bottom <= panel_top:
+        panel_top = max(margin_y, panel_bottom - 20)
     # shadow
     shadow_offset = 6
     draw.rectangle([(panel_left+shadow_offset, panel_top+shadow_offset), (panel_right+shadow_offset, panel_bottom+shadow_offset)], fill=(10, 12, 18))

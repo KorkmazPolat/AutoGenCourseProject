@@ -19,6 +19,7 @@ from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
 
 from video_builder import VideoGenerationError, generate_video_from_script
+import shutil
 
 
 
@@ -118,6 +119,7 @@ class MaterialGenerationRequest(GenerationRequest):
 DEFAULT_MODEL = "gpt-4o-mini"
 VIDEO_PROMPT_ID = "video_script"
 VIDEO_OUTPUT_DIR = Path(__file__).resolve().parent / "generated_videos"
+EXPORTS_DIR = Path(__file__).resolve().parent / "exports"
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
@@ -128,6 +130,12 @@ def _build_video_output_path(course_title: str) -> Path:
     safe_title = "_".join(filter(None, safe_title.split("_"))) or "course_video"
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     return (VIDEO_OUTPUT_DIR / f"{safe_title}_{timestamp}").with_suffix(".mp4")
+
+
+def _slugify_title(title: str) -> str:
+    safe = "".join(ch.lower() if ch.isalnum() else "-" for ch in title)
+    safe = "-".join(filter(None, safe.split("-")))
+    return safe or "course"
 
 
 def _load_prompt_definitions() -> Dict[str, PromptDefinition]:
@@ -459,13 +467,7 @@ def render_form(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "values": {}})
 
 
-# main.py
-@app.get("/dashboard", response_class=HTMLResponse)
-def render_dashboard(request: Request):
-    return templates.TemplateResponse(
-        "index.html",  # artık dashboard ayrı değil
-        {"request": request, "values": {}}
-    )
+# Removed dashboard route as dashboard UI no longer exists
 
 
 
@@ -801,6 +803,61 @@ def create_full_course(
             }
         )
 
+    # Side-effect: save a standalone HTML copy into exports folder (non-blocking)
+    try:
+        EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        export_name = f"{_slugify_title(course_title)}-{timestamp}"
+        export_dir = EXPORTS_DIR / export_name
+        videos_dir = export_dir / "videos"
+        videos_dir.mkdir(parents=True, exist_ok=True)
+
+        # Prepare assets with relative URLs and copy media
+        exported_modules: List[Dict[str, Any]] = []
+        for mod in module_assets:
+            info = mod.get("info", {})
+            assets = mod.get("assets", {})
+            video_pack = dict(assets.get("video_script", {}) or {})
+            for key in ("video_file", "captions_file", "chapters_file"):
+                src = video_pack.get(key)
+                if not src:
+                    continue
+                p = Path(src)
+                if p.exists():
+                    dest = videos_dir / p.name
+                    try:
+                        shutil.copy2(p, dest)
+                    except Exception:
+                        pass
+                    if key == "video_file":
+                        video_pack["video_url"] = f"videos/{dest.name}"
+                    elif key == "captions_file":
+                        video_pack["captions_url"] = f"videos/{dest.name}"
+                    elif key == "chapters_file":
+                        video_pack["chapters_url"] = f"videos/{dest.name}"
+            new_assets = dict(assets)
+            new_assets["video_script"] = video_pack
+            exported_modules.append({"info": info, "assets": new_assets})
+
+        # Render and write HTML using same template but without request
+        env = getattr(templates, "env", None) or getattr(templates, "environment", None)
+        if env is not None:
+            template = env.get_template("full_course.html")
+            html = template.render(
+                course_title=course_title,
+                audience=audience,
+                tone=tone,
+                duration_minutes=duration_minutes,
+                learning_outcomes=outcomes,
+                blueprint=blueprint_content,
+                modules_output=exported_modules,
+                voice=voice or "alloy",
+            )
+            (export_dir / "index.html").write_text(html, encoding="utf-8")
+    except Exception:
+        # Ignore export errors; interactive flow continues
+        pass
+
     return templates.TemplateResponse(
         "full_course.html",
         {
@@ -815,3 +872,52 @@ def create_full_course(
             "voice": voice or "alloy",
         },
     )
+
+
+@app.get("/exported/{export_name}/{path:path}", tags=["web"])
+def serve_exported_file(export_name: str, path: str = "index.html") -> FileResponse:
+    base = (EXPORTS_DIR / Path(export_name)).resolve()
+    target = (base / path).resolve()
+    if not str(target).startswith(str(base)):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if not target.exists():
+        raise HTTPException(status_code=404, detail="Exported file not found.")
+    suffix = target.suffix.lower()
+    media = "application/octet-stream"
+    if suffix in (".html", ".htm"):
+        media = "text/html"
+    elif suffix == ".css":
+        media = "text/css"
+    elif suffix == ".js":
+        media = "application/javascript"
+    elif suffix == ".mp4":
+        media = "video/mp4"
+    elif suffix == ".vtt":
+        media = "text/vtt"
+    elif suffix in (".png", ".jpg", ".jpeg", ".gif", ".webp"):
+        media = f"image/{suffix.lstrip('.')}"
+    return FileResponse(target, media_type=media)
+
+
+@app.get("/exports", response_class=HTMLResponse, tags=["web"])
+def list_exports(request: Request):
+    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    items: List[Dict[str, str]] = []
+    for entry in sorted(EXPORTS_DIR.iterdir(), key=lambda p: p.name, reverse=True):
+        if entry.is_dir():
+            items.append({
+                "name": entry.name,
+                "path": str(entry),
+                "url": f"/exported/{entry.name}/index.html",
+            })
+    # Render a simple list page (amateur look)
+    html = [
+        "<!DOCTYPE html>",
+        "<html><head><meta charset='utf-8'><title>Exports</title></head><body>",
+        "<h1>Saved Courses</h1>",
+        "<ul>",
+    ]
+    for it in items:
+        html.append(f"<li><a href='{it['url']}'>{it['name']}</a></li>")
+    html += ["</ul>", "<p><a href='/'>&larr; back</a></p>", "</body></html>"]
+    return HTMLResponse("\n".join(html))

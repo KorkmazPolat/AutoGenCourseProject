@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.820
+[Basics of Cloud Computing - Module 3: Cloud Use Cases and Benefits] Discover how cloud computing transforms businesses every day!
+
+00:00:04.220 --> 00:00:55.030
+[Common Cloud Use Cases] Welcome to our lesson on cloud computing’s use cases! Today, we’ll explore how businesses utilize cloud technologies to enhance their operations. For instance, take online storage offered by services like Google Drive or Dropbox. These platforms allow users to store and share files from anywhere. Another common use case is computing power. Companies like Netflix rely on cloud-based computing to scale their streaming services to millions of users seamlessly. Additionally, databases hosted in the cloud, such as Amazon RDS, offer businesses flexibility and ease of management. Lastly, AI APIs, like those provided by Azure, enable companies to integrate powerful machine learning features without the need for significant infrastructure investments. Let’s dive deeper into the exciting world of cloud use cases!
+
+00:00:55.430 --> 00:01:38.440
+[Cost Analysis in Cloud] Now that we understand the common use cases, let’s talk about cost analysis. Cloud services operate on a pay-as-you-go model, which can drastically reduce upfront costs. For example, instead of purchasing servers, a startup can use AWS to rent computing resources. However, costs can add up, especially if services aren't monitored. It’s crucial to analyze usage patterns. Many companies find themselves overprovisioning and consequently overspending. Cloud providers also offer calculators for potential expenses, which can be helpful. So, how can you keep costs manageable while leveraging cloud services? Let’s discuss the advantages next!
+
+00:01:38.840 --> 00:02:20.360
+[Advantages of Cloud] There are several compelling advantages to utilizing cloud services. First and foremost is scalability; businesses can quickly adjust resources based on demand. For instance, during Black Friday sales, retail companies can scale their cloud resources to handle increased traffic. Another benefit is cost flexibility; pay for what you use, which is ideal for fluctuating workloads. Moreover, cloud solutions often offer increased collaboration opportunities, enabling teams to work in real-time regardless of location. Finally, security measures are generally robust, as top providers invest heavily in cybersecurity. These benefits make cloud computing a powerful option for modern businesses.
+
+00:02:20.760 --> 00:03:05.110
+[Disadvantages to Consider] Despite its advantages, cloud computing does come with drawbacks. One major concern is vendor lock-in; switching providers can be complicated and costly. For example, once data is stored in one cloud, migrating it to another can pose significant challenges. Additionally, while cloud services can reduce infrastructure costs, hidden fees can emerge over time. Security and compliance are also vital; with data hosted off-site, businesses must ensure they comply with regulations. Finally, internet dependency becomes apparent; services are only as good as the connection. Understanding these disadvantages is crucial to making informed decisions about cloud adoption.
+
+00:03:05.510 --> 00:03:09.970
+[Next Steps] Now, review these concepts and consider how they apply to your projects!

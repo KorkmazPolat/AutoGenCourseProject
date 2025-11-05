@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AutoGenCourse</title>
+<title>alpha</title>
 <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', path='main.css') }}">
@@ -16,13 +16,13 @@
 <nav class="bg-gradient-to-r from-blue-600 to-purple-600 shadow-md">
   <div class="container mx-auto px-6 py-4 flex items-center justify-between">
     <div class="flex items-center space-x-3">
-      <img src="/static/logo.png" alt="AutoGenCourse Logo" class="h-16">
-      <span class="text-white text-3xl font-extrabold tracking-wide">AUTOGENCOURSE</span>
+      <span class="text-white text-3xl font-extrabold tracking-wide">ALPHA</span>
     </div>
     <div class="flex space-x-4">
       <a href="/" class="text-white font-medium hover:text-yellow-300 transition">Home</a>
       <a href="/about" class="text-white font-medium hover:text-yellow-300 transition">About</a>
       <a href="/contact" class="text-white font-medium hover:text-yellow-300 transition">Contact</a>
+      <a href="/exports" class="text-white font-medium hover:text-yellow-300 transition">Saved Courses</a>
     </div>
   </div>
 </nav>
@@ -35,7 +35,7 @@
 <!-- Footer -->
 <footer class="bg-white shadow-inner mt-10">
   <div class="container mx-auto px-6 py-4 text-center text-gray-600 text-sm">
-    © {{ current_year }} AutoGenCourse. All rights reserved.
+    © {{ current_year }} alpha. All rights reserved.
   </div>
 </footer>
 
