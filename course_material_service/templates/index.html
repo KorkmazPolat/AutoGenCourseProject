@@ -33,6 +33,27 @@
 
     /* Form container width */
     .form-container { max-width: 800px; width: 100%; }
+
+    #document-dropzone {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    #document-dropzone.dragover {
+      border-color: #4f46e5;
+      background-color: rgba(79,70,229,0.08);
+    }
+    #document-dropzone.success {
+      border-color: #22c55e;
+      background-color: rgba(34,197,94,0.1);
+    }
+    #document-dropzone.error {
+      border-color: #ef4444;
+      background-color: rgba(239,68,68,0.1);
+    }
+    #document-dropzone.uploading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
   </style>
 {% endblock %}
 
@@ -57,6 +78,23 @@
                  value="{{ values.get(field,'') }}">
         </div>
         {% endfor %}
+
+        <div>
+          <label class="block text-gray-700 font-semibold mb-1" for="document-dropzone">Course Materials (PDF)</label>
+          <div id="document-dropzone" class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-indigo-200 bg-indigo-50/40 rounded-xl py-6 px-4 text-center text-indigo-900">
+            <input id="document-input" type="file" accept="application/pdf" class="hidden">
+            <svg class="w-10 h-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15.75l7.5-7.5 4.5 4.5 3-3M21 12v7.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 19.5v-9A1.5 1.5 0 014.5 9h4.75" />
+            </svg>
+            <p class="text-sm font-semibold">Drag & drop a PDF here</p>
+            <p class="text-sm text-indigo-600">
+              or
+              <button type="button" id="document-browse" class="font-semibold underline underline-offset-4 hover:text-indigo-800">browse files</button>
+            </p>
+            <p class="text-xs text-indigo-500">Upload course source material to ground the AI outputs.</p>
+          </div>
+          <p id="document-status" class="mt-2 text-sm text-gray-500">No document uploaded yet.</p>
+        </div>
 
         <div>
           <label class="block text-gray-700 font-semibold mb-1" for="learning_outcomes">Learning Outcomes</label>
@@ -95,53 +133,4 @@
 
 {% block scripts %}
   {{ super() }}
-  <script>
-    const form = document.getElementById('course-form');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const progressBar = document.getElementById('progress-bar');
-    const progressText = document.getElementById('progress-text');
-    const progressHint = document.getElementById('progress-hint');
-
-    function showLoading(){
-      loadingOverlay.classList.remove('hidden');
-      let pct = 0;
-      const hints = ['Drafting…','Rendering…','Finalizing…'];
-      let step=0;
-      const interval = setInterval(()=>{
-        if(pct<100){
-          pct += Math.floor(Math.random()*5)+1;
-          progressBar.style.width=Math.min(pct,100)+'%';
-          progressText.textContent=Math.min(pct,100)+'%';
-          progressHint.textContent=hints[step];
-          if(pct>30 && step===0) step++;
-          if(pct>60 && step===1) step++;
-          if(pct>=100) clearInterval(interval);
-        }
-      },200);
-    }
-
-    function hideLoading(){
-      loadingOverlay.classList.add('hidden');
-      progressBar.style.width='0%';
-      progressText.textContent='0%';
-      progressHint.textContent='';
-    }
-
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      showLoading();
-      const fd = new FormData(form);
-      try{
-        const response = await fetch(form.action,{method:'POST',body:fd});
-        const html = await response.text();
-        hideLoading();
-        // Optionally, show a simple success message or handle navigation here.
-        alert('Request submitted successfully.');
-      }catch(err){
-        console.error(err);
-        hideLoading();
-        alert('Error creating course');
-      }
-    });
-  </script>
 {% endblock %}

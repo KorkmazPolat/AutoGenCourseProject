@@ -1,23 +1,28 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 import yaml
 from dotenv import load_dotenv
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import BackgroundTasks, File, FastAPI, Form, HTTPException, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from jinja2 import Template
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
 
+from rag_ingest import IngestError, ingest_pdf_into_qdrant
+from rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
 from video_builder import VideoGenerationError, generate_video_from_script
 import shutil
 
@@ -123,6 +128,9 @@ EXPORTS_DIR = Path(__file__).resolve().parent / "exports"
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+logger = logging.getLogger(__name__)
+
+UPLOADS_DIR = Path(__file__).resolve().parent / "uploads"
 
 
 def _build_video_output_path(course_title: str) -> Path:
@@ -136,6 +144,11 @@ def _slugify_title(title: str) -> str:
     safe = "".join(ch.lower() if ch.isalnum() else "-" for ch in title)
     safe = "-".join(filter(None, safe.split("-")))
     return safe or "course"
+
+
+def _keep_uploaded_files() -> bool:
+    toggle = os.getenv("RAG_KEEP_UPLOADS", "true").strip().lower()
+    return toggle not in {"0", "false", "off", "no"}
 
 
 def _load_prompt_definitions() -> Dict[str, PromptDefinition]:
@@ -189,6 +202,114 @@ def _parse_learning_outcomes(raw_text: str) -> List[str]:
     return outcomes
 
 
+def _rag_enabled() -> bool:
+    toggle = os.getenv("RAG_ENABLED", "true").strip().lower()
+    return toggle not in {"0", "false", "off", "no"}
+
+
+def _compose_rag_query(prompt_id: str, payload: GenerationRequest) -> str:
+    lines: List[str] = []
+    if payload.course_title:
+        lines.append(f"Course Title: {payload.course_title}")
+    if payload.module_title:
+        lines.append(f"Module: {payload.module_title}")
+    if payload.module_summary:
+        lines.append(f"Module Summary: {payload.module_summary}")
+    if payload.audience:
+        lines.append(f"Audience: {payload.audience}")
+    if payload.tone:
+        lines.append(f"Tone: {payload.tone}")
+    if payload.duration_minutes:
+        lines.append(f"Target Duration: {payload.duration_minutes} minutes")
+    if payload.learning_outcomes:
+        lines.append("Learning Outcomes:")
+        lines.extend(f"- {outcome}" for outcome in payload.learning_outcomes)
+    lines.append(f"Prompt Requested: {prompt_id}")
+    return "\n".join(lines).strip()
+
+
+def _build_rag_context(prompt_id: str, payload: GenerationRequest) -> str:
+    if not _rag_enabled():
+        return ""
+
+    try:
+        query = _compose_rag_query(prompt_id, payload)
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Unable to compose RAG query for %s: %s", prompt_id, exc)
+        return ""
+
+    if not query:
+        return ""
+
+    try:
+        top_k = int(os.getenv("QDRANT_TOP_K", "4"))
+    except ValueError:
+        top_k = 4
+    try:
+        max_chars = int(os.getenv("QDRANT_MAX_CHARS", "1800"))
+    except ValueError:
+        max_chars = 1800
+
+    min_score_env = os.getenv("QDRANT_MIN_SCORE")
+    min_score: Optional[float]
+    try:
+        min_score = float(min_score_env) if min_score_env else None
+    except (TypeError, ValueError):
+        min_score = None
+
+    try:
+        context = retrieve_rag_context(query, top_k=top_k, max_chars=max_chars, min_score=min_score)
+    except RagRetrieverError as exc:
+        logger.warning("RAG retrieval skipped for prompt '%s': %s", prompt_id, exc)
+        return ""
+    except Exception as exc:  # pragma: no cover
+        logger.exception("Unexpected RAG retrieval failure for prompt '%s'", prompt_id)
+        return ""
+
+    return context.strip()
+
+
+def _safe_upload_filename(original_name: Optional[str]) -> str:
+    stem = Path(original_name or "document").stem
+    normalized = "".join(ch.lower() if ch.isalnum() else "-" for ch in stem)
+    normalized = "-".join(filter(None, normalized.split("-"))) or "document"
+    suffix = Path(original_name or "").suffix.lower() or ".pdf"
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    return f"{timestamp}_{uuid4().hex[:8]}_{normalized}{suffix}"
+
+
+async def _persist_upload(upload: UploadFile) -> Path:
+    filename = _safe_upload_filename(upload.filename)
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    destination = UPLOADS_DIR / filename
+
+    total_bytes = 0
+    with destination.open("wb") as buffer:
+        while True:
+            chunk = await upload.read(1 << 20)
+            if not chunk:
+                break
+            buffer.write(chunk)
+            total_bytes += len(chunk)
+
+    await upload.close()
+
+    if total_bytes == 0:
+        destination.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
+
+    return destination
+
+
+def _cleanup_upload(path: Path) -> None:
+    if _keep_uploaded_files():
+        return
+    try:
+        path.unlink(missing_ok=True)
+    except Exception:  # pragma: no cover
+        logger.debug("Failed to remove temporary upload %s", path)
+
+
 @lru_cache(maxsize=1)
 def _get_openai_client() -> OpenAI:
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -232,29 +353,52 @@ def list_prompts() -> List[Dict[str, str]]:
     ]
 
 
-def _build_messages(prompt_id: str, payload: GenerationRequest) -> List[Dict[str, str]]:
+def _build_messages(
+    prompt_id: str,
+    payload: GenerationRequest,
+    rag_context: Optional[str] = None,
+) -> List[Dict[str, str]]:
     definition = PROMPT_DEFINITIONS.get(prompt_id)
     if not definition:
         raise HTTPException(status_code=404, detail=f"Prompt '{prompt_id}' not found.")
 
-    context = payload.dict()
-    duration = context.get("duration_minutes")
+    template_context = payload.dict()
+    duration = template_context.get("duration_minutes")
     if not duration:
         duration = 10
     target_word_count = max(400, int(duration * 135))
     target_segment_count = max(4, int(round(duration)))
-    context["target_word_count"] = target_word_count
-    context["target_segment_count"] = target_segment_count
+    template_context["target_word_count"] = target_word_count
+    template_context["target_segment_count"] = target_segment_count
 
-    context = {key: value for key, value in context.items() if value not in (None, "", [])}
+    template_context = {
+        key: value for key, value in template_context.items() if value not in (None, "", [])
+    }
     rendered_messages = []
     for message in definition.messages:
         rendered_messages.append(
             {
                 "role": message.role,
-                "content": message.template.render(**context),
+                "content": message.template.render(**template_context),
             }
         )
+
+    if rag_context:
+        context_message = {
+            "role": "system",
+            "content": (
+                "Consult the following excerpts from the uploaded course materials. "
+                "Ground all generated output in these sources when possible:\n\n"
+                f"{rag_context}"
+            ),
+        }
+        for index, message in enumerate(rendered_messages):
+            if message["role"] == "user":
+                rendered_messages.insert(index, context_message)
+                break
+        else:
+            rendered_messages.append(context_message)
+
     return rendered_messages
 
 
@@ -336,7 +480,9 @@ def _generate_material_payload(
     if not definition:
         raise HTTPException(status_code=404, detail=f"Prompt '{prompt_id}' not found.")
 
-    messages = _build_messages(prompt_id, payload)
+    rag_context = _build_rag_context(prompt_id, payload)
+
+    messages = _build_messages(prompt_id, payload, rag_context=rag_context)
 
     if preview:
         preview_payload = PromptPreviewResponse(
@@ -358,6 +504,8 @@ def _generate_material_payload(
         raw_text=llm_output.raw_text,
     )
     result = response.dict()
+    if rag_context:
+        result["rag_context"] = rag_context
 
     auto_video = create_video if create_video is not None else (prompt_id == VIDEO_PROMPT_ID)
     if auto_video:
@@ -467,6 +615,45 @@ def render_form(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "values": {}})
 
 
+@app.post("/documents/upload", tags=["rag"])
+async def upload_course_document(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+) -> Dict[str, Any]:
+    content_type = (file.content_type or "").lower()
+    filename = file.filename or "document.pdf"
+    if "pdf" not in content_type and not filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported for ingestion.")
+
+    try:
+        saved_path = await _persist_upload(file)
+    except HTTPException:
+        raise
+    except Exception as exc:  # pragma: no cover
+        logger.exception("Failed to persist uploaded document %s", filename)
+        raise HTTPException(status_code=500, detail="Could not store uploaded file.") from exc
+
+    try:
+        stats = await run_in_threadpool(ingest_pdf_into_qdrant, saved_path)
+    except IngestError as exc:
+        _cleanup_upload(saved_path)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # pragma: no cover
+        _cleanup_upload(saved_path)
+        logger.exception("Document ingestion failed for %s", saved_path)
+        raise HTTPException(status_code=500, detail="Failed to index the uploaded PDF.") from exc
+
+    background_tasks.add_task(_cleanup_upload, saved_path)
+
+    return {
+        "status": "indexed",
+        "filename": stats.filename,
+        "pages": stats.pages,
+        "chunks": stats.chunks,
+        "collection": stats.collection,
+    }
+
+
 # Removed dashboard route as dashboard UI no longer exists
 
 
@@ -516,10 +703,11 @@ def create_course_video(
         chap_file = result.get("chapters_file")
         if cap_file:
             captions_url = f"/videos/{Path(cap_file).name}"
-        if chap_file:
-            chapters_url = f"/videos/{Path(chap_file).name}"
+    if chap_file:
+        chapters_url = f"/videos/{Path(chap_file).name}"
 
     content = result.get("content", {})
+    rag_context = result.get("rag_context")
 
     return templates.TemplateResponse(
         "result.html",
@@ -535,6 +723,7 @@ def create_course_video(
             "voice": voice or "alloy",
             "model": result.get("model"),
             "video_file": Path(video_path).name if video_path else None,
+            "rag_context": rag_context,
         },
     )
 

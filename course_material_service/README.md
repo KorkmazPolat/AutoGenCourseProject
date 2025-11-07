@@ -25,6 +25,62 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 Uygulama `http://localhost:8000` adresinde çalışır.
 
+## RAG (Retrieval-Augmented Generation) Desteği
+
+Bu sürümle birlikte uygulama PDF formatındaki kaynak dokümanları Qdrant vektör veritabanına aktarır ve içerik üretirken bu dokümanlardan alıntı yapar. Süreç şu adımları izler:
+
+1. Web arayüzünde yer alan **Course Materials (PDF)** alanına sürükleyip bırakarak veya dosya seçerek PDF yükleyin.
+2. Dosya arka planda OpenAI gömlemeleriyle parçalanır ve Docker üzerinde çalışan Qdrant koleksiyonuna yazılır.
+3. Kurs üretim istekleri sırasında aynı koleksiyondan ilgili parçalar çekilir ve LLM istemine eklenir.
+
+### Qdrant'i Docker ile Başlatma
+
+```bash
+docker run -d \
+  -p 6333:6333 \
+  -p 6334:6334 \
+  -v qdrant_storage:/qdrant/storage \
+  qdrant/qdrant
+```
+
+Varsayılan olarak uygulama `http://localhost:6333` adresine bağlanır. Farklı bir barındırıcı/port kullanıyorsanız aşağıdaki ortam değişkenlerini ayarlayabilirsiniz.
+
+### Yeni Ortam Değişkenleri
+
+- `QDRANT_URL` veya `QDRANT_HOST`/`QDRANT_PORT`: Qdrant bağlantısı
+- `QDRANT_API_KEY`: Yetkilendirme gerekiyorsa anahtar
+- `QDRANT_COLLECTION` (varsayılan `course_material_docs`)
+- `QDRANT_EMBED_MODEL` (varsayılan `text-embedding-3-small`)
+- `QDRANT_CHUNK_SIZE` ve `QDRANT_CHUNK_OVERLAP`: PDF parçalama ayarları
+- `QDRANT_TOP_K`, `QDRANT_MAX_CHARS`, `QDRANT_MIN_SCORE`: sorgu sırasında kullanılacak parametreler
+- `RAG_ENABLED=true|false`: RAG'i tümden aç/kapat
+- `RAG_KEEP_UPLOADS=true|false`: Yüklenen PDF dosyalarını `course_material_service/uploads/` klasöründe sakla veya ingest işleminden sonra sil
+
+### Web Arayüzü
+
+Formu doldururken PDF yükleme alanı belgeyi otomatik olarak Qdrant'a aktarır ve durum mesajını ekrandan takip edebilirsiniz. Kurs üretimi tamamlandığında kullanılan kaynak pasajları sonuç sayfasında **Source Context** bölümünde görülür.
+
+### REST API ile PDF Yükleme
+
+Arayüzü kullanmadan da aşağıdaki uç noktadan PDF ingest edebilirsiniz:
+
+```bash
+curl -X POST http://localhost:8000/documents/upload \
+  -F "file=@/path/to/document.pdf"
+```
+
+Yanıt örneği:
+
+```json
+{
+  "status": "indexed",
+  "filename": "document.pdf",
+  "pages": 18,
+  "chunks": 42,
+  "collection": "course_material_docs"
+}
+```
+
 ## REST API Kullanımı
 
 - `GET /prompts` — Kullanılabilir prompt listesini döndürür.
@@ -57,14 +113,18 @@ curl -X POST http://localhost:8000/materials/video_script \
 Tarayıcıdan `http://localhost:8000/` adresine giderek formu doldurun:
 
 1. Kurs başlığı, hedef kitle, ton ve öğrenme çıktıları (satır satır) girin.
-2. Opsiyonel olarak ses (örn. `alloy`) ve TTS modeli (`gpt-4o-mini-tts`) seçin.
-3. “Create Video” düğmesine tıklayın.
+2. **Course Materials (PDF)** alanına kaynak dokümanınızı (PDF) sürükleyip bırakın veya dosya seçin. Sistem yükleme durumunu gösterecektir.
+3. Opsiyonel olarak ses (örn. `alloy`) ve TTS modeli (`gpt-4o-mini-tts`) seçin.
+4. İlgili aksiyon düğmesine tıklayın (plan, modül sayfası, video, tam kurs).
 
 Arka planda `video_script` promptu çalıştırılır, slayt görselleri ve seslendirme üretildikten sonra video oynatıcıya gömülür. Dosya aynı zamanda `/videos/<dosya_adı>` yolundan indirilebilir durumdadır.
 
 ## Gereksinimler
 
 - `ffmpeg` sisteminizde kurulu olmalı (MoviePy video render işlemleri için).
+- Qdrant 1.7+ (Docker veya bulut), inbound bağlantı için 6333 portu
+- OpenAI gömme ve büyük dil modellerine erişim
+- PDF işlemek için `pypdf`, çok parçalı form yüklemeleri için `python-multipart`, vektör veritabanı bağlantısı için `qdrant-client` (requirements dosyasında yer alır)
 - OpenAI TTS modellerine erişim (`gpt-4o-mini-tts` vb.).
 
 ### ffmpeg Kurulumu (Örnekler)

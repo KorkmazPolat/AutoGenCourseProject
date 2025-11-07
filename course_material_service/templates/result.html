@@ -32,6 +32,15 @@
   <p class="text-red-600 font-semibold mb-8">No video file was generated.</p>
   {% endif %}
 
+  {% if rag_context %}
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold mb-3 text-gray-800">Source Context</h2>
+    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 max-h-64 overflow-y-auto">
+      <pre class="whitespace-pre-wrap text-sm text-gray-700 font-mono">{{ rag_context }}</pre>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Outline Section -->
   <div class="mb-8">
     <h2 class="text-2xl font-bold mb-4 text-gray-800">Course Outline</h2>
