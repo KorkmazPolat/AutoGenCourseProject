@@ -1,0 +1,7 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:01.750
+[Instant Guide to Python Async/Await - Module 2: Async/Await: Key Concepts] Unlock the power of Async!
+
+00:00:02.150 --> 00:00:37.120
+[What is Async?] Let’s start with the async keyword. In Python, by adding 'async' before a function definition, you enable the function to be asynchronous. This means it can perform other tasks while waiting for actions like network requests. For example, an async function can process requests in an API service, allowing thousands of users to interact seamlessly. Have you ever noticed delays in app responsiveness? With async, those delays shrink dramatically. Remember, async functions play a huge role in non-blocking code execution!

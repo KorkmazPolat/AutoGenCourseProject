@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.760
+[Veri Bütünlüğü Testi - Module 1: Introduction to Data Integrity Testing] Why should data integrity matter to you?
+
+00:00:03.160 --> 00:00:31.670
+[What is Data Integrity?] Data integrity refers to the accuracy and consistency of data. It's the foundation that ensures the reliability of data. Whether in healthcare, finance, or any other field, maintaining integrity means keeping data error-free and secure. For example, in a hospital, the integrity of patient records is vital. Without accurate data, treatment errors can occur. So, let’s grasp why integrity is indispensable for functional systems.
+
+00:00:32.070 --> 00:01:00.030
+[Why It's Crucial] Data integrity impacts decision-making, compliance, and trust. Businesses rely on precise data to drive strategic plans. A company like Target faced massive breaches when data integrity was compromised. This resulted in loss of trust and revenue. Organizations must recognize that maintaining data integrity enhances data's value and supports innovative solutions. Isn't it vital to ask yourself how your data is being managed?
+
+00:01:00.430 --> 00:01:27.600
+[Common Challenges] Challenges like human error, cyber threats, and software bugs jeopardize data integrity. For instance, when an employee accidentally deletes crucial records, the effects can ripple through an entire organization. Additionally, hackers targeting databases pose a constant threat. Understanding and identifying these challenges is pivotal for developing effective strategies. How can we expect reliability when constant threats loom?
+
+00:01:28.000 --> 00:01:58.360
+[Key Influencing Factors] Critical factors include data governance, user access controls, and regular audits. Proper governance entails establishing protocols to monitor data quality. Restricting access for only necessary personnel is crucial to safeguard sensitive information. Regular audits help detect issues before they escalate. With about 60% of organizations struggling with data management, proactive measures are essential. Are you prepared to take action?
+
+00:01:58.760 --> 00:02:02.910
+[Next Steps] Reflect on how to enhance your own data integrity practices.

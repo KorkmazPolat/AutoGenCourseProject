@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.820
+[Instant Guide to Python Async/Await - Module 3: Creating Asynchronous Functions] Unlock the power of Python's async with quick functions!
+
+00:00:04.220 --> 00:00:33.840
+[Async Functions Overview] Welcome to our lesson on creating asynchronous functions in Python! With the async/await syntax, we can write functions that make better use of our resources, especially in I/O-bound applications. Have you ever noticed how regular functions can block your program while they wait for a task to complete? Asynchronous functions solve this problem by allowing other tasks to run in the meantime. This module will equip you with the foundational knowledge to write simple async functions using the asyncio library.
+
+00:00:34.240 --> 00:01:07.790
+[Utilizing asyncio] Now let's dive into the asyncio library, which is essential for managing asynchronous code. To get started, ensure you have Python 3.7 or higher installed since async and await were introduced in this version. With asyncio, we can define our functions with the 'async' keyword, enabling them to be paused and resumed. For example, a simple function fetching data can utilize asyncio sleep to simulate I/O delays. By adding 'await' before a callable, Python knows to run multiple operations concurrently, rather than sequentially.
+
+00:01:08.190 --> 00:01:38.840
+[Handling Errors] Error handling is critical, especially in asynchronous code. How would we handle mishaps when multiple tasks are running? Using try/except blocks works just as it does in synchronous code. Suppose we have multiple async functions firing off requests; if one fails, we could inadvertently miss important fail-points. By implementing error handling correctly, we can log errors and ensure your application runs smoothly. Learning to catch exceptions specifically in async functions will safeguard your application against crashes.
+
+00:01:39.240 --> 00:02:12.050
+[Real-World Application] Finally, let’s put everything into practice. Imagine you're building a web scraper that fetches multiple webpages simultaneously. We'll define an async function called fetch that uses the aiohttp library. In this example, we’ll collect data from five different sites concurrently. Utilizing asyncio's event loop, you'll effectively manage all these requests in a clean, compact manner. By the end of this example, you’ll see how efficiently async functions can be while maximizing your program's performance.
+
+00:02:12.450 --> 00:02:16.220
+[Next Steps] Start coding with asyncio and explore more asynchronous capabilities!

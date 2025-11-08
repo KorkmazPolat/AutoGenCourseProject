@@ -1,0 +1,10 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.950
+[Veri Biliminde İstatistiksel Modelleme - Module 3: Multiple Linear Regression] Let's unlock the power of multiple linear regression!
+
+00:00:03.350 --> 00:00:33.470
+[Model Diagnostics] Welcome to our session on multiple linear regression! Unlike simple regression that relies on a single predictor, multiple linear regression takes into account two or more variables simultaneously. This model is essential for capturing the complexities of real-world data. For example, if you're analyzing housing prices, factors such as area, number of rooms, and location play significant roles. Can you imagine solely relying on one variable? Multiple regressors provide a more complete picture!
+
+00:00:33.870 --> 00:00:38.120
+[Next Steps] Now, put this knowledge into practice with your own dataset!

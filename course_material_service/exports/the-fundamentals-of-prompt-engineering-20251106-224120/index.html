@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>The Fundamentals of Prompt Engineering | Full Course</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #eef2f7; color: #1f2933; }
+      main { max-width: 980px; margin: 0 auto; background: #ffffff; padding: 24px; border: 1px solid #d2d6dc; }
+      h1, h2, h3, h4 { margin-top: 24px; }
+      h1 { margin-top: 0; }
+      ul, ol { padding-left: 20px; }
+      .module { border: 1px solid #d2d6dc; padding: 16px; margin-bottom: 24px; background: #f8fafc; }
+      .muted { color: #52606d; font-size: 0.9rem; }
+      a.back { text-decoration: none; color: #2563eb; }
+      video { width: 100%; height: auto; margin-top: 12px; background: #000; }
+      .asset-block { margin-top: 16px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+      table th, table td { border: 1px solid #d2d6dc; padding: 8px; text-align: left; }
+      .meta { margin: 8px 0; }
+      /* Quiz styles */
+      .quiz-form { margin-top: 8px; }
+      .choice-list { list-style: none; padding-left: 0; }
+      .choice-list li { margin: 4px 0; }
+      .question { padding: 8px; border-left: 4px solid transparent; }
+      .question.correct { background: #f0fdf4; border-left-color: #22c55e; }
+      .question.incorrect { background: #fef2f2; border-left-color: #ef4444; }
+      .badge { display: inline-block; padding: 2px 6px; font-size: 0.8rem; border-radius: 999px; margin-left: 6px; }
+      .badge.correct { background: #dcfce7; color: #166534; }
+      .badge.incorrect { background: #fee2e2; color: #991b1b; }
+      .quiz-actions { margin-top: 10px; }
+      .quiz-actions button { padding: 8px 12px; background: #2563eb; color: #fff; border: none; cursor: pointer; }
+      .quiz-result { margin-top: 10px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+      .quiz-result .stats { font-weight: bold; }
+      .quiz-result .wrong-list { margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="/">&larr; back</a>
+      <h1>The Fundamentals of Prompt Engineering</h1>
+      <p class="muted">Full course build: blueprint, per-module videos, readings, and quizzes.</p>
+
+      
+      <h2>Course outcomes</h2>
+      <ul>
+        
+        <li>Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</li>
+        
+        <li>Apply iterative prompt refinement to achieve specific outcomes.</li>
+        
+        <li>Identify and mitigate common prompt failures like hallucination and ambiguity.</li>
+        
+      </ul>
+      
+
+      
+      <h2>Blueprint overview</h2>
+      
+      <p><strong>Positioning:</strong> Foundational course for those looking to understand prompt engineering in AI applications.</p>
+      <p class="meta"><strong>Audience:</strong> Beginner Data Scientists and Software Developers</p>
+      <p class="meta"><strong>Total duration:</strong> 1</p>
+      <p class="meta"><strong>Pacing:</strong> Self-paced with guided activities and assessments.</p>
+      
+      <p class="meta"><strong>Prerequisites:</strong> Basic understanding of AI and machine learning concepts</p>
+      
+      
+      
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <div class="module">
+        <h2>Module 1: Introduction to Prompt Engineering</h2>
+        <p>Explore the basic concepts and principles of prompt engineering in AI.</p>
+        <p><strong>Module outcomes:</strong> Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+        <p><strong>Key topics:</strong> Definition of prompt engineering, Types of prompting techniques, Real-world applications of prompts</p>
+
+        
+        <div class="asset-block">
+          <h3>Lesson Video</h3>
+          <video controls preload="metadata">
+            <source src="videos/the_fundamentals_of_prompt_engineering_module_1_introduction_to_prompt_engineering_20251106193229.mp4" type="video/mp4" />
+            
+            <track kind="subtitles" src="videos/the_fundamentals_of_prompt_engineering_module_1_introduction_to_prompt_engineering_20251106193229.vtt" srclang="en" label="English" default />
+            
+            
+            <track kind="chapters" src="videos/the_fundamentals_of_prompt_engineering_module_1_introduction_to_prompt_engineering_20251106193229.chapters.vtt" srclang="en" label="Chapters" />
+            
+            Your browser does not support the video tag.
+          </video>
+          <p class="muted">Narration voice: alloy</p>
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Video script</h3>
+          <p><strong>Hook:</strong> Unlock AI&#39;s potential with effective prompts!</p>
+          
+          <h4>Outline</h4>
+          <ul>
+            
+            <li>00:00 — Introduction to Prompt Engineering</li>
+            
+            <li>01:00 — What is Prompt Engineering?</li>
+            
+            <li>02:30 — Why is it Important?</li>
+            
+            <li>04:00 — Types of Prompting Techniques</li>
+            
+            <li>05:30 — Zero-Shot Prompting Defined</li>
+            
+            <li>06:30 — Few-Shot Prompting Explained</li>
+            
+            <li>08:00 — Chain-of-Thought Prompting</li>
+            
+            <li>09:30 — Real-World Applications</li>
+            
+            <li>10:30 — Case Studies Overview</li>
+            
+            <li>11:00 — Best Practices in Prompting</li>
+            
+            <li>11:30 — Summary of Key Points</li>
+            
+            <li>12:00 — Conclusion and Next Steps</li>
+            
+          </ul>
+          
+          
+          <h4>Narration</h4>
+          <ul>
+            
+            <li>
+              <strong>Introduction to Prompt Engineering</strong>: Overview of prompt engineering and significance.<br />
+              Welcome to our exploration of prompt engineering! We&#39;ll dive into what it means to craft effective prompts in AI systems. This field is vital as it shapes the outcome of AI responses, determining their accuracy and relevance. So why should you care? Well, skilled prompting can lead to more intelligent outputs, transforming your data science projects. Let&#39;s start our journey into this fascinating aspect of AI!
+            </li>
+            
+            <li>
+              <strong>What is Prompt Engineering?</strong>: Defining prompt engineering and its role.<br />
+              At its core, prompt engineering is the method of designing inputs for AI models to produce desirable outputs. It&#39;s not just about asking questions; it’s about asking the right questions! For example, instead of asking &#39;What is weather?&#39;, you might say, &#39;What is the weather forecast for New York City today?&#39; This specificity drives better outcomes. Understanding this process is crucial for anyone working with AI and machine learning.
+            </li>
+            
+            <li>
+              <strong>Why is it Important?</strong>: Significance of prompt engineering in AI.<br />
+              Why should we invest time in learning prompt engineering? Simply put, the effectiveness of AI interactions largely rests on prompt quality. A poorly constructed prompt can yield irrelevant or nonsensical answers, diminishing user trust. In contrast, well-crafted prompts can enhance user engagement and satisfaction, paving the way for innovative applications. The importance of mastering this skill cannot be overstated.
+            </li>
+            
+            <li>
+              <strong>Types of Prompting Techniques</strong>: Exploring various prompting methods.<br />
+              Now, let’s review the major types of prompting techniques. They mainly include zero-shot, few-shot, and chain-of-thought prompting. Each technique serves a unique purpose depending on the task at hand. Recognizing when to use each method is key for maximizing your AI solutions. For instance, zero-shot might work well for straightforward questions, while few-shot can help train models using minimal examples.
+            </li>
+            
+            <li>
+              <strong>Zero-Shot Prompting Defined</strong>: Understanding zero-shot prompting.<br />
+              Let’s dig deeper into zero-shot prompting. As the name suggests, it requires no prior examples; you input entirely novel queries. For instance, you could ask an AI to translate a sentence into French without providing previous translations. Despite its straightforwardness, it’s powerful for tasks requiring immediate responses. This method exemplifies the model&#39;s generalization capabilities, making it ideal for a range of applications.
+            </li>
+            
+            <li>
+              <strong>Few-Shot Prompting Explained</strong>: Gaining insights on few-shot prompting.<br />
+              Next, we have few-shot prompting, which is essentially training with examples. Imagine providing three sample translations to help an AI understand context. This allows us to leverage the existing knowledge and refine outputs based on prior instances. Research indicates that few-shot prompting can enhance accuracy by over 20% in specific tasks, showcasing its pivotal role in machine learning.
+            </li>
+            
+            <li>
+              <strong>Chain-of-Thought Prompting</strong>: Explaining chain-of-thought prompting.<br />
+              Chain-of-thought prompting employs logical progression in reasoning, encouraging AI to demonstrate step-by-step thought processes. For instance, instead of just asking &#39;What is 15% of 200?&#39;, you guide with &#39;Calculate 15% of 200 by first identifying 10% and then finding half of that.&#39; Such detailed prompting fosters clearer, more accurate outputs, especially in complex problems, enhancing comprehension and user trust.
+            </li>
+            
+            <li>
+              <strong>Real-World Applications</strong>: Reviewing applications of prompts in various sectors.<br />
+              We can witness prompt engineering in various industries today! From customer support chatbots providing reliable information to educational platforms personalizing learning experiences, the applications are vast. For example, AI systems in healthcare are using tailored prompts for effective patient interaction. These real-world applications emphasize the necessity of mastering prompt engineering, shaping how we engage with technology.
+            </li>
+            
+            <li>
+              <strong>Case Studies Overview</strong>: Highlighting successful implementations of prompting.<br />
+              Let’s consider case studies to illustrate our points. A renowned e-commerce platform employs few-shot prompting to enhance product recommendations, resulting in a 30% sales increase! Another example involves AI in content creation, where chain-of-thought prompting has streamlined processes significantly, leading to faster delivery and improved quality. These examples demonstrate the transformative impact of effective prompting.
+            </li>
+            
+            <li>
+              <strong>Best Practices in Prompting</strong>: Sharing essential best practices for effective prompting.<br />
+              So, what are the best practices you can adopt in prompt engineering? Aim for clarity in your prompts, avoid ambiguity, and provide context where necessary. Testing and iterating your prompts is crucial; don’t hesitate to refine! Also, remember to keep your audience in mind, crafting prompts tailored to their perspectives. Implementing these best practices will drastically improve your results.
+            </li>
+            
+            <li>
+              <strong>Summary of Key Points</strong>: Recapping the core topics covered.<br />
+              Let&#39;s summarize the key points we discussed. We&#39;ve defined prompt engineering and chosen types like zero-shot, few-shot, and chain-of-thought prompting. We explored their importance and real-world applications. Most importantly, we uncovered powerful case studies demonstrating successful techniques. Remember, effective prompting is key to unlocking AI&#39;s full potential in various domains.
+            </li>
+            
+            <li>
+              <strong>Conclusion and Next Steps</strong>: Encouraging further learning and practice.<br />
+              As we conclude this introduction, I encourage you to practice these techniques. Apply what you&#39;ve learned to your projects and explore further resources. Keep experimenting with prompts! The field is evolving rapidly, and being adept at prompt engineering will set you apart. Thank you for joining this session, and I look forward to seeing you transform your AI interactions.
+            </li>
+            
+          </ul>
+          
+          <p><strong>Recap:</strong> We covered prompt engineering, its types, applications, and best practices.</p>
+          <p><strong>Call to action:</strong> Start crafting your effective prompts today!</p>
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Reading companion</h3>
+          <p><strong>Summary:</strong> This handout provides an overview of prompt engineering, covering its definitions, techniques, and practical applications, targeting beginner data scientists and software developers.</p>
+          
+          <h4>Sections</h4>
+          <ul>
+            
+            <li>
+              <strong>Understanding Prompt Engineering</strong>
+              
+              <ul>
+                
+                <li>Definition of prompt engineering</li>
+                
+                <li>Importance in AI applications</li>
+                
+              </ul>
+              
+              <p>Prompt engineering involves designing prompts that effectively instruct AI models to produce desired outputs. It plays a crucial role in enhancing the performance of AI systems by optimizing the way information is presented to them.</p>
+              
+              <p class="muted">Outcomes: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+              
+            </li>
+            
+            <li>
+              <strong>Types of Prompting Techniques</strong>
+              
+              <ul>
+                
+                <li>Zero-shot prompting</li>
+                
+                <li>Few-shot prompting</li>
+                
+                <li>Chain-of-thought prompting</li>
+                
+              </ul>
+              
+              <p>Different prompting techniques cater to specific tasks and models. Zero-shot prompting provides no examples, relying solely on the prompt text. Few-shot prompting includes a few examples to guide the model. Chain-of-thought prompting encourages step-by-step reasoning by outlining the process explicitly.</p>
+              
+              <p class="muted">Outcomes: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+              
+            </li>
+            
+            <li>
+              <strong>Real-World Applications of Prompts</strong>
+              
+              <ul>
+                
+                <li>Use cases in natural language processing</li>
+                
+                <li>Applications in software development</li>
+                
+                <li>Benefits of effective prompts</li>
+                
+              </ul>
+              
+              <p>Effective prompting can enhance various applications, from chatbot interactions to automated content generation, significantly benefiting industries such as customer service, education, and creative writing.</p>
+              
+              <p class="muted">Outcomes: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+              
+            </li>
+            
+          </ul>
+          
+          
+          <h4>Examples</h4>
+          <ul>
+            
+            <li>
+              <strong>Zero-Shot Prompting in Action</strong> — An example where the prompt &#39;Translate the following English sentence to French: &#39;Hello, how are you?&#39;&#39; is given without any prior examples.
+              
+              <span class="muted">(Outcomes: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.)</span>
+              
+            </li>
+            
+            <li>
+              <strong>Few-Shot Prompting Case Study</strong> — Here, prompts include: &#39;Translate the following to French: &#39;Hello,&#39; (&#39;Bonjour&#39;), &#39;Goodbye,&#39; (&#39;Au revoir&#39;) and then ask for &#39;Please&#39; in French.
+              
+              <span class="muted">(Outcomes: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.)</span>
+              
+            </li>
+            
+            <li>
+              <strong>Chain-of-Thought Prompting Example</strong> — A mathematical question where a prompt guides the model through the steps: &#39;To find the area of a rectangle, multiply length by width. For length 5 and width 3, what is the area?&#39;
+              
+              <span class="muted">(Outcomes: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.)</span>
+              
+            </li>
+            
+          </ul>
+          
+          
+          <h4>Glossary</h4>
+          <ul>
+            
+            <li><strong>Prompt Engineering</strong>: The process of crafting and refining prompts to elicit specific and accurate responses from AI models.</li>
+            
+            <li><strong>Zero-shot prompting</strong>: A prompting technique where no examples are provided to the AI; it must generate output based solely on the prompt.</li>
+            
+            <li><strong>Few-shot prompting</strong>: A technique that provides a model with a few examples to guide its responses more effectively.</li>
+            
+            <li><strong>Chain-of-thought prompting</strong>: A strategy that encourages a model to think through a problem step-by-step, simulating a reasoning process.</li>
+            
+          </ul>
+          
+          
+          <h4>Reflection prompts</h4>
+          <ul>
+            
+            <li>Prompt engineering is essential to harnessing the full potential of AI models.</li>
+            
+            <li>Understanding different prompting techniques can greatly improve AI outcomes.</li>
+            
+            <li>Real-world applications demonstrate the practical importance of effective prompts.</li>
+            
+          </ul>
+          
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Quiz</h3>
+          
+          <form class="quiz-form" id="quiz-form-1">
+            <ol>
+              
+              
+              <li class="question" data-answer="A" data-stem="What characterizes zero-shot prompting in AI?">
+                <div>
+                  <strong>What characterizes zero-shot prompting in AI?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m1" value="A" />
+                      A. It provides no examples and relies solely on the context provided.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m1" value="B" />
+                      B. It uses multiple examples to illustrate the desired output.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m1" value="C" />
+                      C. It employs a step-by-step approach to solve a problem.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m1" value="D" />
+                      D. It asks the user to generate the examples themselves.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Zero-shot prompting involves providing no examples and expecting the AI to rely solely on the given context, making option A correct. Options B, C, and D describe few-shot or chain-of-thought methods.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="B" data-stem="Which of the following best describes few-shot prompting?">
+                <div>
+                  <strong>Which of the following best describes few-shot prompting?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m1" value="A" />
+                      A. It does not provide any examples or context.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m1" value="B" />
+                      B. It provides a limited number of examples to guide responses.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m1" value="C" />
+                      C. It always requires at least ten examples to be effective.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m1" value="D" />
+                      D. It breaks down a problem into smaller, logical steps.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Few-shot prompting involves providing a limited number of examples to guide the model towards generating accurate outputs, making option B the correct choice. Options A and C are incorrect, and option D describes chain-of-thought prompting.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="A" data-stem="How does chain-of-thought prompting enhance the performance of AI models?">
+                <div>
+                  <strong>How does chain-of-thought prompting enhance the performance of AI models?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m1" value="A" />
+                      A. By presenting complex tasks as a series of smaller, solvable steps.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m1" value="B" />
+                      B. By using no examples and utilizing only the main question.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m1" value="C" />
+                      C. By generating responses without any guidance or structure.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m1" value="D" />
+                      D. By limiting context to a single instruction.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Chain-of-thought prompting enhances performance by breaking down complex problems into manageable steps, making option A the correct answer. Options B and C describe alternatives that lack guidance, while option D limits the context too severely.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="B" data-stem="In which scenario would you prefer to use few-shot prompting over zero-shot prompting?">
+                <div>
+                  <strong>In which scenario would you prefer to use few-shot prompting over zero-shot prompting?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m1" value="A" />
+                      A. When you have a clear and abundant context for the task.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m1" value="B" />
+                      B. When you have a few relevant examples that can guide the model.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m1" value="C" />
+                      C. When the AI needs to operate autonomously without guidance.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m1" value="D" />
+                      D. When you are encouraging random exploratory behavior.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Few-shot prompting is preferable when relevant examples are available to guide the model&#39;s output, making option B the correct answer. Option A suggests excessive context that may not be needed, C indicates a lack of guidance, and D does not align with structured prompting.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="B" data-stem="Analyzing a real-world application, which of the following best illustrates chain-of-thought prompting?">
+                <div>
+                  <strong>Analyzing a real-world application, which of the following best illustrates chain-of-thought prompting?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m1" value="A" />
+                      A. A chatbot answering questions without further context.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m1" value="B" />
+                      B. A tutorial guiding users through problem-solving step-by-step.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m1" value="C" />
+                      C. An AI generating text based on a single keyword.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m1" value="D" />
+                      D. A system analyzing data without user intervention.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Explain the difference between zero-shot, few-shot, and chain-of-thought prompting.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Option B exemplifies chain-of-thought prompting as it involves a structured and iterative approach to problem-solving, while the other options lack this methodical breakdown.</p>
+                
+              </li>
+              
+            </ol>
+            <div class="quiz-actions">
+              <button type="button" class="submit-quiz" data-module="1">Check answers</button>
+            </div>
+            <div class="quiz-result" id="quiz-result-1" aria-live="polite"></div>
+          </form>
+          
+          
+          <p><strong>Remediation tip:</strong> If you&#39;re unfamiliar with these concepts, please review the section on prompting techniques in the module, particularly focusing on the definitions and applications of zero-shot, few-shot, and chain-of-thought prompting.</p>
+          
+        </div>
+        
+      </div>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <div class="module">
+        <h2>Module 2: Iterative Prompt Refinement</h2>
+        <p>Learn how to refine prompts through iterative testing to achieve better outcomes.</p>
+        <p><strong>Module outcomes:</strong> Apply iterative prompt refinement to achieve specific outcomes.</p>
+        <p><strong>Key topics:</strong> Iterative testing methods, Strategies for effective prompt refinement, Examples of refined prompts</p>
+
+        
+        <div class="asset-block">
+          <h3>Lesson Video</h3>
+          <video controls preload="metadata">
+            <source src="videos/the_fundamentals_of_prompt_engineering_module_2_iterative_prompt_refinement_20251106193608.mp4" type="video/mp4" />
+            
+            <track kind="subtitles" src="videos/the_fundamentals_of_prompt_engineering_module_2_iterative_prompt_refinement_20251106193608.vtt" srclang="en" label="English" default />
+            
+            
+            <track kind="chapters" src="videos/the_fundamentals_of_prompt_engineering_module_2_iterative_prompt_refinement_20251106193608.chapters.vtt" srclang="en" label="Chapters" />
+            
+            Your browser does not support the video tag.
+          </video>
+          <p class="muted">Narration voice: alloy</p>
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Video script</h3>
+          <p><strong>Hook:</strong> Unlock the power of prompt engineering with iterative refinement!</p>
+          
+          <h4>Outline</h4>
+          <ul>
+            
+            <li>00:00 — Introduction to Iterative Refinement</li>
+            
+            <li>00:45 — Importance of Iteration</li>
+            
+            <li>01:30 — Iterative Testing Methods</li>
+            
+            <li>02:15 — Types of Feedback</li>
+            
+            <li>03:00 — Strategies for Effective Refinement</li>
+            
+            <li>03:45 — Defining Clear Objectives</li>
+            
+            <li>04:30 — Analyzing Results</li>
+            
+            <li>05:15 — Example of a Refined Prompt</li>
+            
+            <li>06:00 — Common Pitfalls in Refinement</li>
+            
+            <li>06:45 — Feedback Loops and User Input</li>
+            
+            <li>07:30 — Case Study: Real-world Application</li>
+            
+            <li>08:15 — Recap and Key Takeaways</li>
+            
+          </ul>
+          
+          
+          <h4>Narration</h4>
+          <ul>
+            
+            <li>
+              <strong>Introduction to Iterative Refinement</strong>: Learn the basic concepts of iterative refinement.<br />
+              Welcome to Module 2 of &#39;The Fundamentals of Prompt Engineering&#39;. In this section, we’ll introduce what iterative prompt refinement is. Iterative refinement is a method where you repeatedly test and modify your prompts to achieve the best possible results. Think of it like sculpting a statue; each iteration chisels away rough edges, resulting in a more refined artwork. Why is this important? Because the right prompt can significantly influence the output quality, making this process vital for every data scientist and developer.
+            </li>
+            
+            <li>
+              <strong>Importance of Iteration</strong>: Understand why iteration is crucial.<br />
+              Now let&#39;s delve into why iteration is crucial in prompt engineering. Iteration helps identify flaws and areas for improvement that may be overlooked initially. Consider a software feature; the first version often misses user expectations. Through feedback and iterations, you refine the feature until it fits users&#39; needs perfectly. Each cycle focuses your prompts, driving towards enhanced specificity and clarity in the outputs. This method isn&#39;t just a luxury; it’s essential for mastering prompt efficiency.
+            </li>
+            
+            <li>
+              <strong>Iterative Testing Methods</strong>: Explore various testing approaches.<br />
+              Moving on to iterative testing methods, there are various strategies we can utilize. A/B testing is one such method where two prompts are tested simultaneously to identify which yields better responses. Another is remote usability testing, where real users interact with the prompts, revealing practical insights. These methods illuminate how small adjustments can drastically change outcomes. Think about your own projects; which of these methods have you used or could you employ in future testing?
+            </li>
+            
+            <li>
+              <strong>Types of Feedback</strong>: Learn about getting meaningful feedback.<br />
+              Feedback is a cornerstone of effective iterative refinement. The types of feedback you gather—be it qualitative or quantitative—play a pivotal role in shaping your prompts. Qualitative feedback includes open-ended responses in user testing, while quantitative feedback might involve numerical ratings. The key is to leverage both types effectively to drive a balanced improvement approach. Have you considered how feedback types align with your goals in previous projects?
+            </li>
+            
+            <li>
+              <strong>Strategies for Effective Refinement</strong>: Identify strategies for successful prompt enhancement.<br />
+              Next, let&#39;s discuss strategies for effective refinement. Start by brainstorming multiple variations of a prompt; creativity can lead to breakthroughs. Use tools like collaborative platforms for deeper insights. Another strategy is to outline possible outcomes to contrast against actual results—this will reveal gaps and opportunities for enhancement. How might diversifying your approach alter your output’s depth and richness?
+            </li>
+            
+            <li>
+              <strong>Defining Clear Objectives</strong>: Establish specific aims for your prompts.<br />
+              Establishing clear objectives for your prompts is essential. What do you want the user to achieve with this prompt? By defining success criteria upfront, you can measure improvement accurately. Perhaps you&#39;re designing prompts for a chatbot; knowing the desired user journey helps streamline refinements. Without clear objectives, prompts could drift without purpose, negatively impacting results. Have clear intentions from the start!
+            </li>
+            
+            <li>
+              <strong>Analyzing Results</strong>: Learn how to effectively evaluate feedback results.<br />
+              Analyzing results is a critical step post-iteration. Look for trends in responses that suggest what works or what doesn&#39;t. Are you noticing patterns of successful prompts? Remember, it&#39;s important to not just celebrate wins but to assess failures for learning opportunities. Effective analysis leads directly to targeted refinements, ensuring each prompt is a step closer to perfection. What trends have you noticed in your past evaluations?
+            </li>
+            
+            <li>
+              <strong>Example of a Refined Prompt</strong>: Review a case for prompt refinement.<br />
+              Let’s look at an example of a refined prompt. Originally, you might have tried, &#39;Tell me about climate change.&#39; After gathering feedback, you might refine it to &#39;What are the recent political impacts of climate change on agriculture?&#39; This version compels a more focused response. Each iteration tightens the scope, ensuring the output aligns more closely with your expectations. Can you think of instances where refining your prompts yielded significant insights?
+            </li>
+            
+            <li>
+              <strong>Common Pitfalls in Refinement</strong>: Identify and avoid common refinement errors.<br />
+              However, there are common pitfalls when refining prompts we should avoid. One is overcomplicating prompts; simplicity often leads to clearer answers. Another is ignoring feedback and sticking to initial ideas. Effective prompt engineering thrives on adaptability. Lastly, don’t rush the process. Taking your time to evaluate and iterate prevents unnecessary mistakes. Reflect on your approach; are you falling into any of these pitfalls?
+            </li>
+            
+            <li>
+              <strong>Feedback Loops and User Input</strong>: Explore integrating feedback loops effectively.<br />
+              Integrating feedback loops is another powerful technique. Continuous user input creates a cycle of improvement that fuels the refinement process. Create systems to gather feedback consistently, whether through surveys or direct interactions. This ensures you&#39;re not only reacting to changes but proactively improving your prompts. How do you currently gather user insights, and could there be a more structured approach?
+            </li>
+            
+            <li>
+              <strong>Case Study: Real-world Application</strong>: Examine a real-world scenario of prompt refinement.<br />
+              Let’s discuss a case study illustrating these concepts in action. A popular virtual assistant faced issues understanding user prompts effectively. By applying iterative prompt refinement, focusing on user-specific tasks, they refined over 40 prompts. Results showed a 30% increase in task completion rates! This highlights the real-world impact effective prompt engineering can have. In your own projects, where can iterative refinement make a difference?
+            </li>
+            
+            <li>
+              <strong>Recap and Key Takeaways</strong>: Summarize key concepts discussed in the module.<br />
+              As we approach the conclusion of this module, let’s recap the key takeaways. Iterative refinement is essential for improving prompt effectiveness. We learned about testing methods, feedback types, and strategies for refinement. With clear objectives, careful analysis, and avoiding common pitfalls, you’ll greatly enhance your prompts. Remember, refinement is a continuous journey. How will you apply these insights into your current projects?
+            </li>
+            
+          </ul>
+          
+          <p><strong>Recap:</strong> Iterative prompt refinement is essential for effective outcomes. Focus on testing, feedback, and continual improvement.</p>
+          <p><strong>Call to action:</strong> Start refining your prompts today for better results!</p>
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Reading companion</h3>
+          <p><strong>Summary:</strong> This module explores iterative prompt refinement, focusing on testing methods and strategies to enhance prompt effectiveness for improved outcomes.</p>
+          
+          <h4>Sections</h4>
+          <ul>
+            
+            <li>
+              <strong>Iterative Testing Methods</strong>
+              
+              <ul>
+                
+                <li>Understanding the iterative process</li>
+                
+                <li>Types of testing methodologies</li>
+                
+                <li>Analyzing results for refinement</li>
+                
+              </ul>
+              
+              <p>Iterative testing involves continuously refining a prompt by evaluating its outcomes over multiple iterations. Key methodologies include A/B testing, user feedback analysis, and performance metrics assessment. By analyzing these results, one can make informed adjustments to the prompt for greater efficacy.</p>
+              
+              <p class="muted">Outcomes: Apply iterative prompt refinement to achieve specific outcomes.</p>
+              
+            </li>
+            
+            <li>
+              <strong>Strategies for Effective Prompt Refinement</strong>
+              
+              <ul>
+                
+                <li>Identifying key elements to refine</li>
+                
+                <li>Utilizing feedback loops</li>
+                
+                <li>Documenting changes for future reference</li>
+                
+              </ul>
+              
+              <p>Effective prompt refinement requires careful consideration of the prompt&#39;s structure, language, and context. Utilizing feedback loops allows for real-time adjustments based on output quality. Documenting changes is essential for tracking what modifications lead to improved results, facilitating a more systematic approach to refinement.</p>
+              
+              <p class="muted">Outcomes: Apply iterative prompt refinement to achieve specific outcomes.</p>
+              
+            </li>
+            
+            <li>
+              <strong>Examples of Refined Prompts</strong>
+              
+              <ul>
+                
+                <li>Before and after examples</li>
+                
+                <li>Impact of specific changes</li>
+                
+                <li>Lessons learned from refinements</li>
+                
+              </ul>
+              
+              <p>This section presents case studies showcasing prompts before and after refinement. Each example illustrates the direct impact of specific changes, such as rephrased questions or adjusted context. Analyzing these cases reveals valuable lessons for conducting one&#39;s own refinements effectively.</p>
+              
+              <p class="muted">Outcomes: Apply iterative prompt refinement to achieve specific outcomes.</p>
+              
+            </li>
+            
+          </ul>
+          
+          
+          <h4>Examples</h4>
+          <ul>
+            
+            <li>
+              <strong>Transforming a Generic Question</strong> — Initial prompt: &#39;Tell me about climate change.&#39; Refined prompt: &#39;Explain the main causes of climate change and their impacts on global weather patterns.&#39; This refinement focuses on specificity and scope.
+              
+              <span class="muted">(Outcomes: Apply iterative prompt refinement to achieve specific outcomes.)</span>
+              
+            </li>
+            
+            <li>
+              <strong>Improving User Engagement</strong> — Initial prompt: &#39;Describe a good movie.&#39; Refined prompt: &#39;Share your thoughts on a movie you recently watched that you would recommend, including what makes it stand out.&#39; This approach invites more detailed user responses.
+              
+              <span class="muted">(Outcomes: Apply iterative prompt refinement to achieve specific outcomes.)</span>
+              
+            </li>
+            
+          </ul>
+          
+          
+          <h4>Glossary</h4>
+          <ul>
+            
+            <li><strong>Iterative Testing</strong>: A repetitive process where modifications are made based on previous results to improve effectiveness.</li>
+            
+            <li><strong>Prompt Refinement</strong>: The process of improving a prompt by adjusting its wording or elements based on feedback and outcomes.</li>
+            
+            <li><strong>User Feedback Loop</strong>: A strategy where user responses are gathered and analyzed to inform subsequent iterations of a prompt.</li>
+            
+          </ul>
+          
+          
+          <h4>Reflection prompts</h4>
+          <ul>
+            
+            <li>I learned that systematic testing and refinement can significantly enhance the quality of generated outputs. The importance of documentation in tracking progress cannot be overstated. Effective communication through refined prompts leads to better user engagement and satisfaction.</li>
+            
+          </ul>
+          
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Quiz</h3>
+          
+          <form class="quiz-form" id="quiz-form-2">
+            <ol>
+              
+              
+              <li class="question" data-answer="B" data-stem="When refining a prompt for a dialogue generation model, which method would most effectively help in determining the best phrasing to elicit user engagement?">
+                <div>
+                  <strong>When refining a prompt for a dialogue generation model, which method would most effectively help in determining the best phrasing to elicit user engagement?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m2" value="A" />
+                      A. Conduct a single test with a poorly phrased prompt.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m2" value="B" />
+                      B. Implement A/B testing with multiple variations of the prompt.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m2" value="C" />
+                      C. Use an informal casual tone in all iterations.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m2" value="D" />
+                      D. Limit feedback to only the initial prompt.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Apply iterative prompt refinement to achieve specific outcomes.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: A/B testing allows for direct comparisons between different prompt variations, making it a robust method for iterative refinement and understanding user engagement effectively.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="B" data-stem="Which of the following strategies is most likely to lead to better prompt responses in an AI model?">
+                <div>
+                  <strong>Which of the following strategies is most likely to lead to better prompt responses in an AI model?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m2" value="A" />
+                      A. Including as few details as possible.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m2" value="B" />
+                      B. Using clear and specific language.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m2" value="C" />
+                      C. Avoiding any form of structure in the prompt.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m2" value="D" />
+                      D. Relying solely on automated generation of prompts without review.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Identify effective strategies for refining prompts.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Using clear and specific language provides the model with better context and focused instructions, which typically leads to improved responses.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="B" data-stem="After testing a new prompt that didn&#39;t produce the desired outcome, what is the next advisable step in the iterative refinement process?">
+                <div>
+                  <strong>After testing a new prompt that didn&#39;t produce the desired outcome, what is the next advisable step in the iterative refinement process?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m2" value="A" />
+                      A. Ignore the results and reuse the same prompt.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m2" value="B" />
+                      B. Analyze the responses for specific weaknesses.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m2" value="C" />
+                      C. Immediately create a completely new prompt without analysis.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m2" value="D" />
+                      D. Send out the results without making changes.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Apply iterative prompt refinement to achieve specific outcomes.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Analyzing the responses helps identify specific weaknesses or areas for improvement, guiding the next round of refinements effectively.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="B" data-stem="When examining refined prompts, which factor is most critical in their improvement?">
+                <div>
+                  <strong>When examining refined prompts, which factor is most critical in their improvement?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m2" value="A" />
+                      A. Increased length of the prompt.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m2" value="B" />
+                      B. Alignment with user intent.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m2" value="C" />
+                      C. Using specialized jargon.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m2" value="D" />
+                      D. Randomly mixing elements from unrelated dialogues.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Analyze examples of refined prompts.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Alignment with user intent ensures that the prompts resonate with user needs, consequently yielding better AI responses.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="B" data-stem="In a team meeting, you noticed that team members are using different phrasing in prompts. What should be your first step to ensure prompt consistency across the team?">
+                <div>
+                  <strong>In a team meeting, you noticed that team members are using different phrasing in prompts. What should be your first step to ensure prompt consistency across the team?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m2" value="A" />
+                      A. Encourage everyone to keep using their own methods.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m2" value="B" />
+                      B. Create a shared document with refined prompt examples.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m2" value="C" />
+                      C. Ignore the variations and focus on results.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m2" value="D" />
+                      D. Mandate a single prompt structure for all.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Apply iterative prompt refinement to achieve specific outcomes.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Creating a shared document with refined examples allows for standardization while still promoting effective techniques learned through iterative refinement.</p>
+                
+              </li>
+              
+            </ol>
+            <div class="quiz-actions">
+              <button type="button" class="submit-quiz" data-module="2">Check answers</button>
+            </div>
+            <div class="quiz-result" id="quiz-result-2" aria-live="polite"></div>
+          </form>
+          
+          
+          <p><strong>Remediation tip:</strong> To improve understanding of iterative prompt refinement, review the key strategies and examples discussed in Module 2. Practice creating various prompts and analyze their effectiveness through group feedback and A/B testing.</p>
+          
+        </div>
+        
+      </div>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <div class="module">
+        <h2>Module 3: Common Prompt Failures</h2>
+        <p>Identify and learn how to mitigate common issues in prompt engineering.</p>
+        <p><strong>Module outcomes:</strong> Identify and mitigate common prompt failures like hallucination and ambiguity.</p>
+        <p><strong>Key topics:</strong> Common prompt failures, Strategies for mitigation, Analysis of failed prompts</p>
+
+        
+        <div class="asset-block">
+          <h3>Lesson Video</h3>
+          <video controls preload="metadata">
+            <source src="videos/the_fundamentals_of_prompt_engineering_module_3_common_prompt_failures_20251106193917.mp4" type="video/mp4" />
+            
+            <track kind="subtitles" src="videos/the_fundamentals_of_prompt_engineering_module_3_common_prompt_failures_20251106193917.vtt" srclang="en" label="English" default />
+            
+            
+            <track kind="chapters" src="videos/the_fundamentals_of_prompt_engineering_module_3_common_prompt_failures_20251106193917.chapters.vtt" srclang="en" label="Chapters" />
+            
+            Your browser does not support the video tag.
+          </video>
+          <p class="muted">Narration voice: alloy</p>
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Video script</h3>
+          <p><strong>Hook:</strong> Unlock the secrets to perfect prompts!</p>
+          
+          <h4>Outline</h4>
+          <ul>
+            
+            <li>00:00 — Introduction to Prompt Failures</li>
+            
+            <li>01:00 — Understanding Hallucinations</li>
+            
+            <li>02:30 — Examples of Hallucinations</li>
+            
+            <li>04:00 — Mitigating Hallucinations</li>
+            
+            <li>05:30 — Navigating Ambiguity</li>
+            
+            <li>07:00 — Case Study: Ambiguous Prompts</li>
+            
+            <li>08:30 — Strategies to Reduce Ambiguity</li>
+            
+            <li>09:30 — Analyzing Failed Prompts</li>
+            
+            <li>10:30 — Common Patterns in Failures</li>
+            
+            <li>11:00 — Conclusion and Key Takeaways</li>
+            
+            <li>11:30 — Next Steps in Prompt Engineering</li>
+            
+          </ul>
+          
+          
+          <h4>Narration</h4>
+          <ul>
+            
+            <li>
+              <strong>Introduction</strong>: Overview of common failures in prompt engineering.<br />
+              Welcome to Module 3 of our course on Prompt Engineering! Today, we&#39;re diving into common prompt failures that every data scientist and software developer should know. Prompt engineering isn&#39;t just about asking questions; it’s about crafting effective prompts that yield useful responses. So, what are the failures, and how can we recognize them? Let&#39;s get started!
+            </li>
+            
+            <li>
+              <strong>Understanding Hallucinations</strong>: Defining what hallucinations are in prompts.<br />
+              One prevalent issue in prompt engineering is hallucinations. But what exactly are hallucinations in this context? Simply put, they&#39;re inaccuracies in generated responses that arise from unclear or poorly structured prompts. For example, if you ask a question that touches on multiple topics, the model may generate a response that blends these themes inaccurately. Can we afford such ambiguity in our work? Certainly not!
+            </li>
+            
+            <li>
+              <strong>Examples of Hallucinations</strong>: Illustrating real-world examples of hallucinated prompts.<br />
+              To better understand hallucinations, let’s look at some real-world examples. Imagine a prompt asking for both historical dates and future predictions. The response could incorrectly merge these subjects. Another instance might involve asking vague technical questions. The generated content might reference hypothetical features that don’t exist! Clear, specific prompts are key!
+            </li>
+            
+            <li>
+              <strong>Mitigating Hallucinations</strong>: Strategies to avoid prompt hallucinations.<br />
+              Now that we know what hallucinations are, how can we mitigate them? First, always be specific in your questions. Provide context wherever possible. Another strategy is to break complex prompts into simpler parts. This way, you limit the room for error. Consider testing prompts iteratively and refining them based on outputs. What steps do you take to ensure accuracy?
+            </li>
+            
+            <li>
+              <strong>Navigating Ambiguity</strong>: Understanding ambiguity and its impact on prompts.<br />
+              Ambiguity is another critical failure in prompt engineering. But how can ambiguity affect your outcomes? Vague or open-ended prompts can lead to unfocused or irrelevant responses. For instance, asking &#39;What do you think about AI?&#39; offers a wide field for interpretation. Students, developers, and AI models can misinterpret such prompts easily!
+            </li>
+            
+            <li>
+              <strong>Case Study: Ambiguous Prompts</strong>: Reviewing case studies highlighting ambiguous prompts.<br />
+              Let’s examine a case study involving an ambiguous prompt: &#39;Can you tell me about Python?&#39; Here, the response might range from programming to the snake! This lack of clarity illustrates how multifaceted prompts can lead to confusion in generated answers. Always strive for precision in your language.
+            </li>
+            
+            <li>
+              <strong>Strategies to Reduce Ambiguity</strong>: Practical tips for reducing ambiguities in prompts.<br />
+              What can we do to reduce ambiguity in our prompts? Here are a few strategies. First, use specific language and define any terms that might be misunderstood. Secondly, context is your ally; providing background helps narrow focus. Lastly, consider testing prompts with real users to gauge their understanding before full deployment.
+            </li>
+            
+            <li>
+              <strong>Analyzing Failed Prompts</strong>: Analyzing failed prompts and extracting lessons.<br />
+              Analyzing failed prompts is vital to our growth. By examining what went wrong, we can find patterns that lead to improvements. For example, failed prompts may often share common intricate phrases or overly broad questions. Analyzing these failures can illuminate opportunities for better crafting your prompts. Are you ready to dissect some prompts?
+            </li>
+            
+            <li>
+              <strong>Common Patterns in Failures</strong>: Identifying trends in prompt failures.<br />
+              In our analysis, we frequently notice common patterns in failures: excessive complexity, vagueness, and lack of specificity. Many beginners struggle with crafting well-focused prompts. Observing these patterns enables us to enhance our prompting skills. Remember, every failure is an opportunity for learning!
+            </li>
+            
+            <li>
+              <strong>Conclusion and Key Takeaways</strong>: Summarizing key points about prompt failures.<br />
+              As we conclude this module, let&#39;s recap. We&#39;ve explored hallucinations and ambiguity, examined real-world examples, and shared techniques to mitigate these common failures. It&#39;s clear that a careful approach to prompt engineering is essential for effective AI interaction. So, what are your next steps in improving your own prompting?
+            </li>
+            
+            <li>
+              <strong>Next Steps in Prompt Engineering</strong>: Encouraging further exploration and practice in prompt engineering.<br />
+              Before you go, I encourage you to practice what we&#39;ve learned in your own projects. Start to recognize prompt failures you encounter, and refine your strategies accordingly. Remember, mastering prompt engineering is a journey, and these insights will help you on your path. Ready to continue your learning?
+            </li>
+            
+          </ul>
+          
+          <p><strong>Recap:</strong> We&#39;ve navigated through common prompt failures, emphasizing the importance of clarity and specificity.</p>
+          <p><strong>Call to action:</strong> Dive deeper into prompt engineering today!</p>
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Reading companion</h3>
+          <p><strong>Summary:</strong> This module provides an overview of common prompt failures in prompt engineering, focusing on identification and mitigation strategies to enhance the effectiveness of prompts.</p>
+          
+          <h4>Sections</h4>
+          <ul>
+            
+            <li>
+              <strong>Common Prompt Failures</strong>
+              
+              <ul>
+                
+                <li>Hallucination</li>
+                
+                <li>Ambiguity</li>
+                
+                <li>Incompleteness</li>
+                
+                <li>Irrelevance</li>
+                
+              </ul>
+              
+              <p>Common prompt failures include issues such as hallucination, where the model generates false information, and ambiguity, which leads to unclear responses. Understanding these failures is crucial for effective prompt engineering.</p>
+              
+              <p class="muted">Outcomes: Identify and mitigate common prompt failures like hallucination and ambiguity.</p>
+              
+            </li>
+            
+            <li>
+              <strong>Strategies for Mitigation</strong>
+              
+              <ul>
+                
+                <li>Clarification techniques</li>
+                
+                <li>Providing examples</li>
+                
+                <li>Iterative testing</li>
+                
+              </ul>
+              
+              <p>Mitigation strategies involve clarification techniques to refine prompts, providing examples for context, and engaging in iterative testing to improve prompt clarity and relevance.</p>
+              
+              <p class="muted">Outcomes: Identify and mitigate common prompt failures like hallucination and ambiguity.</p>
+              
+            </li>
+            
+            <li>
+              <strong>Analysis of Failed Prompts</strong>
+              
+              <ul>
+                
+                <li>Case studies</li>
+                
+                <li>Identifying root causes</li>
+                
+                <li>Redesigning prompts</li>
+                
+              </ul>
+              
+              <p>Analyzing failed prompts through case studies helps in identifying root causes of failures. Redesigning prompts based on analysis can significantly reduce common issues.</p>
+              
+              <p class="muted">Outcomes: Identify and mitigate common prompt failures like hallucination and ambiguity.</p>
+              
+            </li>
+            
+          </ul>
+          
+          
+          <h4>Examples</h4>
+          <ul>
+            
+            <li>
+              <strong>Example of Hallucination in Prompts</strong> — A prompt asking for a historical fact leads to a fabricated event being generated by the model, showcasing hallucination.
+              
+              <span class="muted">(Outcomes: Identify and mitigate common prompt failures like hallucination and ambiguity.)</span>
+              
+            </li>
+            
+            <li>
+              <strong>Handling Ambiguous Prompts</strong> — A vague prompt results in multiple interpretations. Clarification techniques were applied to refine the query for a more focused response.
+              
+              <span class="muted">(Outcomes: Identify and mitigate common prompt failures like hallucination and ambiguity.)</span>
+              
+            </li>
+            
+          </ul>
+          
+          
+          <h4>Glossary</h4>
+          <ul>
+            
+            <li><strong>Hallucination</strong>: A phenomenon where the model generates information that is not based on factual data.</li>
+            
+            <li><strong>Ambiguity</strong>: A situation where a prompt can be interpreted in multiple ways, leading to unclear outputs.</li>
+            
+            <li><strong>Iterative Testing</strong>: A process of repeatedly testing and refining prompts to improve response quality.</li>
+            
+          </ul>
+          
+          
+          <h4>Reflection prompts</h4>
+          <ul>
+            
+            <li>Understanding common prompt failures is essential for efficient prompt engineering. Mitigation strategies can greatly enhance the effectiveness of generated outputs. Continuous analysis of failed prompts informs better design for future prompts.</li>
+            
+          </ul>
+          
+        </div>
+        
+
+        
+        <div class="asset-block">
+          <h3>Quiz</h3>
+          
+          <form class="quiz-form" id="quiz-form-3">
+            <ol>
+              
+              
+              <li class="question" data-answer="A" data-stem="Which of the following terms best describes a prompt failure where the model generates information that is not grounded in reality?">
+                <div>
+                  <strong>Which of the following terms best describes a prompt failure where the model generates information that is not grounded in reality?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m3" value="A" />
+                      A. Hallucination
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m3" value="B" />
+                      B. Ambiguity
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m3" value="C" />
+                      C. Overfitting
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q0-m3" value="D" />
+                      D. Bias
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Identify and mitigate common prompt failures like hallucination and ambiguity.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Hallucination specifically refers to the generation of incorrect or fictional information that sounds plausible, differentiating it from ambiguity, which relates to unclear prompts.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="A" data-stem="When attempting to reduce ambiguity in a prompt, which of the following strategies would be most effective?">
+                <div>
+                  <strong>When attempting to reduce ambiguity in a prompt, which of the following strategies would be most effective?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m3" value="A" />
+                      A. Adding more context and detail to the prompt.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m3" value="B" />
+                      B. Using a more complex sentence structure.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m3" value="C" />
+                      C. Making the question open-ended.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q1-m3" value="D" />
+                      D. Shortening the prompt to its core elements.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Identify and mitigate common prompt failures like hallucination and ambiguity.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Providing more context and detail helps clarify the prompt’s intent, reducing the likelihood of ambiguity in the response.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="A" data-stem="Consider the prompt: &#39;Explain the process of photosynthesis&#39; and the generated response includes irrelevant facts about respiration. This response might indicate which of the following prompt failures?">
+                <div>
+                  <strong>Consider the prompt: &#39;Explain the process of photosynthesis&#39; and the generated response includes irrelevant facts about respiration. This response might indicate which of the following prompt failures?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m3" value="A" />
+                      A. Relevance failure
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m3" value="B" />
+                      B. Clarity failure
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m3" value="C" />
+                      C. Confirmation bias
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q2-m3" value="D" />
+                      D. Temporal inconsistency
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Analyze common prompt failures.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: The inclusion of unrelated information suggests a relevance failure for the prompt, indicating the need to clarify or specify the task better.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="A" data-stem="What is a common method to mitigate the effect of hallucination within AI-generated responses?">
+                <div>
+                  <strong>What is a common method to mitigate the effect of hallucination within AI-generated responses?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m3" value="A" />
+                      A. Incorporating peer-reviewed sources as references.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m3" value="B" />
+                      B. Increasing the complexity of the prompt.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m3" value="C" />
+                      C. Using less frequent vocabulary.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q3-m3" value="D" />
+                      D. Relying solely on the AI’s training data.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Identify and mitigate common prompt failures like hallucination and ambiguity.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Citing peer-reviewed sources encourages the model to provide factual responses grounded in reliable information, thus combating hallucination.</p>
+                
+              </li>
+              
+              
+              <li class="question" data-answer="A" data-stem="If a prompt consistently leads to responses that do not align with user expectations, which analysis approach would help uncover the underlying issue?">
+                <div>
+                  <strong>If a prompt consistently leads to responses that do not align with user expectations, which analysis approach would help uncover the underlying issue?</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m3" value="A" />
+                      A. Conducting a comparative analysis with successful prompts.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m3" value="B" />
+                      B. Increasing the total word count of the prompt.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m3" value="C" />
+                      C. Streamlining the prompt to its simplest form.
+                    </label>
+                  </li>
+                  
+                  <li>
+                    <label>
+                      <input type="radio" name="q4-m3" value="D" />
+                      D. Forcing the model to iterate on existing responses.
+                    </label>
+                  </li>
+                  
+                </ul>
+                
+                <p class="muted">Outcome: Analyze common prompt failures.</p>
+                
+                
+                <p class="muted rationale" style="display:none;">Rationale: Conducting a comparative analysis can reveal differences in structure, wording, or clarity that may be causing the failure in alignment with user expectations.</p>
+                
+              </li>
+              
+            </ol>
+            <div class="quiz-actions">
+              <button type="button" class="submit-quiz" data-module="3">Check answers</button>
+            </div>
+            <div class="quiz-result" id="quiz-result-3" aria-live="polite"></div>
+          </form>
+          
+          
+          <p><strong>Remediation tip:</strong> Review the key topics on prompt failures and their mitigation strategies. Practice crafting prompts with clear context and specificity to minimize the likelihood of hallucination and ambiguity.</p>
+          
+        </div>
+        
+      </div>
+      
+      
+
+      <p class="muted">All materials are auto-generated drafts. Refine prompts and regenerate as needed.</p>
+    </main>
+    <script>
+      (function () {
+        function evaluateQuiz(form) {
+          const questions = Array.from(form.querySelectorAll('.question'));
+          let correct = 0;
+          let wrong = 0;
+          const wrongItems = [];
+          questions.forEach((q, idx) => {
+            q.classList.remove('correct', 'incorrect');
+            const badge = q.querySelector('.badge');
+            if (badge) { badge.textContent = ''; badge.classList.remove('correct','incorrect'); }
+            const radios = q.querySelectorAll('input[type="radio"]');
+            let selected = '';
+            radios.forEach(r => { if (r.checked) selected = r.value; });
+            const expected = (q.getAttribute('data-answer') || '').trim();
+            const rationale = q.querySelector('.rationale');
+            if (!selected) {
+              wrong += 1;
+              q.classList.add('incorrect');
+              if (badge) { badge.textContent = 'Unanswered'; badge.classList.add('incorrect'); }
+              if (rationale) rationale.style.display = '';
+              wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+            } else if (selected.toUpperCase() === expected.toUpperCase()) {
+              correct += 1;
+              q.classList.add('correct');
+              if (badge) { badge.textContent = 'Correct'; badge.classList.add('correct'); }
+              if (rationale) rationale.style.display = 'none';
+            } else {
+              wrong += 1;
+              q.classList.add('incorrect');
+              if (badge) { badge.textContent = 'Incorrect'; badge.classList.add('incorrect'); }
+              if (rationale) rationale.style.display = '';
+              wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+            }
+          });
+          const total = questions.length || 1;
+          const percent = Math.round((correct / total) * 100);
+          const res = form.querySelector('.quiz-result');
+          if (res) {
+            res.innerHTML = '' +
+              '<div class="stats">Score: ' + correct + '/' + total + ' (' + percent + '%)</div>' +
+              '<div>Wrong: ' + wrong + '</div>' +
+              (wrongItems.length ? '<div class="wrong-list"><strong>Review:</strong> ' + wrongItems.map(x => x).join('; ') + '</div>' : '');
+          }
+        }
+
+        document.addEventListener('click', function (e) {
+          const btn = e.target.closest('.submit-quiz');
+          if (!btn) return;
+          const mod = btn.getAttribute('data-module');
+          const form = document.getElementById('quiz-form-' + mod);
+          if (form) evaluateQuiz(form);
+        });
+      })();
+    </script>
+  </body>
+  </html>

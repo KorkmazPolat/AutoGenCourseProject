@@ -1,31 +1,54 @@
 {% extends "base.html" %}
 
-{% block head %}
-  {{ super() }}
+{% block extra_head %}
+
+
+
   <style>
+    
     .animate-fadeIn { animation: fadeIn 0.5s ease-in-out forwards; }
     @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-
-    /* Card hover effect */
-    .form-card:hover, .stat-card:hover, #video-list > div:hover {
-      transform: translateY(-2px) scale(1.02);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    /* 2. Kart Derinliği ve Mikro Etkileşim  */
+    .form-card {
+      /* Başlangıç gölgesi: Hafif ve derin */
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 10px rgba(100, 40, 200, 0.1);
+      transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease;
     }
-
-    /* Video list */
-    #video-list { max-height: 300px; overflow-y: auto; padding-right:4px; }
-    #video-list::-webkit-scrollbar { width:8px; }
-    #video-list::-webkit-scrollbar-thumb { background-color: rgba(100,116,139,0.5); border-radius:4px; }
+    .form-card:hover {
+      /* Hover'da kartı yükselt ve mor ışık yay */
+      transform: translateY(-5px);
+      box-shadow: 0 15px 50px rgba(100, 40, 200, 0.4), 0 0 25px rgba(100, 40, 200, 0.3);
+    }
+    
+    /* 3. Kaydırma Çubuğu (Daha Temiz) */
+    #video-list { max-height: 350px; overflow-y: auto; padding-right:8px; }
+    #video-list::-webkit-scrollbar { width:10px; }
+    #video-list::-webkit-scrollbar-track { background: #1A1A2E; } /* Dark Mode Track */
+    #video-list::-webkit-scrollbar-thumb { background-color: #6C5CE7; border-radius:5px; border: 2px solid #1A1A2E; }
     #video-list > div { transition: transform 0.2s ease, box-shadow 0.2s ease; }
 
-    /* Loading overlay */
-    #loading-overlay { backdrop-filter: blur(2px); transition: opacity 0.3s ease; }
-    #loading-overlay .bg-white { max-width: 400px; width: 90%; }
+    /* 4. Loading Overlay (Bulanıklık ve Yeni Kart Stili) */
+    #loading-overlay { backdrop-filter: blur(8px); transition: opacity 0.3s ease; }
+    #loading-overlay .loading-card {
+        background-color: #1A1A2E; /* Dark Mode Kart */
+        border: 1px solid #333;
+        box-shadow: 0 20px 60px rgba(140, 82, 255, 0.4); /* Mor parlak gölge */
+        max-width: 450px; 
+        width: 90%; 
+    }
 
-    #progress-bar { transition: width 0.2s ease; }
+    /* 5. İlerleme Çubuğu  */
+    #progress-bar { 
+        transition: width 0.5s ease-out; 
+        /* Akışkan parlak gradyan */
+        background: linear-gradient(90deg, #6C5CE7 0%, #4F46E5 50%, #00C4FF 100%);
+        box-shadow: 0 0 15px rgba(79,70,229,0.7); /* Parlama efekti */
+    }
 
-    /* Input focus */
+    /* 6. Input Odaklanma (Yüksek Teknoloji Parlaması) */
     #course-form input:focus,
+<<<<<<< HEAD
     #course-form textarea:focus { border-color: #4f46e5; box-shadow: 0 0 0 2px rgba(79,70,229,0.3); }
 
     /* Buttons hover */
@@ -53,33 +76,41 @@
     #document-dropzone.uploading {
       opacity: 0.6;
       pointer-events: none;
+=======
+    #course-form textarea:focus { 
+        border-color: #6C5CE7; 
+        box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.4); /* Geniş mor parlama */
+>>>>>>> improvements
     }
   </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex flex-col items-center justify-start space-y-10 py-10">
+<div class="min-h-screen flex flex-col items-center justify-start space-y-10 py-16">
 
   <div class="form-container w-full flex flex-col items-center">
 
-    <!-- Form Card -->
-    <div class="bg-white shadow-2xl rounded-3xl p-10 form-card w-full">
-      <div class="text-center mb-8">
-        <p class="text-gray-600 text-lg">Enter your course details and watch it come to life! Professional, fast, and user-friendly.</p>
+    <div class="bg-gray-900 form-card rounded-3xl p-12 w-full max-w-4xl text-gray-200">
+      
+      <div class="text-center mb-10">
+        <p class="text-indigo-300 text-xl font-light">Enter your course details and watch the AI bring it to life.</p>
+        <p class="text-3xl font-extrabold mt-2 text-white">Automated Course Builder</p>
       </div>
 
-      <form id="course-form" method="post" action="/create-course-plan" class="space-y-5">
+      <form id="course-form" method="post" action="/create-course-plan" class="space-y-6">
+        
         {% for field in ['course_title', 'audience', 'tone', 'duration_minutes'] %}
         <div>
-          <label class="block text-gray-700 font-semibold mb-1" for="{{ field }}">{{ field.replace('_', ' ') | title }}</label>
+          <label class="block text-indigo-300 font-medium mb-2 uppercase tracking-wider text-sm" for="{{ field }}">{{ field.replace('_', ' ') | title }}</label>
           <input id="{{ field }}" name="{{ field }}" type="{{ 'number' if field=='duration_minutes' else 'text' }}" 
                  placeholder="Enter {{ field.replace('_', ' ') }}" 
-                 class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" 
+                 class="w-full p-4 border border-gray-700 bg-gray-800 rounded-xl text-lg text-white placeholder-gray-500 focus:outline-none" 
                  value="{{ values.get(field,'') }}">
         </div>
         {% endfor %}
 
         <div>
+<<<<<<< HEAD
           <label class="block text-gray-700 font-semibold mb-1" for="document-dropzone">Course Materials (PDF)</label>
           <div id="document-dropzone" class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-indigo-200 bg-indigo-50/40 rounded-xl py-6 px-4 text-center text-indigo-900">
             <input id="document-input" type="file" accept="application/pdf" class="hidden">
@@ -98,33 +129,40 @@
 
         <div>
           <label class="block text-gray-700 font-semibold mb-1" for="learning_outcomes">Learning Outcomes</label>
+=======
+          <label class="block text-indigo-300 font-medium mb-2 uppercase tracking-wider text-sm" for="learning_outcomes">Learning Outcomes (One per line)</label>
+>>>>>>> improvements
           <textarea id="learning_outcomes" name="learning_outcomes" rows="5" 
                     placeholder="- Explain why prompt design matters
 - Compare prompting patterns
 - Use prompts to debug failures"
-                    class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none resize-none">{{ values.get('learning_outcomes','') }}</textarea>
+                    class="w-full p-4 border border-gray-700 bg-gray-800 rounded-xl text-lg text-white placeholder-gray-500 focus:outline-none resize-none">{{ values.get('learning_outcomes','') }}</textarea>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-3 mt-4">
-          <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold py-3 rounded-xl shadow-lg">Create Course Plan</button>
-          <button type="submit" formaction="/create-course-pages" class="flex-1 border border-blue-500 text-blue-500 font-bold py-3 rounded-xl hover:bg-blue-50 transition">Build Module Pages</button>
-          <button type="submit" formaction="/create-course-video" class="flex-1 border border-purple-500 text-purple-500 font-bold py-3 rounded-xl hover:bg-purple-50 transition">Generate Video</button>
-          <button type="submit" formaction="/create-full-course" class="flex-1 border border-green-600 text-green-600 font-bold py-3 rounded-xl hover:bg-green-50 transition">Create Full Course</button>
-        </div>
+        <div class="flex justify-center pt-10">
+          <button
+            type="submit"
+           formaction="/create-full-course"
+           class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-extrabold py-5 rounded-xl shadow-2xl shadow-purple-900/50 transition duration-300 transform hover:scale-[1.015] hover:shadow-purple-700/80 tracking-widest uppercase"
+       >
+        Create Full Course
+       </button>
+      </div>
       </form>
     </div>
 
   </div>
 
-  <!-- Loading Overlay -->
-  <div id="loading-overlay" class="hidden fixed inset-0 bg-white/95 flex flex-col items-center justify-center z-50">
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-96 max-w-[90vw] text-center animate-fadeIn">
-      <h2 class="text-2xl font-bold mb-4">Creating your content…</h2>
-      <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-        <div id="progress-bar" class="h-full w-0 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+  <div id="loading-overlay" class="hidden fixed inset-0 bg-black/80 flex flex-col items-center justify-center z-50">
+    <div class="loading-card p-10 rounded-2xl w-96 max-w-[90vw] text-center animate-fadeIn text-gray-100">
+      <h2 class="text-3xl font-extrabold mb-6 text-indigo-400">Creating your content...</h2>
+      
+      <div class="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+        <div id="progress-bar" class="h-full w-0 rounded-full"></div>
       </div>
-      <p id="progress-text" class="mt-2 font-mono text-gray-700">0%</p>
-      <p id="progress-hint" class="mt-2 text-gray-500">Drafting materials…</p>
+      
+      <p id="progress-text" class="mt-4 text-xl font-bold font-mono text-white">0%</p>
+      <p id="progress-hint" class="mt-1 text-indigo-300 font-light">Drafting course blueprint...</p>
     </div>
   </div>
 
@@ -133,4 +171,88 @@
 
 {% block scripts %}
   {{ super() }}
+<<<<<<< HEAD
 {% endblock %}
+=======
+  <script>
+    const form = document.getElementById('course-form');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const progressHint = document.getElementById('progress-hint');
+
+    function showLoading(){
+      loadingOverlay.classList.remove('hidden');
+      let pct = 0;
+      // İpuçları, sürecin aşamalarını yansıtacak şekilde güncellendi
+      const hints = [
+        'Drafting course blueprint...', 
+        'Generating module scripts (Parallel API Calls)...', 
+        'Synthesizing audio and rendering videos...'
+      ];
+      let step=0;
+      
+      // Tahmini ilerleme ve ipucu güncelleme mantığı
+      const interval = setInterval(()=>{
+        if(pct < 98){ // Son %2'yi tamamlanana bırak
+          pct += Math.floor(Math.random() * 3) + 1; // Daha yavaş ve istikrarlı ilerleme
+          
+          if(pct > 30 && step === 0) step = 1;
+          if(pct > 65 && step === 1) step = 2;
+
+          progressBar.style.width = Math.min(pct, 98) + '%';
+          progressText.textContent = Math.min(pct, 98) + '%';
+          progressHint.textContent = hints[step];
+        } else if (pct < 100) {
+            progressHint.textContent = 'Finalizing output... (Video encoding)';
+        }
+      }, 500); // Daha yavaş güncelleme hızı
+
+      
+      loadingOverlay.dataset.intervalId = interval;
+    }
+
+    function hideLoading(){
+      const intervalId = loadingOverlay.dataset.intervalId;
+      if (intervalId) {
+        clearInterval(parseInt(intervalId));
+      }
+      loadingOverlay.classList.add('hidden');
+      progressBar.style.width='0%';
+      progressText.textContent='0%';
+      progressHint.textContent='';
+    }
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      showLoading();
+      const fd = new FormData(form);
+      const submitter = e.submitter;
+      const action = submitter ? submitter.formAction : form.action;
+
+      try{
+        const response = await fetch(action,{method:'POST',body:fd});
+        
+        // Başarılı tamamlama
+        if(response.ok) {
+            const html = await response.text();
+            hideLoading();
+            // Başarılıysa, sonucu göstermek için yeni sayfaya yönlendir
+            document.open();
+            document.write(html);
+            document.close();
+        } else {
+            // Hata durumunda ilerlemeyi durdur ve hata mesajı göster
+            hideLoading();
+            alert('Error creating course. Please check the server logs.');
+        }
+
+      }catch(err){
+        console.error("Fetch Error:", err);
+        hideLoading();
+        alert('A network error occurred while submitting the request.');
+      }
+    });
+  </script>
+{% endblock %}
+>>>>>>> improvements

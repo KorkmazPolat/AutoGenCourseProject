@@ -1,0 +1,10 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.050
+[Fast Test Course - Module 1: Introduction to Test Outputs] Welcome to your fast-paced introduction to test outputs!
+
+00:00:03.450 --> 00:00:32.420
+[What is Test Output?] Test outputs are the results generated from running a test on a software application. Each time we perform a test, whether it’s manual or automated, we gather outputs that reveal how the software behaves. For example, if a user clicks a button and a confirmation message appears, the message is part of the test output. This essential element helps us compare expected results against what actually occurs. But why care about test outputs at all? Let’s dive deeper.
+
+00:00:32.820 --> 00:00:36.540
+[Next Steps] Explore more about test outputs to enhance your testing skills!
