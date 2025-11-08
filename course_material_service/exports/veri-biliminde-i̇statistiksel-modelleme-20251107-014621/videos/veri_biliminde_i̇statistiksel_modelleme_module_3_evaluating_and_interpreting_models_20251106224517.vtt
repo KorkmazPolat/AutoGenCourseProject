@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.810
+[Veri Biliminde İstatistiksel Modelleme - Module 3: Evaluating and Interpreting Models] Unlock the secrets to effective model evaluation!
+
+00:00:03.210 --> 00:00:27.470
+[Model Evaluation Basics] Welcome to Module 3! In this video, we'll explore how to evaluate and interpret statistical models effectively. Evaluating models ensures we understand their predictive power. Did you know that a well-evaluated model can significantly improve decision-making? We’ll dive into key techniques that help you assess model performance. By the end, you will feel more confident interpreting your model's output!
+
+00:00:27.870 --> 00:00:54.820
+[Statistical Significance Explained] Next, let’s discuss statistical significance. When we evaluate models, determining whether our findings are statistically significant is crucial. For instance, p-values help us ascertain this significance: a p-value below 0.05 usually indicates a significant result. Have you considered how these values impact your interpretations? Understanding p-values can guide you in making data-driven decisions confidently!
+
+00:00:55.220 --> 00:01:18.570
+[Coefficients and Their Meaning] Now, let’s interpret coefficients effectively. Each coefficient tells us how much the dependent variable changes when we alter an independent variable. For example, if a coefficient is 2, increasing that variable by one unit results in a two-unit increase in the outcome. Do you see how coefficients can serve as a roadmap for your analysis? Mastering this will enhance your data storytelling!
+
+00:01:18.970 --> 00:01:41.340
+[Evaluating Performance Metrics] Finally, let’s evaluate model performance. Metrics like R-squared and RMSE are vital in assessing how well your model fits the data. An R-squared value closer to 1 reveals a better fit. Have you examined these metrics in your work? Utilizing these evaluations empowers you to refine your models, leading to more accurate predictions and insights.
+
+00:01:41.740 --> 00:01:45.510
+[Next Steps] Start evaluating your statistical models today!

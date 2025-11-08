@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.220
+[Instant Guide to Python Async/Await - Module 3: Writing Asynchronous Functions] Unlock the power of Python with async functions!
+
+00:00:03.620 --> 00:00:36.190
+[Defining Async Functions] To begin with async functions, we start by defining one using the 'async' keyword. For example, consider a simple function like this: ‘async def fetch_data()’. This syntax indicates that the function runs asynchronously. But what does this mean? It allows the function to pause and yield control back to the event loop. This helps in managing multiple tasks concurrently. Can you imagine how much more efficient your code can be when it doesn’t wait for each task to finish? Let’s explore how to implement this in code.
+
+00:00:36.590 --> 00:01:14.700
+[Using Asyncio Library] Next, we turn to the asyncio library, which is the backbone of running asynchronous tasks in Python. To use it effectively, you'll first need to import it with 'import asyncio'. One crucial component is 'asyncio.sleep()' for simulating delays. For instance, when you write 'await asyncio.sleep(1)', it pauses execution for one second without blocking other operations. Think of this as letting your computer do more than one thing at a time. What happens when you manage multiple tasks? It vastly improves efficiency and responsiveness in your applications.
+
+00:01:15.100 --> 00:01:45.270
+[Executing Async Functions] Now that we have our async functions, the next step is execution. You cannot just call an async function directly. Instead, you need to run it in an event loop. Here’s a common use case: 'asyncio.run(fetch_data())'. This command ensures your function runs to completion. Why is this step vital? Without the event loop, asynchronous features do not get utilized, making your efforts futile. Remember, only inside the right context can these functions shine.
+
+00:01:45.670 --> 00:02:15.480
+[Real-World Applications] Let’s round this out by exploring real-world scenarios. Asynchronous functions are ideal for tasks like web scraping, where latency is high. For example, if your script fetches data from 10 different APIs, using 'asyncio' can reduce overall runtime significantly. Imagine this: with a synchronous approach, you might wait up to 10 seconds, but with async functions, this could drop to under 2 seconds. Isn’t that incredible? Leveraging async in your scripts can make a big difference in performance.
+
+00:02:15.880 --> 00:02:20.200
+[Next Steps] Start integrating async in your Python projects today!

@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALPHA | Automated Course Generation</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link rel="stylesheet" href="/static/main.css">
+<script src="/static/main.js" defer></script>
+
+
+  
+  <style>
+    /* ========================================= */
+    /* 1. YENİ KURS SAYFASI ÖZEL STİLLERİ */
+    /* (Stillerde değişiklik yok, öncekiyle aynı) */
+    /* ========================================= */
+
+    /* Ana İçerik ve Kenar Çubuğu */
+    .course-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      gap: 2.5rem; /* 40px */
+    }
+
+    /* Sol Kenar Çubuğu (Sticky) */
+    .course-sidebar {
+      width: 25%;
+      min-width: 280px;
+      position: sticky;
+      top: 100px; 
+      height: calc(100vh - 120px);
+      overflow-y: auto;
+      padding-right: 1.5rem; /* 24px */
+      border-right: 1px solid #374151; /* Gri-700 */
+    }
+
+    .sidebar-link {
+      display: block;
+      padding: 0.75rem 1rem; /* 12px 16px */
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #D1D5DB; /* Gri-300 */
+      border-radius: 8px;
+      transition: all 0.2s ease-in-out;
+      border-left: 3px solid transparent;
+    }
+    .sidebar-link:hover {
+      background-color: #374151; /* Gri-700 */
+      color: #FFF;
+      transform: translateX(4px);
+    }
+    .sidebar-link.active {
+      color: var(--color-secondary-blue); /* #38BDF8 */
+      font-weight: 700;
+      background-color: rgba(56, 189, 248, 0.05);
+      border-left-color: var(--color-secondary-blue);
+    }
+
+    /* Ana İçerik Alanı */
+    .course-content {
+      width: 75%;
+    }
+
+    /* Scroll-Spy için Modül Bölümü */
+    .module-section {
+      padding-top: 80px; /* Kenar çubuğu tıklamaları için boşluk */
+      margin-top: -80px;
+    }
+
+    /* ========================================= */
+    /* 2. "WOAWW" FAKTÖRÜ: SEKMELİ (TAB) İÇERİK */
+    /* ========================================= */
+    .tab-buttons {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid #374151;
+      margin-bottom: 1.5rem;
+    }
+    .tab-button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #9CA3AF; /* Gri-400 */
+      border-bottom: 3px solid transparent;
+      transform: translateY(2px);
+      transition: all 0.2s ease;
+    }
+    .tab-button:hover {
+      color: #E0E0E5;
+    }
+    .tab-button.active {
+      color: var(--color-primary-purple); /* #7C3AED */
+      border-bottom-color: var(--color-primary-purple);
+    }
+
+    .tab-content { display: none; animation: fadeIn 0.5s ease; }
+    .tab-content.active { display: block; }
+
+    /* ========================================= */
+    /* 3. İÇERİK STİLLERİ (Video, Okuma, Quiz) */
+    /* ========================================= */
+
+    /* Video Oynatıcı */
+    .video-player-wrapper {
+      position: relative;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #000;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .video-player-wrapper video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Video Script (Gizlenebilir) */
+    .script-accordion summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--color-secondary-blue);
+      margin-top: 1.5rem;
+    }
+    .script-accordion pre {
+      background-color: #111827; /* Gri-900 */
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      white-space: pre-wrap; /* Satırları kaydır */
+      color: #D1D5DB;
+      font-family: 'Consolas', 'Monospace';
+    }
+
+    /* Okuma Materyali (Prose) */
+    .reading-wrapper {
+      background-color: #1F2937; /* Kart Rengi */
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid #374151;
+    }
+    .reading-wrapper h4 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-primary-purple);
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .reading-wrapper p {
+      color: #D1D5DB;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .reading-wrapper .section-card {
+      background: #2D3748; /* Biraz daha açık */
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .reading-wrapper .key-points {
+      list-style-type: '— ';
+      padding-left: 1.5rem;
+      color: #9CA3AF;
+    }
+    .reading-wrapper .glossary-item dt {
+      font-weight: 700;
+      color: #FFF;
+    }
+    .reading-wrapper .glossary-item dd {
+      color: #9CA3AF;
+      margin-left: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Quiz Stilleri */
+    .question { 
+        padding: 1.5rem; 
+        border: 1px solid #374151; 
+        background: #1F2937; 
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    .choice-list { list-style: none; padding-left: 0; margin-top: 1rem;}
+    .choice-list li label { 
+        cursor: pointer; 
+        display: block; 
+        padding: 0.75rem 1rem; 
+        border-radius: 6px; 
+        transition: background 0.2s;
+        border: 1px solid #374151;
+        margin-bottom: 0.5rem;
+    }
+    .choice-list li label:hover { 
+        background: #374151; /* Gri-700 */
+    }
+    .choice-list input[type="radio"] {
+        margin-right: 0.75rem;
+        accent-color: var(--color-primary-purple); 
+    }
+    .quiz-actions button {
+      display: inline-block;
+      width: auto;
+      background: linear-gradient(90deg, var(--color-primary-purple) 0%, var(--color-secondary-blue) 100%);
+      color: white;
+      font-weight: 700;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+      transition: all 0.3s ease;
+    }
+    .quiz-actions button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+    }
+    
+    .question.correct { background: #1F2937; border-left: 5px solid #22C55E; } 
+    .question.incorrect { background: #1F2937; border-left: 5px solid #EF4444; }
+    .badge.correct { background: #22C55E; color: #FFF; }
+    .badge.incorrect { background: #EF4444; color: #FFF; }
+    .quiz-result { 
+        margin-top: 1.5rem; 
+        padding: 1rem;
+        background: #2D3748;
+        border-radius: 8px;
+        border-left: 5px solid #3B82F6; 
+    }
+    
+    .badge { 
+      display: inline-block; 
+      padding: 2px 8px; 
+      font-size: 0.8rem; 
+      border-radius: 999px; 
+      margin-left: 0.5rem; 
+      font-weight: 600;
+    }
+
+  </style>
+ 
+</head>
+
+<body class="bg-gray-900 text-gray-100 font-sans" style="font-family: 'Inter', sans-serif;"> 
+
+<nav class="sticky top-0 z-40 bg-gray-800/90 backdrop-blur-lg shadow-xl border-b border-indigo-500/50">
+  <div class="container mx-auto px-6 lg:px-12 py-4 flex items-center justify-between">
+    
+    <div class="flex items-center space-x-3">
+      <span class="text-3xl font-extrabold tracking-widest uppercase logo-text">ALPHA</span>
+    </div>
+    
+    <div class="flex space-x-6 text-lg">
+      <a href="/" class="nav-link text-gray-300 hover:text-purple-400">Home</a>
+      <a href="/about" class="nav-link text-gray-300 hover:text-purple-400">About</a>
+      <a href="/contact" class="nav-link text-gray-300 hover:text-purple-400">Contact</a>
+      <a href="/exports" class="nav-link text-gray-300 hover:text-purple-400 border-l border-gray-600 pl-6">Saved Courses</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container mx-auto px-6 lg:px-12 py-16 min-h-[80vh]">
+  
+<main class="container mx-auto px-6 lg:px-12 py-16 min-h-[80vh]">
+
+  <div class="mb-16">
+    <a class="back inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition mb-6" href="/exports">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Back to All Courses
+    </a>
+    
+    <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight logo-text mb-6">
+      Fast Course
+    </h1>
+    
+    <p class="text-xl md:text-2xl text-gray-300 max-w-4xl">
+      A quick-paced course designed for general learners to encourage a growth mindset through the simple act of trying.
+    </p>
+
+    
+    <div class="mt-10">
+      <h2 class="text-2xl font-bold text-indigo-300 mb-4">Learning Outcomes</h2>
+      <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+        
+        <li class="flex items-start gap-3 text-gray-300">
+          <svg class="w-6 h-6 flex-shrink-0 text-green-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>Just try</span>
+        </li>
+        
+      </ul>
+    </div>
+    
+  </div>
+
+  <div class="course-container">
+    
+    <nav class="course-sidebar">
+      <h3 class="text-lg font-semibold text-gray-300 uppercase tracking-wider mb-4">Course Modules</h3>
+      <ul class="space-y-2">
+        
+        <li>
+          <a href="#module-1" class="sidebar-link">
+            <span class="block text-sm text-indigo-400 font-medium">Module 1</span>
+            <span class="block text-white">Introduction to Trying</span>
+          </a>
+        </li>
+        
+      </ul>
+    </nav>
+
+    <div class="course-content">
+      
+      
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <section id="module-1" class="module-section mb-16 bg-gray-900 p-6 md:p-10 rounded-2xl shadow-xl border border-gray-800">
+        
+        <h2 class="text-4xl font-bold text-white mb-2">
+          <span class="text-indigo-400">Module 1:</span> Introduction to Trying
+        </h2>
+        <p class="text-lg text-gray-400 mb-6">An introductory module that emphasizes the importance of taking that first step to try new things.</p>
+
+        <div>
+          <div class="tab-buttons">
+            <button class="tab-button active" data-tab-group="1" data-tab-target="video-1">
+              <svg class="inline-block w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v4a1 1 0 002 0V3a1 1 0 00-1-1zM4 6a1 1 0 011-1h1.586l1-1H10.414l1 1H13a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V6zm10 0v10H6V6h8z"></path></svg>
+              Video Lesson
+            </button>
+            <button class="tab-button" data-tab-group="1" data-tab-target="reading-1">
+              <svg class="inline-block w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4zm2 0v12h6V4H7z"></path></svg>
+              Reading Material
+            </button>
+            <button class="tab-button" data-tab-group="1" data-tab-target="quiz-1">
+              <svg class="inline-block w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zm0 14a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zm-6-8a1 1 0 000 2h1a1 1 0 000-2H4zm0 4a1 1 0 000 2h1a1 1 0 000-2H4zm12-4a1 1 0 000 2h1a1 1 0 000-2h-1zm0 4a1 1 0 000 2h1a1 1 0 000-2h-1zM7 6a1 1 0 011-1h4a1 1 0 011 1v8a1 1 0 01-1 1H8a1 1 0 01-1-1V6zm1 0v8h4V6H8z"></path></svg>
+              Quiz
+            </button>
+          </div>
+
+          <div id="video-1" class="tab-content active" data-tab-group="1">
+            
+              <div class="video-player-wrapper">
+                <video class="video" controls preload="metadata">
+                  <source src="videos/fast_course_module_1_introduction_to_trying_20251108221548.mp4" type="video/mp4" />
+                  
+                  <track kind="subtitles" src="videos/fast_course_module_1_introduction_to_trying_20251108221548.vtt" srclang="en" label="English" default />
+                  
+                  
+                  <track kind="chapters" src="videos/fast_course_module_1_introduction_to_trying_20251108221548.chapters.vtt" srclang="en" label="Chapters" />
+                  
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              
+              
+              <details class="script-accordion mt-6">
+                <summary>View Video Script</summary>
+                <pre>A growth mindset is the belief that abilities can be developed through dedication and hard work. For example, consider athletes like Michael Jordan, who failed numerous times but learned and improved through those experiences. Embracing a growth mindset encourages us to try new things without the fear of failing. Have you ever avoided trying simply because you were afraid to fail? It&#39;s crucial to recognize that this mindset fosters resilience and a love for learning.
+
+Trying is a fundamental step in all learning processes. It&#39;s through trying that we discover our passions and strengths. Think of inventors like Thomas Edison, who faced thousands of failures before creating the light bulb. Each attempt brought him closer to success. If you don’t try, how can you identify what you’re capable of? By stepping out of your comfort zone, you open doors to possibilities and growth.
+
+Many people let fear prevent them from trying. Understanding that failure is a part of growth is essential. Consider this: each failed attempt can provide valuable feedback for improvement. A strategy to overcome this fear is to set small, manageable goals. Have you tried breaking down larger challenges into tiny, achievable steps? This way, you can build confidence with each success along the way.
+
+The first step is often the hardest! Start with simple actions like learning a new skill or joining an interest group. Each small step you take builds towards greater accomplishments. For example, if you want to learn guitar, start with one chord instead of a full song. It&#39;s not about perfection; it&#39;s about progress. So, what will your first step be? Embrace the journey and enjoy discovering new things!</pre>
+              </details>
+              
+
+            
+          </div>
+          
+          <div id="reading-1" class="tab-content" data-tab-group="1">
+            
+            <div class="reading-wrapper">
+              
+                <p class="text-lg text-indigo-300 mb-6 border-b border-gray-600 pb-4"><strong>Summary:</strong> This module introduces the concept of trying and its significance in personal and academic growth, encouraging learners to embrace new experiences.</p>
+              
+              
+              
+                <h4>In-Depth Sections</h4>
+                
+                  <div class="section-card">
+                    <h5 class="font-bold text-lg text-white mb-2">Growth Mindset</h5>
+                    <p class="text-sm mb-3">A growth mindset involves believing that abilities and intelligence can be developed through dedication and hard work. This mindset fosters a love for learning and resilience, crucial for trying new things.</p>
+                    
+                      <ul class="key-points space-y-1">
+                        
+                          <li>Embrace challenges</li>
+                        
+                          <li>Learn from feedback</li>
+                        
+                          <li>Persist in the face of setbacks</li>
+                        
+                      </ul>
+                    
+                  </div>
+                
+                  <div class="section-card">
+                    <h5 class="font-bold text-lg text-white mb-2">Importance of Trying</h5>
+                    <p class="text-sm mb-3">Trying is the first step towards learning and personal development. It involves stepping out of your comfort zone and taking risks, which can lead to discovering new passions and skills.</p>
+                    
+                      <ul class="key-points space-y-1">
+                        
+                          <li>Overcome fear of failure</li>
+                        
+                          <li>Encourage experimentation</li>
+                        
+                          <li>Build confidence</li>
+                        
+                      </ul>
+                    
+                  </div>
+                
+              
+                
+              
+                <h4>Glossary</h4>
+                <dl class="space-y-2">
+                  
+                    <div class="glossary-item">
+                      <dt>Growth Mindset:</dt>
+                      <dd>The belief that abilities can be developed through dedication and hard work.</dd>
+                    </div>
+                  
+                    <div class="glossary-item">
+                      <dt>Trying:</dt>
+                      <dd>The act of making an attempt or effort to do something, particularly something new.</dd>
+                    </div>
+                  
+                </dl>
+              
+            </div>
+            
+          </div>
+          
+          <div id="quiz-1" class="tab-content" data-tab-group="1">
+            
+              
+              <form class="quiz-form" id="quiz-form-1">
+                <ol class="space-y-4">
+                  
+                  
+                  <li class="question" data-answer="C" data-stem="What does adopting a growth mindset primarily encourage individuals to do?">
+                    <div>
+                      <strong class="text-lg">1. What does adopting a growth mindset primarily encourage individuals to do?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q0-m1" value="A" />
+                          A. Give up after encountering difficulties.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q0-m1" value="B" />
+                          B. Avoid challenges in favor of safe options.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q0-m1" value="C" />
+                          C. Embrace challenges and learn from failures.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q0-m1" value="D" />
+                          D. Stay within their comfort zone.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-sm mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> A growth mindset encourages individuals to see challenges as opportunities for growth and learning, leading them to embrace challenges and learn from failures rather than giving up or avoiding difficulties.</p>
+                    
+                  </li>
+                  
+                  
+                  <li class="question" data-answer="B" data-stem="Which of the following best illustrates the importance of trying new things?">
+                    <div>
+                      <strong class="text-lg">2. Which of the following best illustrates the importance of trying new things?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q1-m1" value="A" />
+                          A. Only doing what one is already good at.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q1-m1" value="B" />
+                          B. Taking risks and gaining new experiences.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q1-m1" value="C" />
+                          C. Listening to others&#39; advice without attempting.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q1-m1" value="D" />
+                          D. Focusing on past successes exclusively.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-sm mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> Trying new things is essential because it opens up opportunities for gaining new experiences, which is crucial for learning and personal development.</p>
+                    
+                  </li>
+                  
+                  
+                  <li class="question" data-answer="C" data-stem="When faced with a new opportunity, how should one ideally approach trying, according to the principles of a growth mindset?">
+                    <div>
+                      <strong class="text-lg">3. When faced with a new opportunity, how should one ideally approach trying, according to the principles of a growth mindset?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q2-m1" value="A" />
+                          A. With reluctance and fear of failure.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q2-m1" value="B" />
+                          B. With expectations of immediate success.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q2-m1" value="C" />
+                          C. With curiosity and openness to learning.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q2-m1" value="D" />
+                          D. By seeking reassurance from others.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-sm mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> A growth mindset promotes approaching new opportunities with curiosity and an openness to learning, which helps individuals overcome fear and embrace the process of trying.</p>
+                    
+                  </li>
+                  
+                  
+                  <li class="question" data-answer="C" data-stem="How can one measure personal growth stemming from trying new activities?">
+                    <div>
+                      <strong class="text-lg">4. How can one measure personal growth stemming from trying new activities?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q3-m1" value="A" />
+                          A. By comparing oneself solely to others.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q3-m1" value="B" />
+                          B. By recording feelings of discomfort.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q3-m1" value="C" />
+                          C. By reflecting on lessons learned from experiences.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q3-m1" value="D" />
+                          D. By avoiding activities that seem challenging.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-sm mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> Reflecting on the lessons learned from experiences is a comprehensive way to measure personal growth since it emphasizes understanding and applying knowledge gained from trying new activities.</p>
+                    
+                  </li>
+                  
+                  
+                  <li class="question" data-answer="B" data-stem="What is a likely consequence of avoiding trying new experiences altogether?">
+                    <div>
+                      <strong class="text-lg">5. What is a likely consequence of avoiding trying new experiences altogether?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q4-m1" value="A" />
+                          A. Increased confidence over time.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q4-m1" value="B" />
+                          B. Limited personal and skill development.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q4-m1" value="C" />
+                          C. Complete mastery of known skills.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q4-m1" value="D" />
+                          D. Enhanced adaptability to change.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-sm mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> Avoiding new experiences can lead to limited personal and skill development, as individuals miss opportunities to learn and grow through trying.</p>
+                    
+                  </li>
+                  
+                </ol>
+                <div class="quiz-actions mt-6">
+                  <button type="button" class="submit-quiz" data-module="1">Check Answers</button>
+                </div>
+                <div class="quiz-result" id="quiz-result-1" aria-live="polite"></div>
+              </form>
+              
+            
+          </div>
+          
+        </div>
+        </section>
+      
+       
+
+    </div>
+    </div>
+  </main>
+
+</main>
+
+<footer class="bg-gray-900 border-t border-purple-600/30">
+  <div class="container mx-auto px-6 lg:px-12 py-6 text-center text-gray-500 text-sm">
+    &copy;  ALPHA. All rights reserved. | <span class="text-purple-400 hover:text-purple-300 transition cursor-pointer">AI-Powered Course Generation</span>
+  </div>
+</footer>
+
+
+  
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // --- 1. SEKME (TAB) KONTROLÜ ---
+      const allTabButtons = document.querySelectorAll('.tab-button');
+      
+      allTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const tabGroup = button.dataset.tabGroup;
+          const targetId = button.dataset.tabTarget;
+          
+          document.querySelectorAll(`.tab-button[data-tab-group="${tabGroup}"]`).forEach(btn => btn.classList.remove('active'));
+          document.querySelectorAll(`.tab-content[data-tab-group="${tabGroup}"]`).forEach(content => content.classList.remove('active'));
+          
+          button.classList.add('active');
+          document.getElementById(targetId).classList.add('active');
+        });
+      });
+
+      // --- 2. SCROLL-SPY (Kenar çubuğunu aktif etme) & SMOOTH SCROLL ---
+      const sidebarLinks = document.querySelectorAll('.sidebar-link');
+      const moduleSections = document.querySelectorAll('.module-section');
+
+      // Smooth scroll
+      sidebarLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetId = link.getAttribute('href');
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        });
+      });
+
+      // Scroll-spy
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            sidebarLinks.forEach(link => link.classList.remove('active'));
+            document.querySelector(`.sidebar-link[href="#${id}"]`)?.classList.add('active');
+          }
+        });
+      }, {
+        rootMargin: '-50% 0px -50% 0px', 
+        threshold: 0
+      });
+
+      moduleSections.forEach(section => {
+        observer.observe(section);
+      });
+
+    });
+  </script>
+
+  <script>
+    (function () {
+      function evaluateQuiz(form) {
+        const questions = Array.from(form.querySelectorAll('.question'));
+        let correct = 0;
+        let wrong = 0;
+        let wrongItems = [];
+        questions.forEach((q, idx) => {
+          q.classList.remove('correct', 'incorrect');
+          const badge = q.querySelector('.badge');
+          if (badge) { badge.textContent = ''; badge.classList.remove('correct','incorrect'); }
+          const radios = q.querySelectorAll('input[type="radio"]');
+          let selected = '';
+          radios.forEach(r => { if (r.checked) selected = r.value; });
+          const expected = (q.getAttribute('data-answer') || '').trim();
+          const rationale = q.querySelector('.rationale');
+          
+          if (rationale) rationale.style.display = 'none';
+
+          if (!selected) {
+            wrong += 1;
+            q.classList.add('incorrect');
+            if (badge) { badge.textContent = 'Unanswered'; badge.classList.add('incorrect'); } // DEĞİŞTİ
+            if (rationale) rationale.style.display = 'block'; 
+            wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+          } else if (selected.toUpperCase() === expected.toUpperCase()) {
+            correct += 1;
+            q.classList.add('correct');
+            if (badge) { badge.textContent = 'Correct'; badge.classList.add('correct'); } // DEĞİŞTİ
+          } else {
+            wrong += 1;
+            q.classList.add('incorrect');
+            if (badge) { badge.textContent = 'Incorrect'; badge.classList.add('incorrect'); } // DEĞİŞTİ
+            if (rationale) rationale.style.display = 'block'; 
+            wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+          }
+        });
+        const total = questions.length || 1;
+        const percent = Math.round((correct / total) * 100);
+        const res = form.querySelector('.quiz-result');
+        if (res) {
+          res.innerHTML = '' +
+            '<div class="stats font-bold text-lg">Score: ' + correct + '/' + total + ' (' + percent + '%)</div>' + // DEĞİŞTİ
+            (wrongItems.length ? '<div class="wrong-list mt-3 text-sm"><strong>Review:</strong> ' + wrongItems.join('; ') + '</div>' : ''); // DEĞİŞTİ
+        }
+      }
+
+      document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.submit-quiz');
+        if (!btn) return;
+        e.preventDefault(); 
+        const mod = btn.getAttribute('data-module');
+        const form = document.getElementById('quiz-form-' + mod);
+        if (form) evaluateQuiz(form);
+      });
+    })();
+  </script>
+
+</body>
+</html>
+
+<style>
+  /* Logo metnine gradient ve parlaklık ekleyen sınıf (Woaww Faktörü) */
+  .logo-text {
+    background: linear-gradient(90deg, #6C5CE7 0%, #00C4FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 5px rgba(108, 92, 231, 0.5);
+  }
+  /* Navigasyon linkleri için hover efekti */
+  .nav-link {
+    color: #E0E0E5;
+    position: relative;
+    transition: color 0.3s ease;
+  }
+  .nav-link:hover {
+    color: #00C4FF; /* Neon mavi vurgu */
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #6C5CE7;
+    transition: width 0.3s ease;
+  }
+  .nav-link:hover::after {
+    width: 100%; /* Hover'da alt çizgi animasyonu */
+  }
+</style>

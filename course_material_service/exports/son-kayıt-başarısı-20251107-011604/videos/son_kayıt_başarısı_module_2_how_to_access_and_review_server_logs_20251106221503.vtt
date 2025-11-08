@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.400
+[Son Kayıt Başarısı - Module 2: How to Access and Review Server Logs] Unlock the secrets of server logs!
+
+00:00:02.800 --> 00:00:32.800
+[Accessing Server Logs] To check server logs effectively, you first need to know where to find them. Most servers maintain logs in specific directories that depend on the operating system. For example, in Linux systems, you often find logs in the /var/log directory. Wouldn't it be great if you could locate crucial information at your fingertips? Windows, on the other hand, uses the Event Viewer, a tool that lets you access logs graphically. Keep in mind, the steps may vary slightly depending on your server's configuration.
+
+00:00:33.200 --> 00:01:03.850
+[Interpreting Log Entries] Once you've accessed the logs, the next step is interpreting the entries accurately. Each log entry typically contains a timestamp, message, and level of seriousness. For instance, a timestamp might read '2023-10-03 14:15:22', helping you pinpoint when a specific issue arose. Have you ever wondered how such details can uncover problems? Learning to read these logs enables you to trace back issues, be proactive in maintenance, and minimize downtime.
+
+00:01:04.250 --> 00:01:31.300
+[Common Log Formats] Next, let’s discuss some common log formats you might encounter. The majority of server logs will appear as plain text files but may vary in structure. For example, Apache logs use the Common Log Format, while others might adhere to JSON or XML. Did you know understanding these formats can simplify troubleshooting? Recognizing the differences helps in quickly filtering necessary information versus noise in the data.
+
+00:01:31.700 --> 00:01:55.650
+[Effective Review Techniques] Finally, let’s dive into effective review techniques. Scanning logs regularly can save you time during crises. Start by honing in on entries with warning or error levels; they signal potential issues. Engaging with tools like Logwatch or Splunk can streamline your log review process. Wouldn't it be beneficial to automate your log monitoring? Consistent review and quick reactions will keep your systems running smoothly.
+
+00:01:56.050 --> 00:01:58.400
+[Next Steps] Start checking your server logs today!

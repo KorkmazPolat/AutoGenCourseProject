@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Courses - Alpha Course Builder</title>
+    <!-- Tailwind CSS'i yükle -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Ana koyu arka plan */
+        body {
+            background-color: #0b1120; /* Dark Navy */
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Kartlar için hafif yükseltilmiş gölge */
+        .form-card {
+            box-shadow: 0 0 40px rgba(109, 40, 217, 0.2); /* Mor glow */
+        }
+
+        /* Başlıklar ve metin */
+        .header-text {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5); /* Hafif mor ışık */
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+    <!-- Navigasyon (Basitleştirilmiş) -->
+    <header class="bg-gray-900 shadow-lg py-4 px-6 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-black text-indigo-400 header-text tracking-widest">ALPHA</a>
+            <nav class="space-x-4">
+                <a href="/" class="text-gray-400 hover:text-indigo-400 transition">Home</a>
+                <a href="/exports" class="text-indigo-400 font-semibold">Saved Courses</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Ana İçerik Alanı -->
+    <div class="min-h-screen flex flex-col items-center justify-start space-y-10 py-16 px-4">
+        
+        <div class="w-full max-w-4xl text-gray-200">
+            <h1 class="text-4xl font-extrabold mb-8 text-indigo-400 text-center">Saved Courses</h1>
+            
+            <div class="bg-gray-900 form-card rounded-2xl p-8 w-full shadow-2xl">
+                {% if exports %}
+                    <ul class="space-y-4 list-none pl-0">
+                    {% for url, name in exports %}
+                        <li class="border-b border-gray-800 last:border-b-0 py-3 flex justify-between items-center">
+                            <a href="{{ url }}" class="text-indigo-300 text-xl font-medium hover:text-purple-400 transition duration-200">
+                                <span class="text-2xl mr-3 text-indigo-400">&raquo;</span> {{ name }}
+                            </a>
+                            <!-- Klasör adını ve tarihi gösterir -->
+                            <p class="text-xs text-gray-500 ml-6 bg-gray-800 px-2 py-1 rounded-full">ID: {{ url.split('/')[-2] }}</p>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-500 text-lg text-center">No courses have been saved yet. Go back to the <a href="/" class="text-indigo-400 underline">homepage</a> to create one!</p>
+                {% endif %}
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>
