@@ -1,103 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ALPHA | Automated Course Generation</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-
+<title>alpha</title>
 <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', path='main.css') }}">
 <script src="{{ url_for('static', path='main.js') }}" defer></script>
-
-{% block extra_head %}{% endblock %} 
 </head>
 
-<body class="bg-gray-900 text-gray-100 font-sans" style="font-family: 'Inter', sans-serif;"> 
+<body class="bg-gray-50 text-gray-900">
 
-<nav class="sticky top-0 z-40 bg-gray-800/90 backdrop-blur-lg shadow-xl border-b border-indigo-500/50">
-  <div class="container mx-auto px-6 lg:px-12 py-4 flex items-center justify-between">
-    
+<!-- Navbar -->
+<nav class="bg-gradient-to-r from-blue-600 to-purple-600 shadow-md">
+  <div class="container mx-auto px-6 py-4 flex items-center justify-between">
     <div class="flex items-center space-x-3">
-      <span class="text-3xl font-extrabold tracking-widest uppercase logo-text">ALPHA</span>
+      <span class="text-white text-3xl font-extrabold tracking-wide">ALPHA</span>
     </div>
-    
-    <div class="flex items-center space-x-6 text-lg">
-      <a href="{{ url_for('render_form') }}" class="nav-link text-gray-300 hover:text-purple-400">Home</a>
-      
-      <a href="/about" class="nav-link text-gray-300 hover:text-purple-400">About</a>
-      <a href="/contact" class="nav-link text-gray-300 hover:text-purple-400">Contact</a>
-      
-      <a href="{{ url_for('list_exports') }}" class="nav-link text-gray-300 hover:text-purple-400">Saved Courses</a>
-
-      <div class="border-l border-gray-600 pl-6 flex items-center space-x-4">
-      {% if user %}
-        <span class="text-sm text-gray-400" title="{{ user }}">
-          Welcome, <span class="font-medium text-gray-300">{{ user.split('@')[0] }}</span>
-        </span>
-        
-        <a href="{{ url_for('logout') }}" 
-           class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-lg transition duration-200 text-center">
-          Logout
-        </a>
-      {% else %}
-        <a href="{{ url_for('show_login') }}" 
-           class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-lg transition duration-200 text-center">
-          Login
-        </a>
-      {% endif %}
-      </div>
+    <div class="flex space-x-4">
+      <a href="/" class="text-white font-medium hover:text-yellow-300 transition">Home</a>
+      <a href="/about" class="text-white font-medium hover:text-yellow-300 transition">About</a>
+      <a href="/contact" class="text-white font-medium hover:text-yellow-300 transition">Contact</a>
+      <a href="/exports" class="text-white font-medium hover:text-yellow-300 transition">Saved Courses</a>
     </div>
-    </div>
+  </div>
 </nav>
 
-<main class="container mx-auto px-6 lg:px-12 py-16 min-h-[80vh]">
+<!-- Main Content -->
+<main class="container mx-auto px-6 py-12">
   {% block content %}{% endblock %}
 </main>
 
-<footer class="bg-gray-900 border-t border-purple-600/30">
-  <div class="container mx-auto px-6 lg:px-12 py-6 text-center text-gray-500 text-sm">
-    &copy; ALPHA. All rights reserved. | <span class="text-purple-400 hover:text-purple-300 transition cursor-pointer">AI-Powered Course Generation</span>
+<!-- Footer -->
+<footer class="bg-white shadow-inner mt-10">
+  <div class="container mx-auto px-6 py-4 text-center text-gray-600 text-sm">
+    © {{ current_year }} alpha. All rights reserved.
   </div>
 </footer>
 
-{% block scripts %}{% endblock %}
 </body>
 </html>
-
-<style>
-  /* Logo metnine gradient ve parlaklık ekleyen sınıf  */
-  .logo-text {
-    background: linear-gradient(90deg, #6C5CE7 0%, #00C4FF 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 5px rgba(108, 92, 231, 0.5);
-  }
-  /* Navigasyon linkleri için hover efekti */
-  .nav-link {
-    color: #E0E0E5;
-    position: relative;
-    transition: color 0.3s ease;
-  }
-  .nav-link:hover {
-    color: #00C4FF; /* Neon mavi vurgu */
-  }
-  .nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background-color: #6C5CE7;
-    transition: width 0.3s ease;
-  }
-  .nav-link:hover::after {
-    width: 100%; /* Hover'da alt çizgi animasyonu */
-  }
-</style>

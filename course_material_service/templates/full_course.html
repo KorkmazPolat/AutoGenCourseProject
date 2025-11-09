@@ -1,563 +1,291 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ course_title }} | Full Course</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #eef2f7; color: #1f2933; }
+      main { max-width: 980px; margin: 0 auto; background: #ffffff; padding: 24px; border: 1px solid #d2d6dc; }
+      h1, h2, h3, h4 { margin-top: 24px; }
+      h1 { margin-top: 0; }
+      ul, ol { padding-left: 20px; }
+      .module { border: 1px solid #d2d6dc; padding: 16px; margin-bottom: 24px; background: #f8fafc; }
+      .muted { color: #52606d; font-size: 0.9rem; }
+      a.back { text-decoration: none; color: #2563eb; }
+      video { width: 100%; height: auto; margin-top: 12px; background: #000; }
+      .asset-block { margin-top: 16px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+      table th, table td { border: 1px solid #d2d6dc; padding: 8px; text-align: left; }
+      .meta { margin: 8px 0; }
+      /* Quiz styles */
+      .quiz-form { margin-top: 8px; }
+      .choice-list { list-style: none; padding-left: 0; }
+      .choice-list li { margin: 4px 0; }
+      .question { padding: 8px; border-left: 4px solid transparent; }
+      .question.correct { background: #f0fdf4; border-left-color: #22c55e; }
+      .question.incorrect { background: #fef2f2; border-left-color: #ef4444; }
+      .badge { display: inline-block; padding: 2px 6px; font-size: 0.8rem; border-radius: 999px; margin-left: 6px; }
+      .badge.correct { background: #dcfce7; color: #166534; }
+      .badge.incorrect { background: #fee2e2; color: #991b1b; }
+      .quiz-actions { margin-top: 10px; }
+      .quiz-actions button { padding: 8px 12px; background: #2563eb; color: #fff; border: none; cursor: pointer; }
+      .quiz-result { margin-top: 10px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+      .quiz-result .stats { font-weight: bold; }
+      .quiz-result .wrong-list { margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="/">&larr; back</a>
+      <h1>{{ course_title }}</h1>
+      <p class="muted">Full course build: blueprint, per-module videos, readings, and quizzes.</p>
 
-{% block extra_head %}
-  {{ super() }}
-  <style>
-    /* ========================================= */
-    /* 1. KURS SAYFASI STİLLERİ 
-    /* ========================================= */
-
-    /* Ana İçerik ve Kenar Çubuğu */
-    .course-container {
-      max-width: 1600px;
-      margin: 0 auto;
-      display: flex;
-      gap: 3rem; /* 48px */
-    }
-
-    /* Sol Kenar Çubuğu  */
-    .course-sidebar {
-      width: 30%;
-      min-width: 320px;
-      position: sticky;
-      top: 100px; 
-      height: calc(100vh - 120px);
-      overflow-y: auto;
-      padding-right: 2rem; /* 32px */
-      border-right: 1px solid #374151;
-    }
-
-    /* Kenar Çubuğu Linkleri  */
-    .sidebar-link {
-      display: block;
-      padding: 0.85rem 1.25rem; 
-      font-size: 1rem; /* 16px */
-      font-weight: 500;
-      color: #D1D5DB;
-      border-radius: 8px;
-      transition: all 0.2s ease-in-out;
-      border-left: 4px solid transparent; 
-    }
-    .sidebar-link:hover {
-      background-color: #374151;
-      color: #FFF;
-      transform: translateX(4px);
-    }
-    .sidebar-link.active {
-      color: var(--color-secondary-blue);
-      font-weight: 700;
-      background-color: rgba(56, 189, 248, 0.05);
-      border-left-color: var(--color-secondary-blue);
-    }
-
-    /* Ana İçerik Alanı  */
-    .course-content {
-      width: 70%; 
-    }
-
-    .module-section {
-      padding-top: 80px; 
-      margin-top: -80px;
-    }
-
-    /* ========================================= */
-    /* 2. SEKMELİ (TAB) İÇERİK */
-    /* ========================================= */
-    .tab-buttons {
-      display: flex;
-      gap: 0.5rem;
-      border-bottom: 2px solid #374151;
-      margin-bottom: 2rem; 
-    }
-    .tab-button {
-      padding: 0.85rem 1.75rem; 
-      font-size: 1.25rem; /* 20px */
-      font-weight: 600;
-      color: #9CA3AF;
-      border-bottom: 4px solid transparent; 
-      transform: translateY(2px);
-      transition: all 0.2s ease;
-    }
-    .tab-button:hover { color: #E0E0E5; }
-    .tab-button.active {
-      color: var(--color-primary-purple);
-      border-bottom-color: var(--color-primary-purple);
-    }
-
-    .tab-content { display: none; animation: fadeIn 0.5s ease; }
-    .tab-content.active { display: block; }
-
-    /* ========================================= */
-    /* 3. İÇERİK STİLLERİ  */
-    /* ========================================= */
-
-    /* Video Oynatıcı  */
-    .video-player-wrapper {
-      position: relative;
-      padding-top: 56.25%; 
-      height: 0;
-      overflow: hidden;
-      border-radius: 12px;
-      background: #000;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .video-player-wrapper video {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    }
-
-    /* Video Script */
-    .script-accordion summary {
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--color-secondary-blue);
-      margin-top: 1.5rem;
-      font-size: 1.125rem; /* 18px (text-lg) */
-    }
-    .script-accordion pre {
-      background-color: #111827;
-      padding: 1.5rem; 
-      border-radius: 8px;
-      margin-top: 1rem;
-      white-space: pre-wrap;
-      color: #D1D5DB;
-      font-family: 'Consolas', 'Monospace';
-      font-size: 1.125rem; /* 18px (text-lg) */
-      line-height: 1.7; 
-    }
-
-    /* Okuma Materyali  */
-    .reading-wrapper {
-      background-color: #1F2937;
-      padding: 2rem 2.5rem; 
-      border-radius: 12px;
-      border: 1px solid #374151;
-    }
-    .reading-wrapper h4 {
-      font-size: 1.75rem; /* 28px */
-      font-weight: 700;
-      color: var(--color-primary-purple);
-      margin-top: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .reading-wrapper p {
-      color: #D1D5DB;
-      line-height: 1.7;
-      margin-bottom: 1rem;
-      font-size: 1.125rem; /* 18px (text-lg) */
-    }
-    .reading-wrapper .section-card {
-      background: #2D3748;
-      padding: 1.5rem;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-    }
-    .reading-wrapper .key-points {
-      list-style-type: '— ';
-      padding-left: 1.5rem;
-      color: #B0B8C5;
-      font-size: 1rem; /* 16px (text-base) */
-    }
-    .reading-wrapper .glossary-item dt {
-      font-weight: 700;
-      color: #FFF;
-      font-size: 1.125rem; /* 18px */
-    }
-    .reading-wrapper .glossary-item dd {
-      color: #9CA3AF;
-      margin-left: 1rem;
-      margin-bottom: 1rem;
-      font-size: 1rem; /* 16px */
-    }
-
-    /* Quiz Stilleri  */
-    .question { 
-        padding: 1.5rem; 
-        border: 1px solid #374151; 
-        background: #1F2937; 
-        border-radius: 10px;
-        margin-bottom: 1rem;
-    }
-    .question strong {
-        font-size: 1.25rem; /* 20px (text-xl) */
-        line-height: 1.6;
-    }
-    .choice-list { list-style: none; padding-left: 0; margin-top: 1.25rem;}
-    .choice-list li label { 
-        cursor: pointer; 
-        display: block; 
-        padding: 1rem 1.25rem; 
-        border-radius: 8px; 
-        transition: background 0.2s;
-        border: 1px solid #374151;
-        margin-bottom: 0.75rem;
-        font-size: 1.125rem; /* 18px (text-lg) */
-    }
-    .choice-list li label:hover { 
-        background: #374151;
-    }
-    .choice-list input[type="radio"] {
-        margin-right: 0.75rem;
-        accent-color: var(--color-primary-purple); 
-        transform: scale(1.1);
-    }
-    .quiz-actions button {
-      display: inline-block;
-      width: auto;
-      background: linear-gradient(90deg, var(--color-primary-purple) 0%, var(--color-secondary-blue) 100%);
-      color: white;
-      font-weight: 700;
-      padding: 0.85rem 2.5rem; 
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-      transition: all 0.3s ease;
-      font-size: 1.125rem; /* 18px */
-    }
-    .quiz-actions button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
-    }
-    .question.correct { background: #1F2937; border-left: 5px solid #22C55E; } 
-    .question.incorrect { background: #1F2937; border-left: 5px solid #EF4444; }
-    .badge.correct { background: #22C55E; color: #FFF; }
-    .badge.incorrect { background: #EF4444; color: #FFF; }
-    .quiz-result { 
-        margin-top: 1.5rem; 
-        padding: 1.5rem;
-        background: #2D3748;
-        border-radius: 8px;
-        border-left: 5px solid #3B82F6;
-        font-size: 1.125rem; /* 18px */
-    }
-    .badge { 
-      display: inline-block; 
-      padding: 4px 10px; 
-      font-size: 0.9rem; /* 14px */
-      border-radius: 999px; 
-      margin-left: 0.75rem; 
-      font-weight: 600;
-    }
-
-  </style>
-{% endblock %}
-
-{% block content %}
-<main class="container mx-auto px-6 lg:px-12 py-16 min-h-[80vh]">
-
-  <div class="mb-16">
-    <a class="back inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition mb-6 text-base" href="/exports">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-      Back to All Courses
-    </a>
-    
-    <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight logo-text mb-6">
-      {{ course_title }}
-    </h1>
-    
-    {% if learning_outcomes %}
-    <div class="mt-10">
-      <h2 class="text-3xl font-bold text-indigo-300 mb-6">Learning Outcomes</h2>
-      <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4">
+      {% if learning_outcomes %}
+      <h2>Course outcomes</h2>
+      <ul>
         {% for outcome in learning_outcomes %}
-        <li class="flex items-start gap-3 text-lg text-gray-300">
-          <svg class="w-7 h-7 flex-shrink-0 text-green-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          <span>{{ outcome }}</span>
-        </li>
+        <li>{{ outcome }}</li>
         {% endfor %}
       </ul>
-    </div>
-    {% endif %}
-  </div>
-
-  <div class="course-container">
-    
-    <nav class="course-sidebar">
-      <h3 class="text-xl font-semibold text-gray-300 uppercase tracking-wider mb-5">Course Modules</h3>
-      <ul class="space-y-3">
-        {% for module in modules_output %}
-        <li>
-          <a href="#module-{{ module.info.number }}" class="sidebar-link">
-            <span class="block text-base text-indigo-400 font-medium">Module {{ module.info.number }}</span>
-            <span class="block text-white text-lg">{{ module.info.title }}</span>
-          </a>
-        </li>
-        {% endfor %}
-      </ul>
-    </nav>
-
-    <div class="course-content">
-      
-      {% if not modules_output %}
-        <p class="text-gray-400 text-lg">No module content has been generated for this course yet.</p>
       {% endif %}
 
-      {# MODÜL DÖNGÜSÜ #}
+      {% if blueprint %}
+      <h2>Blueprint overview</h2>
+      {% if blueprint.overview %}
+      <p><strong>Positioning:</strong> {{ blueprint.overview.positioning }}</p>
+      <p class="meta"><strong>Audience:</strong> {{ blueprint.overview.target_audience }}</p>
+      <p class="meta"><strong>Total duration:</strong> {{ blueprint.overview.total_duration_hours }}</p>
+      <p class="meta"><strong>Pacing:</strong> {{ blueprint.overview.pacing_strategy }}</p>
+      {% if blueprint.overview.prerequisites %}
+      <p class="meta"><strong>Prerequisites:</strong> {{ blueprint.overview.prerequisites | join(", ") }}</p>
+      {% endif %}
+      {% endif %}
+      {% endif %}
+
+      {% if modules_output %}
       {% for module in modules_output %}
       {% set info = module.info %}
       {% set assets = module.assets %}
       {% set video_pack = assets.get("video_script", {}) %}
-      {% set video_content = video_pack.get("content") %}
+      {% set video = video_pack.get("content") %}
       {% set video_url = video_pack.get("video_url") %}
       {% set captions_url = video_pack.get("captions_url") %}
       {% set chapters_url = video_pack.get("chapters_url") %}
-      {% set reading_content = assets.get("reading_material", {}).get("content") %}
+      {% set reading = assets.get("reading_material", {}).get("content") %}
       {% set quiz = assets.get("quiz_questions", {}).get("content") %}
-      
-      <section id="module-{{ info.number }}" class="module-section mb-20 bg-gray-900 p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-800">
-        
-        <h2 class="text-5xl font-bold text-white mb-3">
-          <span class="text-indigo-400">Module {{ info.number }}:</span> {{ info.title }}
-        </h2>
-        
-        <div class="mt-8">
-          <div class="tab-buttons">
-            <button class="tab-button active" data-tab-group="{{ info.number }}" data-tab-target="video-{{ info.number }}">
-              <svg class="inline-block w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v4a1 1 0 002 0V3a1 1 0 00-1-1zM4 6a1 1 0 011-1h1.586l1-1H10.414l1 1H13a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V6zm10 0v10H6V6h8z"></path></svg>
-              Video Lesson
-            </button>
-            <button class="tab-button" data-tab-group="{{ info.number }}" data-tab-target="reading-{{ info.number }}">
-              <svg class="inline-block w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4zm2 0v12h6V4H7z"></path></svg>
-              Reading Material
-            </button>
-            <button class="tab-button" data-tab-group="{{ info.number }}" data-tab-target="quiz-{{ info.number }}">
-              <svg class="inline-block w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zm0 14a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zm-6-8a1 1 0 000 2h1a1 1 0 000-2H4zm0 4a1 1 0 000 2h1a1 1 0 000-2H4zm12-4a1 1 0 000 2h1a1 1 0 000-2h-1zm0 4a1 1 0 000 2h1a1 1 0 000-2h-1zM7 6a1 1 0 011-1h4a1 1 0 011 1v8a1 1 0 01-1 1H8a1 1 0 01-1-1V6zm1 0v8h4V6H8z"></path></svg>
-              Quiz
-            </button>
-          </div>
+      <div class="module">
+        <h2>Module {{ info.number }}: {{ info.title }}</h2>
+        {% if info.summary %}<p>{{ info.summary }}</p>{% endif %}
+        {% if info.outcomes %}<p><strong>Module outcomes:</strong> {{ info.outcomes | join(", ") }}</p>{% endif %}
+        {% if info.key_topics %}<p><strong>Key topics:</strong> {{ info.key_topics | join(", ") }}</p>{% endif %}
 
-          <div id="video-{{ info.number }}" class="tab-content active" data-tab-group="{{ info.number }}">
-            {% if video_url %}
-              <div class="video-player-wrapper">
-                <video class="video" controls preload="metadata">
-                  <source src="{{ video_url }}" type="video/mp4" />
-                  {% if captions_url %}
-                  <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
-                  {% endif %}
-                  {% if chapters_url %}
-                  <track kind="chapters" src="{{ chapters_url }}" srclang="en" label="Chapters" />
-                  {% endif %}
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-              
-              {% if video_content and video_content.narration %}
-              <details class="script-accordion mt-6">
-                <summary>View Video Script</summary>
-                <pre>{{ video_content.narration | map(attribute='script') | join('\n\n') | default("Script content not found.") }}</pre>
-              </details>
-              {% endif %}
-
-            {% else %}
-              <p class="text-gray-400 text-lg">No video has been generated for this module.</p>
+        {% if video_url %}
+        <div class="asset-block">
+          <h3>Lesson Video</h3>
+          <video controls preload="metadata">
+            <source src="{{ video_url }}" type="video/mp4" />
+            {% if captions_url %}
+            <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
             {% endif %}
-          </div>
-          
-          <div id="reading-{{ info.number }}" class="tab-content" data-tab-group="{{ info.number }}">
-            {% if reading_content %}
-            <div class="reading-wrapper">
-              {% if reading_content.summary %}
-                <p class="text-xl text-indigo-300 mb-6 border-b border-gray-600 pb-4"><strong>Summary:</strong> {{ reading_content.summary }}</p>
-              {% endif %}
-              
-              {% if reading_content.sections %}
-                <h4>In-Depth Sections</h4>
-                {% for section in reading_content.sections %}
-                  <div class="section-card">
-                    <h5 class="font-bold text-xl text-white mb-2">{{ section.heading }}</h5>
-                    <p class="mb-3">{{ section.content }}</p> 
-                    {% if section.key_points %}
-                      <ul class="key-points space-y-2">
-                        {% for point in section.key_points %}
-                          <li>{{ point }}</li>
-                        {% endfor %}
-                      </ul>
-                    {% endif %}
-                  </div>
+            {% if chapters_url %}
+            <track kind="chapters" src="{{ chapters_url }}" srclang="en" label="Chapters" />
+            {% endif %}
+            Your browser does not support the video tag.
+          </video>
+          <p class="muted">Narration voice: {{ voice }}</p>
+        </div>
+        {% endif %}
+
+        {% if video %}
+        <div class="asset-block">
+          <h3>Video script</h3>
+          {% if video.hook %}<p><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
+          {% if video.outline %}
+          <h4>Outline</h4>
+          <ul>
+            {% for item in video.outline %}
+            <li>{{ item.timestamp }} — {{ item.topic }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if video.narration %}
+          <h4>Narration</h4>
+          <ul>
+            {% for block in video.narration %}
+            <li>
+              <strong>{{ block.section }}</strong>: {{ block.summary }}<br />
+              {{ block.script }}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if video.recap %}<p><strong>Recap:</strong> {{ video.recap }}</p>{% endif %}
+          {% if video.call_to_action %}<p><strong>Call to action:</strong> {{ video.call_to_action }}</p>{% endif %}
+        </div>
+        {% endif %}
+
+        {% if reading %}
+        <div class="asset-block">
+          <h3>Reading companion</h3>
+          {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
+          {% if reading.sections %}
+          <h4>Sections</h4>
+          <ul>
+            {% for section in reading.sections %}
+            <li>
+              <strong>{{ section.heading }}</strong>
+              {% if section.key_points %}
+              <ul>
+                {% for point in section.key_points %}
+                <li>{{ point }}</li>
                 {% endfor %}
+              </ul>
               {% endif %}
-                
-              {% if reading_content.glossary %}
-                <h4>Glossary</h4>
-                <dl class="space-y-3">
-                  {% for term in reading_content.glossary %}
-                    <div class="glossary-item">
-                      <dt>{{ term.term }}:</dt>
-                      <dd>{{ term.definition }}</dd>
-                    </div>
-                  {% endfor %}
-                </dl>
+              <p>{{ section.content }}</p>
+              {% if section.outcome_alignment %}
+              <p class="muted">Outcomes: {{ section.outcome_alignment | join(", ") }}</p>
               {% endif %}
-            </div>
-            {% else %}
-              <p class="text-gray-400 text-lg">No reading material found for this module.</p>
-            {% endif %}
-          </div>
-          
-          <div id="quiz-{{ info.number }}" class="tab-content" data-tab-group="{{ info.number }}">
-            {% if quiz %}
-              {% if quiz.questions %}
-              <form class="quiz-form" id="quiz-form-{{ info.number }}">
-                <ol class="space-y-4">
-                  {% for question in quiz.questions %}
-                  {% set qidx = loop.index0 %}
-                  <li class="question" data-answer="{{ question.answer }}" data-stem="{{ question.stem|e }}">
-                    <div>
-                      <strong>{{ loop.index }}. {{ question.stem }}</strong>
-                      <span class="badge" aria-live="polite"></span>
-                    </div>
-                    <ul class="choice-list">
-                      {% for choice in question.choices %}
-                      <li>
-                        <label>
-                          <input type="radio" name="q{{ qidx }}-m{{ info.number }}" value="{{ choice.label }}" />
-                          {{ choice.label }}. {{ choice.text }}
-                        </label>
-                      </li>
-                      {% endfor %}
-                    </ul>
-                    {% if question.rationale %}
-                    <p class="muted rationale text-base mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> {{ question.rationale }}</p>
-                    {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if reading.examples %}
+          <h4>Examples</h4>
+          <ul>
+            {% for example in reading.examples %}
+            <li>
+              <strong>{{ example.title }}</strong> — {{ example.description }}
+              {% if example.outcome_alignment %}
+              <span class="muted">(Outcomes: {{ example.outcome_alignment | join(", ") }})</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if reading.glossary %}
+          <h4>Glossary</h4>
+          <ul>
+            {% for term in reading.glossary %}
+            <li><strong>{{ term.term }}</strong>: {{ term.definition }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if reading.reflections %}
+          <h4>Reflection prompts</h4>
+          <ul>
+            {% for prompt in reading.reflections %}
+            <li>{{ prompt }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% if quiz %}
+        <div class="asset-block">
+          <h3>Quiz</h3>
+          {% if quiz.questions %}
+          <form class="quiz-form" id="quiz-form-{{ info.number }}">
+            <ol>
+              {% for question in quiz.questions %}
+              {% set qidx = loop.index0 %}
+              <li class="question" data-answer="{{ question.answer }}" data-stem="{{ question.stem|e }}">
+                <div>
+                  <strong>{{ question.stem }}</strong>
+                  <span class="badge" aria-live="polite"></span>
+                </div>
+                <ul class="choice-list">
+                  {% for choice in question.choices %}
+                  <li>
+                    <label>
+                      <input type="radio" name="q{{ qidx }}-m{{ info.number }}" value="{{ choice.label }}" />
+                      {{ choice.label }}. {{ choice.text }}
+                    </label>
                   </li>
                   {% endfor %}
-                </ol>
-                <div class="quiz-actions mt-8">
-                  <button type="button" class="submit-quiz" data-module="{{ info.number }}">Check Answers</button>
-                </div>
-                <div class="quiz-result" id="quiz-result-{{ info.number }}" aria-live="polite"></div>
-              </form>
-              {% endif %}
-            {% else %}
-              <p class="text-gray-400 text-lg">No quiz found for this module.</p>
-            {% endif %}
-          </div>
-          
+                </ul>
+                {% if question.learning_outcome %}
+                <p class="muted">Outcome: {{ question.learning_outcome }}</p>
+                {% endif %}
+                {% if question.rationale %}
+                <p class="muted rationale" style="display:none;">Rationale: {{ question.rationale }}</p>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ol>
+            <div class="quiz-actions">
+              <button type="button" class="submit-quiz" data-module="{{ info.number }}">Check answers</button>
+            </div>
+            <div class="quiz-result" id="quiz-result-{{ info.number }}" aria-live="polite"></div>
+          </form>
+          {% endif %}
+          {% if quiz.remediation %}
+          <p><strong>Remediation tip:</strong> {{ quiz.remediation }}</p>
+          {% endif %}
         </div>
-        </section>
-      {# <-- MODÜL BÖLÜMÜNÜN SONU #}
-      {% endfor %} {# <-- MODÜL DÖNGÜSÜNÜN SONU #}
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% else %}
+      <p>No modules were produced.</p>
+      {% endif %}
 
-    </div>
-    </div>
-  </main>
-{% endblock %}
-
-{% block scripts %}
-  {{ super() }}
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-
-      // --- 1. SEKME (TAB) KONTROLÜ ---
-      const allTabButtons = document.querySelectorAll('.tab-button');
-      
-      allTabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-          const tabGroup = button.dataset.tabGroup;
-          const targetId = button.dataset.tabTarget;
-          
-          document.querySelectorAll(`.tab-button[data-tab-group="${tabGroup}"]`).forEach(btn => btn.classList.remove('active'));
-          document.querySelectorAll(`.tab-content[data-tab-group="${tabGroup}"]`).forEach(content => content.classList.remove('active'));
-          
-          button.classList.add('active');
-          document.getElementById(targetId).classList.add('active');
-        });
-      });
-
-      // --- 2. SCROLL-SPY (Kenar çubuğunu aktif etme) & SMOOTH SCROLL ---
-      const sidebarLinks = document.querySelectorAll('.sidebar-link');
-      const moduleSections = document.querySelectorAll('.module-section');
-
-      // Smooth scroll
-      sidebarLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const targetId = link.getAttribute('href');
-          const targetElement = document.querySelector(targetId);
-          if (targetElement) {
-            targetElement.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
-            });
+      <p class="muted">All materials are auto-generated drafts. Refine prompts and regenerate as needed.</p>
+    </main>
+    <script>
+      (function () {
+        function evaluateQuiz(form) {
+          const questions = Array.from(form.querySelectorAll('.question'));
+          let correct = 0;
+          let wrong = 0;
+          const wrongItems = [];
+          questions.forEach((q, idx) => {
+            q.classList.remove('correct', 'incorrect');
+            const badge = q.querySelector('.badge');
+            if (badge) { badge.textContent = ''; badge.classList.remove('correct','incorrect'); }
+            const radios = q.querySelectorAll('input[type="radio"]');
+            let selected = '';
+            radios.forEach(r => { if (r.checked) selected = r.value; });
+            const expected = (q.getAttribute('data-answer') || '').trim();
+            const rationale = q.querySelector('.rationale');
+            if (!selected) {
+              wrong += 1;
+              q.classList.add('incorrect');
+              if (badge) { badge.textContent = 'Unanswered'; badge.classList.add('incorrect'); }
+              if (rationale) rationale.style.display = '';
+              wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+            } else if (selected.toUpperCase() === expected.toUpperCase()) {
+              correct += 1;
+              q.classList.add('correct');
+              if (badge) { badge.textContent = 'Correct'; badge.classList.add('correct'); }
+              if (rationale) rationale.style.display = 'none';
+            } else {
+              wrong += 1;
+              q.classList.add('incorrect');
+              if (badge) { badge.textContent = 'Incorrect'; badge.classList.add('incorrect'); }
+              if (rationale) rationale.style.display = '';
+              wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+            }
+          });
+          const total = questions.length || 1;
+          const percent = Math.round((correct / total) * 100);
+          const res = form.querySelector('.quiz-result');
+          if (res) {
+            res.innerHTML = '' +
+              '<div class="stats">Score: ' + correct + '/' + total + ' (' + percent + '%)</div>' +
+              '<div>Wrong: ' + wrong + '</div>' +
+              (wrongItems.length ? '<div class="wrong-list"><strong>Review:</strong> ' + wrongItems.map(x => x).join('; ') + '</div>' : '');
           }
-        });
-      });
-
-      // Scroll-spy
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const id = entry.target.id;
-            sidebarLinks.forEach(link => link.classList.remove('active'));
-            document.querySelector(`.sidebar-link[href="#${id}"]`)?.classList.add('active');
-          }
-        });
-      }, {
-        rootMargin: '-50% 0px -50% 0px', 
-        threshold: 0
-      });
-
-      moduleSections.forEach(section => {
-        observer.observe(section);
-      });
-
-    });
-  </script>
-
-  <script>
-    (function () {
-      function evaluateQuiz(form) {
-        const questions = Array.from(form.querySelectorAll('.question'));
-        let correct = 0;
-        let wrong = 0;
-        let wrongItems = [];
-        questions.forEach((q, idx) => {
-          q.classList.remove('correct', 'incorrect');
-          const badge = q.querySelector('.badge');
-          if (badge) { badge.textContent = ''; badge.classList.remove('correct','incorrect'); }
-          const radios = q.querySelectorAll('input[type="radio"]');
-          let selected = '';
-          radios.forEach(r => { if (r.checked) selected = r.value; });
-          const expected = (q.getAttribute('data-answer') || '').trim();
-          const rationale = q.querySelector('.rationale');
-          
-          if (rationale) rationale.style.display = 'none';
-
-          if (!selected) {
-            wrong += 1;
-            q.classList.add('incorrect');
-            if (badge) { badge.textContent = 'Unanswered'; badge.classList.add('incorrect'); } 
-            if (rationale) rationale.style.display = 'block'; 
-            wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
-          } else if (selected.toUpperCase() === expected.toUpperCase()) {
-            correct += 1;
-            q.classList.add('correct');
-            if (badge) { badge.textContent = 'Correct'; badge.classList.add('correct'); }
-          } else {
-            wrong += 1;
-            q.classList.add('incorrect');
-            if (badge) { badge.textContent = 'Incorrect'; badge.classList.add('incorrect'); } 
-            if (rationale) rationale.style.display = 'block'; 
-            wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
-          }
-        });
-        const total = questions.length || 1;
-        const percent = Math.round((correct / total) * 100);
-        const res = form.querySelector('.quiz-result');
-        if (res) {
-          res.innerHTML = '' +
-            '<div class="stats font-bold text-lg">Score: ' + correct + '/' + total + ' (' + percent + '%)</div>' +
-            (wrongItems.length ? '<div class="wrong-list mt-3 text-sm"><strong>Review:</strong> ' + wrongItems.join('; ') + '</div>' : '');
         }
-      }
 
-      document.addEventListener('click', function (e) {
-        const btn = e.target.closest('.submit-quiz');
-        if (!btn) return;
-        e.preventDefault(); 
-        const mod = btn.getAttribute('data-module');
-        const form = document.getElementById('quiz-form-' + mod);
-        if (form) evaluateQuiz(form);
-      });
-    })();
-  </script>
-{% endblock %}
+        document.addEventListener('click', function (e) {
+          const btn = e.target.closest('.submit-quiz');
+          if (!btn) return;
+          const mod = btn.getAttribute('data-module');
+          const form = document.getElementById('quiz-form-' + mod);
+          if (form) evaluateQuiz(form);
+        });
+      })();
+    </script>
+  </body>
+  </html>

@@ -1,136 +1,21 @@
-/* ========================================= */
-/* 1. KÜRESEL SIFIRLAMA VE TEMEL STİL */
-/* ========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-
-/* YENİ PALET: Daha az siyah, daha morumsu koyu tonlar ve yumuşak vurgular */
-:root {
-    --color-dark-bg: #12121A; /* Premium Koyu Morumsu Arka Plan */
-    --color-card-bg: #1F2937; /* Hafif Gri Kart Arka Planı */
-    --color-primary-purple: #7C3AED; /* Yumuşak Ana Mor */
-    --color-secondary-blue: #38BDF8; /* Yumuşak Neon Mavi Vurgu */
-    --color-text-light: #E0E0E5; /* Açık Metin */
-    --color-nav-link: #CFCFE5; /* Yüksek kontrastlı Navigasyon Linki */
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    /* Body arka planı base.html'deki bg-gray-900 ile kontrol edilir */
-    color: var(--color-text-light);
-}
-
-/* ========================================= */
-/* 2. ANİMASYONLAR VE MİKRO ETKİLEŞİMLER */
-/* ========================================= */
-
+/* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fadeIn {
-  animation: fadeIn 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: fadeIn 0.5s ease-in-out forwards;
 }
 
-/* Kart Hover Efekti (Woaww faktörü - Gölge yoğunuğu hafifletildi) */
-.form-card, .card-hover {
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    /* Kartların arka planı (index.html'deki bg-gray-900) ile uyumlu */
-}
-.form-card:hover, .card-hover:hover {
-  transform: translateY(-8px);
-  /* Gölge opaklığı azaltıldı */
-  box-shadow: 0 15px 40px rgba(124, 58, 237, 0.3), 0 0 15px rgba(124, 58, 237, 0.15);
+/* Card Hover Shadow */
+.card-hover:hover {
+  transform: translateY(-4px) scale(1.02);
+  transition: all 0.3s ease;
 }
 
-/* ========================================= */
-/* 2.5. NAVİGASYON VE LOGO KONTRASTI */
-/* ========================================= */
-
-.logo-text {
-    background: linear-gradient(90deg, var(--color-primary-purple) 0%, var(--color-secondary-blue) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 6px rgba(124, 58, 237, 0.5); /* Yumuşak parlaklık */
-    font-weight: 800;
-}
-
-.nav-link {
-    color: var(--color-nav-link) !important; /* YÜKSEK KONTRAST */
-    position: relative;
-    transition: color 0.3s ease, text-shadow 0.3s ease;
-    font-weight: 500;
-}
-.nav-link:hover {
-    color: #A78BFA !important; /* Yumuşak mor vurgu */
-    text-shadow: 0 0 5px rgba(167, 139, 250, 0.7);
-}
-.nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background-color: var(--color-primary-purple);
-    transition: width 0.3s ease;
-}
-.nav-link:hover::after {
-    width: 100%;
-}
-
-/* ========================================= */
-/* 3. FORM VE INPUT ELEMANLARI (YUMUŞATILDI) */
-/* ========================================= */
-
-/* Input ve Textarea - Dark Mode Stili */
-input[type="text"], input[type="number"], textarea {
-    background-color: #2D3748 !important; /* Karttan bir ton daha koyu */
-    border: 1px solid #4B5563 !important; /* Yumuşak kenarlık */
-    color: var(--color-text-light) !important;
-}
-
-/* Yüksek Teknoloji Input Odaklanma (Parlama hafifletildi) */
+/* Input focus */
 input:focus, textarea:focus {
-  border-color: var(--color-primary-purple) !important;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.3) !important; 
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.3);
   outline: none;
-}
-
-/* ========================================= */
-/* 4. İLERLEME ÇUBUĞU (LOADING) */
-/* ========================================= */
-.progress-bar-container {
-    height: 12px;
-    background-color: #374151; /* Daha yumuşak koyu konteyner */
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-/* İlerleme Çubuğu İç Dolgu (Canlı Gradyan) */
-#progress-bar {
-    background: linear-gradient(90deg, var(--color-primary-purple) 0%, var(--color-secondary-blue) 100%);
-    box-shadow: 0 0 10px var(--color-secondary-blue); /* Parlama azaltıldı */
-}
-
-/* ========================================= */
-/* 5. KAYDIRMA ÇUBUĞU (SCROLLBAR) */
-/* ========================================= */
-#video-list::-webkit-scrollbar { width: 10px; }
-#video-list::-webkit-scrollbar-track { background: var(--color-dark-bg); }
-#video-list::-webkit-scrollbar-thumb { 
-    background-color: var(--color-primary-purple);
-    border-radius: 5px; 
-    border: 2px solid var(--color-dark-bg);
-}
-
-/* ========================================= */
-/* 6. BUTONLAR VE EK VURGULAR */
-/* ========================================= */
-.create-button {
-    letter-spacing: 0.1em;
-    /* Mor gölge hafifletildi */
-    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
-}
-.create-button:hover {
-    box-shadow: 0 12px 35px rgba(124, 58, 237, 0.6);
 }
