@@ -5,11 +5,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from moviepy import (
+from moviepy.editor import (
     AudioFileClip,
-    ImageClip,
+    VideoFileClip,
     concatenate_videoclips,
-)  # type: ignore[import]
+    CompositeVideoClip,
+    TextClip,
+) # type: ignore[import]
 from PIL import Image, ImageDraw, ImageFont  # type: ignore[import]
 
 
