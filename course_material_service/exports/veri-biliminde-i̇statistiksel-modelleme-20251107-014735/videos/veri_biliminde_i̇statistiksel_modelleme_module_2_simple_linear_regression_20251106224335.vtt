@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.650
+[Veri Biliminde İstatistiksel Modelleme - Module 2: Simple Linear Regression] Unlock the power of data with simple linear regression!
+
+00:00:04.050 --> 00:00:30.110
+[Introduction to Regression] Welcome! Today, we're diving into simple linear regression, a fundamental statistical tool for data analysis. What if you could predict outcomes based on existing data? That’s exactly what regression allows us to do. For example, businesses use it to forecast sales based on advertising spend. By the end of this video, you will know how to analyze datasets using these techniques and interpret your findings effectively.
+
+00:00:30.510 --> 00:00:58.110
+[Fitting a Model in R] Now, let's look at how to fit a linear model using R. R is a powerful language for statistical computing. You can start by using the lm() function, which stands for 'linear model'. For instance, running the command lm(y ~ x) allows you to explore the relationship between your dependent variable y and independent variable x. Wouldn't it be great to see this data come alive with interactive graphs? Let's set that up in your environment!
+
+00:00:58.510 --> 00:01:30.960
+[Interpreting Output] Interpreting the regression output is crucial. You'll see coefficients for each predictor, which tell you their impact on your outcome variable. For example, a coefficient of 0.5 suggests that for every unit increase in x, y increases by 0.5 units. Additionally, R-squared values indicate how well your model explains the variability of the data. Remember, a higher R-squared usually means a better model fit. Are you excited to unlock insights from your data?
+
+00:01:31.360 --> 00:01:58.770
+[Practical Applications] Finally, let's explore practical applications. Simple linear regression is used in various fields, from predicting house prices to assessing labor costs based on hours worked. By applying these concepts, you can make informed decisions driven by data. Imagine making marketing strategies based on customer behavior data! As you practice, think about the datasets you have and how regression could reveal trends and forecasts.
+
+00:01:59.170 --> 00:02:03.030
+[Next Steps] Start applying these techniques in your next data analysis project!

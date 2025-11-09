@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.210
+[Veri Biliminde İstatistiksel Modelleme - Module 1: Introduction to Statistical Modeling] Discover how statistical modeling shapes the world of data science!
+
+00:00:05.610 --> 00:00:36.810
+[What is Statistical Modeling?] Welcome to our introduction to statistical modeling! Did you know that statistical models are the backbone of data science? They help us make sense of complex data by capturing relationships among variables. For instance, when predicting housing prices, a statistical model incorporates factors like location, size, and age of the property. In this module, we will uncover the fundamental principles guiding these models, empowering you to leverage them in your data analysis.
+
+00:00:37.210 --> 00:01:05.070
+[Types of Models Explained] Now, let’s delve into the types of statistical models. There are primarily two categories: parametric and non-parametric models. Parametric models, like linear regression, assume a specific form for the relationship between variables. In contrast, non-parametric models, such as decision trees, do not make such assumptions. Each model type has its strengths, suited for different scenarios in data analysis, making the choice critical in your work.
+
+00:01:05.470 --> 00:01:33.070
+[Real-World Applications] So, how are these statistical models used in data science? They can predict outcomes, identify trends, and even guide decision-making in industries like finance and healthcare. For example, predictive analytics in healthcare uses models to forecast patient outcomes based on historical data, improving care and resource allocation. Understanding how to apply these models is vital for unlocking actionable insights from your data.
+
+00:01:33.470 --> 00:01:58.570
+[Summary and Next Steps] As we wrap up, remember that statistical modeling is essential for comprehending and harnessing data effectively. You’ve learned about the fundamentals of statistical modeling, distinguished between model types, and explored their real-world applications. Embrace these concepts as you embark on your journey into data science, forming a solid foundation for advanced techniques later on!
+
+00:01:58.970 --> 00:02:03.530
+[Next Steps] Join us for more in-depth learning on advanced statistical techniques!

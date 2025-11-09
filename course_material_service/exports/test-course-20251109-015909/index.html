@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALPHA | Automated Course Generation</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
+<link rel="icon" href="http://127.0.0.1:8000/static/favicon.ico" type="image/x-icon">
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link rel="stylesheet" href="http://127.0.0.1:8000/static/main.css">
+<script src="http://127.0.0.1:8000/static/main.js" defer></script>
+
+
+  
+  <style>
+    /* ========================================= */
+    /* 1. KURS SAYFASI STİLLERİ (REVİZE EDİLDİ) */
+    /* ========================================= */
+
+    /* Ana İçerik ve Kenar Çubuğu */
+    .course-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      gap: 3rem; /* 48px - Boşluk artırıldı */
+    }
+
+    /* Sol Kenar Çubuğu (GENİŞLETİLDİ) */
+    .course-sidebar {
+      width: 30%; /* 25%'ten 30%'a çıkarıldı */
+      min-width: 320px; /* 280px'ten 320px'e çıkarıldı */
+      position: sticky;
+      top: 100px; 
+      height: calc(100vh - 120px);
+      overflow-y: auto;
+      padding-right: 2rem; /* 32px - Boşluk artırıldı */
+      border-right: 1px solid #374151;
+    }
+
+    /* Kenar Çubuğu Linkleri (BÜYÜTÜLDÜ) */
+    .sidebar-link {
+      display: block;
+      padding: 0.85rem 1.25rem; /* Boşluk artırıldı */
+      font-size: 1rem; /* 0.95rem'den 1rem'e (16px) */
+      font-weight: 500;
+      color: #D1D5DB;
+      border-radius: 8px;
+      transition: all 0.2s ease-in-out;
+      border-left: 4px solid transparent; /* Daha kalın kenarlık */
+    }
+    .sidebar-link:hover {
+      background-color: #374151;
+      color: #FFF;
+      transform: translateX(4px);
+    }
+    .sidebar-link.active {
+      color: var(--color-secondary-blue);
+      font-weight: 700;
+      background-color: rgba(56, 189, 248, 0.05);
+      border-left-color: var(--color-secondary-blue);
+    }
+
+    /* Ana İçerik Alanı (DARALTILDI) */
+    .course-content {
+      width: 70%; /* 75%'ten 70%'e (daha dengeli) */
+    }
+
+    .module-section {
+      padding-top: 80px; 
+      margin-top: -80px;
+    }
+
+    /* ========================================= */
+    /* 2. SEKMELİ (TAB) İÇERİK (BÜYÜTÜLDÜ) */
+    /* ========================================= */
+    .tab-buttons {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid #374151;
+      margin-bottom: 2rem; /* Boşluk artırıldı */
+    }
+    .tab-button {
+      padding: 0.85rem 1.75rem; /* Boşluk artırıldı */
+      font-size: 1.25rem; /* 1.1rem'den 1.25rem'e (20px) */
+      font-weight: 600;
+      color: #9CA3AF;
+      border-bottom: 4px solid transparent; /* Daha kalın kenarlık */
+      transform: translateY(2px);
+      transition: all 0.2s ease;
+    }
+    /* ... (hover/active stilleri aynı) ... */
+    .tab-button:hover { color: #E0E0E5; }
+    .tab-button.active {
+      color: var(--color-primary-purple);
+      border-bottom-color: var(--color-primary-purple);
+    }
+
+    .tab-content { display: none; animation: fadeIn 0.5s ease; }
+    .tab-content.active { display: block; }
+
+    /* ========================================= */
+    /* 3. İÇERİK STİLLERİ (BÜYÜTÜLDÜ) */
+    /* ========================================= */
+
+    /* Video Oynatıcı (Aynı) */
+    .video-player-wrapper {
+      position: relative;
+      padding-top: 56.25%; 
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #000;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .video-player-wrapper video {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    }
+
+    /* Video Script (BÜYÜTÜLDÜ) */
+    .script-accordion summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--color-secondary-blue);
+      margin-top: 1.5rem;
+      font-size: 1.125rem; /* 18px (text-lg) */
+    }
+    .script-accordion pre {
+      background-color: #111827;
+      padding: 1.5rem; /* Boşluk artırıldı */
+      border-radius: 8px;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      color: #D1D5DB;
+      font-family: 'Consolas', 'Monospace';
+      font-size: 1rem; /* 16px (text-base) */
+    }
+
+    /* Okuma Materyali (BÜYÜTÜLDÜ) */
+    .reading-wrapper {
+      background-color: #1F2937;
+      padding: 2rem 2.5rem; /* Boşluk artırıldı */
+      border-radius: 12px;
+      border: 1px solid #374151;
+    }
+    .reading-wrapper h4 {
+      font-size: 1.75rem; /* 28px */
+      font-weight: 700;
+      color: var(--color-primary-purple);
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    /* EN KRİTİK DEĞİŞİKLİK (Okunabilirlik) */
+    .reading-wrapper p {
+      color: #D1D5DB;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+      font-size: 1.125rem; /* 18px (text-lg) - KÜÇÜKTÜ */
+    }
+    .reading-wrapper .section-card {
+      background: #2D3748;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .reading-wrapper .key-points {
+      list-style-type: '— ';
+      padding-left: 1.5rem;
+      color: #B0B8C5; /* Daha açık renk */
+      font-size: 1rem; /* 16px (text-base) */
+    }
+    .reading-wrapper .glossary-item dt {
+      font-weight: 700;
+      color: #FFF;
+      font-size: 1.125rem; /* 18px */
+    }
+    .reading-wrapper .glossary-item dd {
+      color: #9CA3AF;
+      margin-left: 1rem;
+      margin-bottom: 1rem;
+      font-size: 1rem; /* 16px */
+    }
+
+    /* Quiz Stilleri (BÜYÜTÜLDÜ) */
+    .question { 
+        padding: 1.5rem; 
+        border: 1px solid #374151; 
+        background: #1F2937; 
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    /* Soru metni büyütüldü (HTML'de) */
+    .question strong {
+        font-size: 1.25rem; /* 20px (text-xl) */
+        line-height: 1.6;
+    }
+    .choice-list { list-style: none; padding-left: 0; margin-top: 1.25rem;}
+    .choice-list li label { 
+        cursor: pointer; 
+        display: block; 
+        padding: 1rem 1.25rem; /* Boşluk artırıldı */
+        border-radius: 8px; /* Daha yuvarlak */
+        transition: background 0.2s;
+        border: 1px solid #374151;
+        margin-bottom: 0.75rem;
+        font-size: 1.125rem; /* 18px (text-lg) - KÜÇÜKTÜ */
+    }
+    .choice-list li label:hover { 
+        background: #374151;
+    }
+    .choice-list input[type="radio"] {
+        margin-right: 0.75rem;
+        accent-color: var(--color-primary-purple); 
+        transform: scale(1.1); /* Butonu hafifçe büyüt */
+    }
+    
+    /* Quiz Buton/Sonuç (Stiller aynı, sadece boyutlar) */
+    .quiz-actions button {
+      display: inline-block;
+      width: auto;
+      background: linear-gradient(90deg, var(--color-primary-purple) 0%, var(--color-secondary-blue) 100%);
+      color: white;
+      font-weight: 700;
+      padding: 0.85rem 2.5rem; /* Büyütüldü */
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+      transition: all 0.3s ease;
+      font-size: 1.125rem; /* 18px */
+    }
+    .quiz-actions button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+    }
+    .question.correct { background: #1F2937; border-left: 5px solid #22C55E; } 
+    .question.incorrect { background: #1F2937; border-left: 5px solid #EF4444; }
+    .badge.correct { background: #22C55E; color: #FFF; }
+    .badge.incorrect { background: #EF4444; color: #FFF; }
+    .quiz-result { 
+        margin-top: 1.5rem; 
+        padding: 1.5rem;
+        background: #2D3748;
+        border-radius: 8px;
+        border-left: 5px solid #3B82F6;
+        font-size: 1.125rem; /* 18px */
+    }
+    .badge { 
+      display: inline-block; 
+      padding: 4px 10px; /* Büyütüldü */
+      font-size: 0.9rem; /* 14px */
+      border-radius: 999px; 
+      margin-left: 0.75rem; 
+      font-weight: 600;
+    }
+
+  </style>
+ 
+</head>
+
+<body class="bg-gray-900 text-gray-100 font-sans" style="font-family: 'Inter', sans-serif;"> 
+
+<nav class="sticky top-0 z-40 bg-gray-800/90 backdrop-blur-lg shadow-xl border-b border-indigo-500/50">
+  <div class="container mx-auto px-6 lg:px-12 py-4 flex items-center justify-between">
+    
+    <div class="flex items-center space-x-3">
+      <span class="text-3xl font-extrabold tracking-widest uppercase logo-text">ALPHA</span>
+    </div>
+    
+    <div class="flex items-center space-x-6 text-lg">
+      <a href="http://127.0.0.1:8000/" class="nav-link text-gray-300 hover:text-purple-400">Home</a>
+      
+      <a href="/about" class="nav-link text-gray-300 hover:text-purple-400">About</a>
+      <a href="/contact" class="nav-link text-gray-300 hover:text-purple-400">Contact</a>
+      
+      <a href="http://127.0.0.1:8000/exports" class="nav-link text-gray-300 hover:text-purple-400">Saved Courses</a>
+
+      <div class="border-l border-gray-600 pl-6 flex items-center space-x-4">
+      
+        <span class="text-sm text-gray-400" title="admin@alpha.com">
+          Welcome, <span class="font-medium text-gray-300">admin</span>
+        </span>
+        
+        <a href="http://127.0.0.1:8000/logout" 
+           class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-lg transition duration-200 text-center">
+          Logout
+        </a>
+      
+      </div>
+    </div>
+    </div>
+</nav>
+
+<main class="container mx-auto px-6 lg:px-12 py-16 min-h-[80vh]">
+  
+<main class="container mx-auto px-6 lg:px-12 py-16 min-h-[80vh]">
+
+  <div class="mb-16">
+    <a class="back inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition mb-6 text-base" href="/exports">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Back to All Courses
+    </a>
+    
+    <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight logo-text mb-6">
+      test course
+    </h1>
+    
+    <p class="text-2xl md:text-3xl text-gray-300 max-w-5xl"> A course designed to equip general learners with foundational knowledge and skills in testing.
+    </p>
+
+    
+    <div class="mt-12">
+      <h2 class="text-3xl font-bold text-indigo-300 mb-6">Learning Outcomes</h2> <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4">
+        
+        <li class="flex items-start gap-3 text-lg text-gray-300"> <svg class="w-7 h-7 flex-shrink-0 text-green-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>test course</span>
+        </li>
+        
+      </ul>
+    </div>
+    
+  </div>
+
+  <div class="course-container">
+    
+    <nav class="course-sidebar">
+      <h3 class="text-xl font-semibold text-gray-300 uppercase tracking-wider mb-5">Course Modules</h3> <ul class="space-y-3"> 
+        <li>
+          <a href="#module-1" class="sidebar-link">
+            <span class="block text-base text-indigo-400 font-medium">Module 1</span> <span class="block text-white text-lg">Introduction to Testing</span> </a>
+        </li>
+        
+      </ul>
+    </nav>
+
+    <div class="course-content">
+      
+      
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <section id="module-1" class="module-section mb-20 bg-gray-900 p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-800"> <h2 class="text-5xl font-bold text-white mb-3"> <span class="text-indigo-400">Module 1:</span> Introduction to Testing
+        </h2>
+        <p class="text-xl text-gray-400 mb-10">An overview of testing concepts and their importance.</p> <div>
+          <div class="tab-buttons">
+            <button class="tab-button active" data-tab-group="1" data-tab-target="video-1">
+              <svg class="inline-block w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v4a1 1 0 002 0V3a1 1 0 00-1-1zM4 6a1 1 0 011-1h1.586l1-1H10.414l1 1H13a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V6zm10 0v10H6V6h8z"></path></svg>
+              Video Lesson
+            </button>
+            <button class="tab-button" data-tab-group="1" data-tab-target="reading-1">
+              <svg class="inline-block w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4zm2 0v12h6V4H7z"></path></svg>
+              Reading Material
+            </button>
+            <button class="tab-button" data-tab-group="1" data-tab-target="quiz-1">
+              <svg class="inline-block w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zm0 14a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zm-6-8a1 1 0 000 2h1a1 1 0 000-2H4zm0 4a1 1 0 000 2h1a1 1 0 000-2H4zm12-4a1 1 0 000 2h1a1 1 0 000-2h-1zm0 4a1 1 0 000 2h1a1 1 0 000-2h-1zM7 6a1 1 0 011-1h4a1 1 0 011 1v8a1 1 0 01-1 1H8a1 1 0 01-1-1V6zm1 0v8h4V6H8z"></path></svg>
+              Quiz
+            </button>
+          </div>
+
+          <div id="video-1" class="tab-content active" data-tab-group="1">
+            
+              <div class="video-player-wrapper">
+                <video class="video" controls preload="metadata">
+                  <source src="videos/test_course_module_1_introduction_to_testing_20251108225802.mp4" type="video/mp4" />
+                  
+                  <track kind="subtitles" src="videos/test_course_module_1_introduction_to_testing_20251108225802.vtt" srclang="en" label="English" default />
+                  
+                  
+                  <track kind="chapters" src="videos/test_course_module_1_introduction_to_testing_20251108225802.chapters.vtt" srclang="en" label="Chapters" />
+                  
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              
+              
+              <details class="script-accordion mt-6">
+                <summary>View Video Script</summary>
+                <pre>Testing is essentially a systematic process intended to evaluate a product, service, or concept. It helps validate whether a solution meets specified requirements. For example, in software development, testing ensures that the application behaves as expected under various conditions. Perhaps you&#39;ve encountered scenarios where a product failed because it wasn&#39;t properly tested—this underlines the concept&#39;s importance. So, think of testing as a critical checkpoint that safeguards quality.
+
+Testing serves multiple vital purposes across industries, from reducing risks to maintaining quality. Consider how a single bug in software could lead to significant financial losses or loss of customer trust. In healthcare, rigorous testing of medical devices can save lives. This shows how neglecting testing can have dire consequences, reinforcing the need for thorough evaluations before any launch.
+
+There are several types of testing methods suitable for various contexts. From unit testing in software to user acceptance tests in marketing, each testing type suits specific needs. For instance, regression testing checks if new changes introduce errors in previously working code. Each method has its unique benefits, thus knowing them enriches our toolkit and enhances problem-solving ability.
+
+In our daily lives, we interact with various testing applications. Think about your last software update—how it went through multiple testing phases before reaching you. Similarly, educational assessments gauge students&#39; understanding. Testing becomes a foundational element in decision-making processes across sectors, emphasizing a robust approach to quality assurance. Therefore, awareness and understanding of testing can significantly heighten our effectiveness.</pre>
+              </details>
+              
+
+            
+          </div>
+          
+          <div id="reading-1" class="tab-content" data-tab-group="1">
+            
+            <div class="reading-wrapper">
+              
+                <p class="text-xl text-indigo-300 mb-6 border-b border-gray-600 pb-4"><strong>Summary:</strong> This module provides an overview of testing concepts, emphasizing its significance and various methods.</p> 
+              
+              
+                <h4>In-Depth Sections</h4>
+                
+                  <div class="section-card">
+                    <h5 class="font-bold text-xl text-white mb-2">Definition of Testing</h5> <p class="mb-3">Testing encompasses a wide array of activities performed to identify errors, gaps, or missing requirements in contrast to the actual requirements. It verifies whether the system functions as intended and meets business and technical specifications.</p> 
+                    
+                      <ul class="key-points space-y-2">
+                        
+                          <li>Testing is the process of evaluating a system or its components.</li>
+                        
+                          <li>It ensures that the product meets specified requirements.</li>
+                        
+                      </ul>
+                    
+                  </div>
+                
+                  <div class="section-card">
+                    <h5 class="font-bold text-xl text-white mb-2">Importance of Testing</h5> <p class="mb-3">The significance of testing lies in its ability to identify issues early in the development life cycle, reducing costs associated with fixing defects post-release. Effective testing ensures that the final product is reliable and performs as expected in real-world scenarios.</p> 
+                    
+                      <ul class="key-points space-y-2">
+                        
+                          <li>Helps uncover defects before deployment.</li>
+                        
+                          <li>Ensures product quality and customer satisfaction.</li>
+                        
+                      </ul>
+                    
+                  </div>
+                
+                  <div class="section-card">
+                    <h5 class="font-bold text-xl text-white mb-2">Types of Testing Methods</h5> <p class="mb-3">Testing methods can be categorized broadly into Manual and Automated testing. Each method serves different needs and fits various testing levels, such as Unit Testing (testing individual components), Integration Testing (testing combined parts), and System Testing (testing the entire system&#39;s interactions).</p> 
+                    
+                      <ul class="key-points space-y-2">
+                        
+                          <li>Manual Testing vs Automated Testing.</li>
+                        
+                          <li>Different levels of testing: Unit, Integration, and System Testing.</li>
+                        
+                      </ul>
+                    
+                  </div>
+                
+              
+                
+              
+                <h4>Glossary</h4>
+                <dl class="space-y-3">
+                  
+                    <div class="glossary-item">
+                      <dt>Testing:</dt>
+                      <dd>The process of evaluating a system to identify any gaps, errors, or requirements not met.</dd>
+                    </div>
+                  
+                    <div class="glossary-item">
+                      <dt>Manual Testing:</dt>
+                      <dd>Testing a software application manually without automation tools.</dd>
+                    </div>
+                  
+                    <div class="glossary-item">
+                      <dt>Automated Testing:</dt>
+                      <dd>Using scripts and software tools to test the application automatically.</dd>
+                    </div>
+                  
+                </dl>
+              
+            </div>
+            
+          </div>
+          
+          <div id="quiz-1" class="tab-content" data-tab-group="1">
+            
+              
+              <form class="quiz-form" id="quiz-form-1">
+                <ol class="space-y-4">
+                  
+                  
+                  <li class="question" data-answer="A" data-stem="What is the primary purpose of testing in software development?">
+                    <div>
+                      <strong>1. What is the primary purpose of testing in software development?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q0-m1" value="A" />
+                          A. To identify defects before the software is released.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q0-m1" value="B" />
+                          B. To enhance the aesthetics of the software.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q0-m1" value="C" />
+                          C. To create documentation for end-users.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q0-m1" value="D" />
+                          D. To improve sales and marketing strategies.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-base mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> The primary purpose of testing is to identify defects and ensure quality before the software reaches the end-user, making option A the correct choice.</p> 
+                  </li>
+                  
+                  
+                  <li class="question" data-answer="C" data-stem="Which of the following testing methods is primarily focused on evaluating the functionality of the software against the specifications?">
+                    <div>
+                      <strong>2. Which of the following testing methods is primarily focused on evaluating the functionality of the software against the specifications?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q1-m1" value="A" />
+                          A. Unit Testing
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q1-m1" value="B" />
+                          B. Usability Testing
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q1-m1" value="C" />
+                          C. Functional Testing
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q1-m1" value="D" />
+                          D. Performance Testing
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-base mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> Functional Testing specifically evaluates software against its requirements to ensure that it performs the required functions correctly.</p> 
+                  </li>
+                  
+                  
+                  <li class="question" data-answer="B" data-stem="In the context of software testing, what does the term &#39;regression testing&#39; refer to?">
+                    <div>
+                      <strong>3. In the context of software testing, what does the term &#39;regression testing&#39; refer to?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q2-m1" value="A" />
+                          A. Testing the new features of the software.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q2-m1" value="B" />
+                          B. Re-testing the software after changes to ensure existing functionalities work.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q2-m1" value="C" />
+                          C. Testing to improve the user interface.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q2-m1" value="D" />
+                          D. Conducting performance testing under peak loads.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-base mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> Regression testing involves re-testing parts of the software that may have been affected by recent changes to ensure that existing functionalities continue to operate as expected.</p> 
+                  </li>
+                  
+                  
+                  <li class="question" data-answer="C" data-stem="Why is it important to employ a variety of testing methods throughout the software lifecycle?">
+                    <div>
+                      <strong>4. Why is it important to employ a variety of testing methods throughout the software lifecycle?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q3-m1" value="A" />
+                          A. To ensure that all team members are engaged.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q3-m1" value="B" />
+                          B. To accumulate more documentation for the project.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q3-m1" value="C" />
+                          C. To comprehensively evaluate different aspects of the software.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q3-m1" value="D" />
+                          D. To reduce the overall time spent on testing.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-base mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> Employing a variety of testing methods allows for a more thorough evaluation of the software, addressing different aspects such as functionality, usability, and performance, making option C the most accurate.</p> 
+                  </li>
+                  
+                  
+                  <li class="question" data-answer="B" data-stem="Analyze the impact of not implementing testing in the software development process. What could be a likely consequence?">
+                    <div>
+                      <strong>5. Analyze the impact of not implementing testing in the software development process. What could be a likely consequence?</strong>
+                      <span class="badge" aria-live="polite"></span>
+                    </div>
+                    <ul class="choice-list">
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q4-m1" value="A" />
+                          A. Increased user satisfaction.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q4-m1" value="B" />
+                          B. High costs due to post-release defects.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q4-m1" value="C" />
+                          C. Faster time to market.
+                        </label>
+                      </li>
+                      
+                      <li>
+                        <label>
+                          <input type="radio" name="q4-m1" value="D" />
+                          D. Enhanced team morale.
+                        </label>
+                      </li>
+                      
+                    </ul>
+                    
+                    <p class="muted rationale text-base mt-3 p-3 bg-gray-800 rounded" style="display:none;"><strong>Rationale:</strong> Not implementing testing can lead to undetected defects that result in high costs incurred after release due to the need for urgent fixes, making option B the best choice.</p> 
+                  </li>
+                  
+                </ol>
+                <div class="quiz-actions mt-8"> <button type="button" class="submit-quiz" data-module="1">Check Answers</button>
+                </div>
+                <div class="quiz-result" id="quiz-result-1" aria-live="polite"></div>
+              </form>
+              
+            
+          </div>
+          
+        </div>
+        </section>
+      
+       
+
+    </div>
+    </div>
+  </main>
+
+</main>
+
+<footer class="bg-gray-900 border-t border-purple-600/30">
+  <div class="container mx-auto px-6 lg:px-12 py-6 text-center text-gray-500 text-sm">
+    &copy; ALPHA. All rights reserved. | <span class="text-purple-400 hover:text-purple-300 transition cursor-pointer">AI-Powered Course Generation</span>
+  </div>
+</footer>
+
+
+  
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // --- 1. SEKME (TAB) KONTROLÜ ---
+      const allTabButtons = document.querySelectorAll('.tab-button');
+      
+      allTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const tabGroup = button.dataset.tabGroup;
+          const targetId = button.dataset.tabTarget;
+          
+          document.querySelectorAll(`.tab-button[data-tab-group="${tabGroup}"]`).forEach(btn => btn.classList.remove('active'));
+          document.querySelectorAll(`.tab-content[data-tab-group="${tabGroup}"]`).forEach(content => content.classList.remove('active'));
+          
+          button.classList.add('active');
+          document.getElementById(targetId).classList.add('active');
+        });
+      });
+
+      // --- 2. SCROLL-SPY (Kenar çubuğunu aktif etme) & SMOOTH SCROLL ---
+      const sidebarLinks = document.querySelectorAll('.sidebar-link');
+      const moduleSections = document.querySelectorAll('.module-section');
+
+      // Smooth scroll
+      sidebarLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetId = link.getAttribute('href');
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        });
+      });
+
+      // Scroll-spy
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            sidebarLinks.forEach(link => link.classList.remove('active'));
+            document.querySelector(`.sidebar-link[href="#${id}"]`)?.classList.add('active');
+          }
+        });
+      }, {
+        rootMargin: '-50% 0px -50% 0px', 
+        threshold: 0
+      });
+
+      moduleSections.forEach(section => {
+        observer.observe(section);
+      });
+
+    });
+  </script>
+
+  <script>
+    (function () {
+      function evaluateQuiz(form) {
+        const questions = Array.from(form.querySelectorAll('.question'));
+        let correct = 0;
+        let wrong = 0;
+        let wrongItems = [];
+        questions.forEach((q, idx) => {
+          q.classList.remove('correct', 'incorrect');
+          const badge = q.querySelector('.badge');
+          if (badge) { badge.textContent = ''; badge.classList.remove('correct','incorrect'); }
+          const radios = q.querySelectorAll('input[type="radio"]');
+          let selected = '';
+          radios.forEach(r => { if (r.checked) selected = r.value; });
+          const expected = (q.getAttribute('data-answer') || '').trim();
+          const rationale = q.querySelector('.rationale');
+          
+          if (rationale) rationale.style.display = 'none';
+
+          if (!selected) {
+            wrong += 1;
+            q.classList.add('incorrect');
+            if (badge) { badge.textContent = 'Unanswered'; badge.classList.add('incorrect'); } 
+            if (rationale) rationale.style.display = 'block'; 
+            wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+          } else if (selected.toUpperCase() === expected.toUpperCase()) {
+            correct += 1;
+            q.classList.add('correct');
+            if (badge) { badge.textContent = 'Correct'; badge.classList.add('correct'); }
+          } else {
+            wrong += 1;
+            q.classList.add('incorrect');
+            if (badge) { badge.textContent = 'Incorrect'; badge.classList.add('incorrect'); } 
+            if (rationale) rationale.style.display = 'block'; 
+            wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+          }
+        });
+        const total = questions.length || 1;
+        const percent = Math.round((correct / total) * 100);
+        const res = form.querySelector('.quiz-result');
+        if (res) {
+          res.innerHTML = '' +
+            '<div class="stats font-bold text-lg">Score: ' + correct + '/' + total + ' (' + percent + '%)</div>' +
+            (wrongItems.length ? '<div class="wrong-list mt-3 text-sm"><strong>Review:</strong> ' + wrongItems.join('; ') + '</div>' : '');
+        }
+      }
+
+      document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.submit-quiz');
+        if (!btn) return;
+        e.preventDefault(); 
+        const mod = btn.getAttribute('data-module');
+        const form = document.getElementById('quiz-form-' + mod);
+        if (form) evaluateQuiz(form);
+      });
+    })();
+  </script>
+
+</body>
+</html>
+
+<style>
+  /* Logo metnine gradient ve parlaklık ekleyen sınıf (Woaww Faktörü) */
+  .logo-text {
+    background: linear-gradient(90deg, #6C5CE7 0%, #00C4FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 5px rgba(108, 92, 231, 0.5);
+  }
+  /* Navigasyon linkleri için hover efekti */
+  .nav-link {
+    color: #E0E0E5;
+    position: relative;
+    transition: color 0.3s ease;
+  }
+  .nav-link:hover {
+    color: #00C4FF; /* Neon mavi vurgu */
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #6C5CE7;
+    transition: width 0.3s ease;
+  }
+  .nav-link:hover::after {
+    width: 100%; /* Hover'da alt çizgi animasyonu */
+  }
+</style>

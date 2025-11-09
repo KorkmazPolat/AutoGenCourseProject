@@ -1,0 +1,16 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.620
+[Son Kayıt Başarısı - Module 1: Introduction to Server Logs] Ever wonder how servers track their performance?
+
+00:00:03.020 --> 00:00:35.180
+[What are Server Logs?] Server logs are essential records that keep track of all activities on a server. Imagine them as a diary chronicling every action, including user interactions, errors, and transactions. For instance, web servers create access logs to record each request made by users. This means every time you visit a website, the server notes your activity! Understanding these logs is crucial for monitoring system health and diagnosing issues efficiently. So, why are logs important? Let’s explore further!
+
+00:00:35.580 --> 00:01:07.640
+[Types of Server Logs] There are several types of server logs that administrators should be aware of. Access logs document each request made to a server, while error logs highlight issues that occur during operation. Moreover, application logs track specific activities related to applications running on the server. For example, if a web application crashes, the application log might provide detailed insights into what went wrong. Knowing the different log types helps in pinpointing problem areas effectively.
+
+00:01:08.040 --> 00:01:38.950
+[Importance of Server Logs] Server logs play a pivotal role in system performance monitoring. They help identify bottlenecks and optimize operations, ensuring your server runs smoothly. Consider this: a company might face significant downtime due to unmonitored server issues, leading to lost revenue. By utilizing server logs, companies can proactively address these issues before they escalate. In fact, studies show that organizations leveraging log data significantly reduce their downtime!
+
+00:01:39.350 --> 00:02:05.870
+[Log Monitoring Tools] To manage server logs effectively, various log monitoring tools are available. Tools like Splunk and ELK Stack allow you to aggregate, search, and analyze log data in real-time. For instance, with ELK, you can visualize log data and spot trends quickly. But, it’s not just about having the right tools—it's about understanding how to use them effectively in managing your server performance. That’s the key to harnessing the power of server logs!

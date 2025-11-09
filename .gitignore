@@ -26,3 +26,4 @@ course_material_service/uploads/
 venv/
 course_material_service/.venv/
 course_material_service/generated_videos/
+.DS_Store 

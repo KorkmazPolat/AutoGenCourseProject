@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALPHA | Login</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
+    <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='main.css') }}">
+    
+    <style>
+        body {
+            background: linear-gradient(-45deg, #12121A, #1F2937, #12121A);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .login-card {
+            background-color: #1F2937; /* --color-card-bg */
+            border: 1px solid #374151;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 60px rgba(124, 58, 237, 0.3); /* --color-primary-purple */
+        }
+    </style>
+</head>
+<body class="text-gray-100" style="font-family: 'Inter', sans-serif;">
+
+    <div class="min-h-screen flex flex-col items-center justify-center py-12 px-4">
+        
+        <div class="mb-10 text-center">
+            <span class="text-7xl font-extrabold tracking-widest uppercase logo-text">ALPHA</span>
+            <p class="text-2xl text-gray-400 mt-4">AI-Powered Course Generation</p>
+        </div>
+
+        <div class="login-card w-full max-w-2xl p-16 rounded-3xl">
+            
+            <h2 class="text-5xl font-bold text-white text-center mb-10">Welcome Back</h2>
+            
+            {% if error %}
+            <div class="bg-red-800 border border-red-600 text-white px-4 py-3 rounded-lg mb-6 text-center text-lg">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form action="{{ url_for('handle_login') }}" method="post" class="space-y-8">
+                
+                <div>
+                    <label for="username" class="block text-lg font-medium text-indigo-300 mb-3">Email or Username</label>
+                    <input type="text" id="username" name="username" 
+                           class="w-full p-5 border border-gray-700 bg-gray-800 rounded-xl text-xl text-white placeholder-gray-500 focus:outline-none"
+                           placeholder="you@example.com" required>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <label for="password" class="block text-lg font-medium text-indigo-300">Password</label>
+                        <a href="#" class="text-lg text-indigo-400 hover:text-indigo-300 transition">Forgot password?</a>
+                    </div>
+                    <input type="password" id="password" name="password" 
+                           class="w-full p-5 border border-gray-700 bg-gray-800 rounded-xl text-xl text-white placeholder-gray-500 focus:outline-none"
+                           placeholder="••••••••" required>
+                </div>
+
+                <div class="pt-6">
+                    <button type="submit"
+                            class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-extrabold py-5 rounded-xl shadow-lg shadow-purple-900/50 transition duration-300 transform hover:scale-[1.015] hover:shadow-purple-700/80 tracking-widest uppercase text-lg">
+                        Log In
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-10 text-center">
+                <p class="text-lg text-gray-400">
+                    Don't have an account? 
+                    <a href="{{ url_for('show_register') }}" class="font-medium text-indigo-400 hover:text-indigo-300 transition">Sign up</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

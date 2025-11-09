@@ -1,0 +1,19 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.170
+[Veri Biliminde İstatistiksel Modelleme - Module 2: Advanced Regression Techniques] Discover the power of advanced regression techniques!
+
+00:00:03.570 --> 00:00:29.030
+[What is Advanced Regression?] Welcome! Today, we dive into advanced regression techniques, a vital skill for data scientists. Understanding these methods allows you to paint a clearer picture of your data. Have you ever wondered how businesses make predictions based on historical data? That’s the power of regression! In this module, we'll explore multiple linear regression, logistic regression, and regularization techniques.
+
+00:00:29.430 --> 00:00:56.650
+[Understanding Multiple Linear Regression] First, let's discuss multiple linear regression. This method helps model the relationship between several independent variables and one dependent variable. For example, you can use multiple linear regression to predict house prices based on size, location, and age. Imagine having a house price prediction model that accurately considers all these factors! It’s a robust tool that identifies significant predictors and their impact.
+
+00:00:57.050 --> 00:01:24.910
+[Applying Logistic Regression] Next up is logistic regression, crucial for binary outcomes. Have you ever wanted to predict whether a customer will buy a product? Logistic regression is your answer! It transforms linear outputs into probabilities, ensuring results are between 0 and 1. For instance, by analyzing customer data, we can predict with 85% accuracy who is likely to make a purchase. This method transforms your approach to decision-making.
+
+00:01:25.310 --> 00:01:54.160
+[Regularization Techniques Explained] Finally, let's explore regularization techniques, specifically Lasso and Ridge regression. These methods help prevent overfitting in your models. If you've been frustrated with a model that performs well on training data but poorly on new data, regularization might be the solution. By applying penalties on coefficients, Lasso can shrink some to zero, effectively selecting features. For example, using Lasso might simplify your model from 10 variables to only 5 while retaining performance!
+
+00:01:54.560 --> 00:01:58.420
+[Next Steps] Dive into coding with R and apply these techniques today!
