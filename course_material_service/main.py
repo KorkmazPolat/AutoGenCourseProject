@@ -14,7 +14,7 @@ import yaml
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, File, FastAPI, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jinja2 import Template
@@ -353,6 +353,68 @@ def list_prompts() -> List[Dict[str, str]]:
     ]
 
 
+@app.get("/login", response_class=HTMLResponse, tags=["web"])
+def render_login_form(request: Request):
+    """Serves the professional login page."""
+    return templates.TemplateResponse(
+        "login.html", 
+        {
+            "request": request,
+            "values": {},
+            "current_year": datetime.utcnow().year
+        }
+    )
+
+# YENİ FONKSİYON
+@app.get("/", response_class=HTMLResponse, tags=["web"])
+def render_root(request: Request):
+    """Redirects root (/) to the login page."""
+    # Ana dizine gelenleri /login'e yönlendir
+    return RedirectResponse(url="/login", status_code=303)
+
+# main.py dosyasına, @app.post("/login", ...) sonrasına ekleyin
+
+@app.get("/dashboard", response_class=HTMLResponse, tags=["web"])
+def render_dashboard(request: Request):
+    """Serves the main application page (course generator form)."""
+    # Bu, daha önce sildiğiniz @app.get("/") fonksiyonunun
+    # /dashboard adresine taşınmış halidir.
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "values": {},
+            "current_year": datetime.utcnow().year
+        }
+    )
+
+# ... (geri kalan kodunuz, _build_messages vb. buradan devam eder)
+
+@app.post("/login", response_class=HTMLResponse, tags=["web"])
+async def handle_login(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...)
+):
+    """Handles the login form submission."""
+    
+    # Geçici sahte kullanıcı kontrolü
+    if email.lower() == "admin@alpha.com" and password == "AlphaDev!2025":
+        # Başarılı, /dashboard'a yönlendir
+        return RedirectResponse(url="/dashboard", status_code=303)
+    else:
+        # Başarısız, hata ile login sayfasını tekrar göster
+        return templates.TemplateResponse(
+            "login.html",
+            {
+                "request": request,
+                "error": "Invalid email or password. Please try again.",
+                "values": {"email": email},
+                "current_year": datetime.utcnow().year
+            },
+            status_code=401
+        )
+
 def _build_messages(
     prompt_id: str,
     payload: GenerationRequest,
@@ -609,10 +671,6 @@ def generate_all_materials(
         "materials": prompts,
     }
 
-
-@app.get("/", response_class=HTMLResponse)
-def render_form(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "values": {}})
 
 
 @app.post("/documents/upload", tags=["rag"])

@@ -19,3 +19,15 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(139,92,246,0.3);
   outline: none;
 }
+
+/* Login page animation */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.7s ease-out forwards;
+}
+
+/* Gradient background handled inline in HTML */
+

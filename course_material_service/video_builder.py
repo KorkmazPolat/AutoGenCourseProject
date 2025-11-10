@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from moviepy.editor import (
+from moviepy import (
     AudioFileClip,
     VideoFileClip,
     concatenate_videoclips,
