@@ -361,7 +361,6 @@ async def get_session_user(request: Request):
     """Dependency: Checks if a user is in the session. Redirects to login if not."""
     user = request.session.get("user")
     if not user:
-        # Kullanıcı yoksa, login'e yönlendir
         raise HTTPException(status_code=307, detail="Not authorized", headers={"Location": "/login"})
     return user
 
@@ -379,14 +378,12 @@ def render_login_form(request: Request):
         }
     )
 
-# YENİ FONKSİYON
+
 @app.get("/", response_class=HTMLResponse, tags=["web"])
 def render_root(request: Request):
     """Redirects root (/) to the login page."""
-    # Ana dizine gelenleri /login'e yönlendir
     return RedirectResponse(url="/login", status_code=303)
 
-# main.py dosyasına, @app.post("/login", ...) sonrasına ekleyin
 
 @app.get("/dashboard", response_class=HTMLResponse, tags=["web"])
 def render_dashboard(request: Request, user: str = Depends(get_session_user)):
@@ -428,7 +425,7 @@ async def handle_login(
 @app.get("/logout", response_class=HTMLResponse, tags=["web"])
 async def handle_logout(request: Request):
     """Clears the user session and redirects to login."""
-    request.session.clear() # Session'ı temizle
+    request.session.clear() 
     return RedirectResponse(url="/login", status_code=303)
 
 
