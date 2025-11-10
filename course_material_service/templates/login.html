@@ -10,14 +10,12 @@
     <link rel="stylesheet" href="{{ url_for('static', path='main.css') }}">
     
     <style>
-        /* Yüksek kaliteli bir arka plan görseli ekleyelim (Unsplash'ten) */
+        /* V2 Tasarım Stilleri */
         .brand-visual {
             background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80');
             background-size: cover;
             background-position: center;
         }
-        
-        /* Görselin üzerine marka gradyanımızı kaplama olarak ekleyelim */
         .brand-overlay::before {
             content: "";
             position: absolute;
@@ -25,14 +23,24 @@
             background: linear-gradient(135deg, rgba(79, 70, 229, 0.85) 0%, rgba(168, 85, 247, 0.85) 100%);
             z-index: 1;
         }
+        
+        /* Input focus efekti */
+        input:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
+            outline: none;
+            transform: scale(1.02);
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
 
-<body class="bg-gray-100"> <div class="flex min-h-screen">
+<body class="bg-gray-100">
+
+    <div class="flex min-h-screen">
         
         <div class="hidden md:flex md:w-1/2 brand-visual relative">
             <div class="brand-overlay"></div>
-            
             <div class="relative z-10 flex flex-col justify-between p-12 text-white">
                 <div>
                     <span class="text-white text-4xl font-extrabold tracking-wide">ALPHA</span>
@@ -42,12 +50,12 @@
                 </div>
                 <div class="text-sm text-indigo-200">
                     © {{ current_year }} alpha. All rights reserved. <br>
-                    <a href="/privacy" class="hover:underline">Privacy Policy</a> &middot; <a href="/terms" class.="hover:underline">Terms of Service</a>
+                    <a href="/privacy" class="hover:underline">Privacy Policy</a> &middot; <a href="/terms" class="hover:underline">Terms of Service</a>
                 </div>
             </div>
         </div>
 
-        <div class="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12">
+        <div class="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 animate-fadeIn">
             
             <div class="max-w-md w-full bg-white p-10 md:p-12 rounded-2xl shadow-2xl">
                 
@@ -68,23 +76,25 @@
                 </div>
                 {% endif %}
 
-                <form action="/login" method="post" class="space-y-6">
+                <form id="login-form" action="/login" method="post" class="space-y-6 needs-validation" novalidate>
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
                         <div class="mt-1">
                             <input id="email" name="email" type="email" autocomplete="email" required
-                                   class="w-full p-3 border border-gray-300 rounded-xl focus:ring-purple-500 focus:border-purple-500"
+                                   class="w-full p-3 border border-gray-300 rounded-xl form-input"
                                    placeholder="you@example.com"
                                    value="{{ values.get('email', '') }}">
+                            <span class="form-error-message" id="email-error">Please enter a valid email address.</span>
                         </div>
                     </div>
 
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                         <div class="mt-1">
-                            <input id="password" name="password" type="password" autocomplete="current-password" required
-                                   class="w-full p-3 border border-gray-300 rounded-xl focus:ring-purple-500 focus:border-purple-500"
+                            <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8"
+                                   class="w-full p-3 border border-gray-300 rounded-xl form-input"
                                    placeholder="••••••••">
+                            <span class="form-error-message" id="password-error">Password must be at least 8 characters.</span>
                         </div>
                     </div>
 
@@ -98,13 +108,12 @@
                     </div>
 
                     <div>
-                        <button type="submit"
+                        <button id="login-submit-button" type="submit"
                                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-transform transform hover:scale-105">
                             Sign In
                         </button>
                     </div>
                 </form>
-                
                 <div class="mt-8">
                     <div class="relative">
                         <div class="absolute inset-0 flex items-center">
@@ -115,26 +124,13 @@
                         </div>
                     </div>
 
-                    <div class="mt-6 grid grid-cols-2 gap-3">
-                        <div>
-                            <a href="#" class="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-100">
-                                <span class="sr-only">Sign in with Google</span>
-                                <svg classa="w-5 h-5" fill="currentColor" viewBox="0 0 48 48">
-                                  <path d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/>
-                                  <path d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" fill="#FF3D00"/>
-                                  <path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-4.819C29.211 35.091 26.715 36 24 36c-5.222 0-9.601-3.108-11.28-7.39l-6.57 4.82C9.656 39.663 16.318 44 24 44z" fill="#4CAF50"/>
-                                  <path d="M43.611 20.083H42V20H24v8h11.303c-.792 2.235-2.24 4.13-4.14 5.571l6.19 4.819c3.636-3.37 5.65-8.169 5.65-13.389C48 22.659 46.138 20.083 43.611 20.083z" fill="#1976D2"/>
-                                </svg>
-                            </a>
-                        </div>
-                        <div>
-                            <a href="#" class="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-100">
-                                <span class="sr-only">Sign in with GitHub</span>
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                  <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.165 6.839 9.489.5.09.682-.218.682-.483 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.455-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.004.07 1.532 1.03 1.532 1.03.891 1.529 2.34 1.087 2.91.833.091-.647.349-1.087.635-1.337-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682-.103-.253-.447-1.27.098-2.645 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.82c.85.004 1.705.114 2.504.336 1.909-1.296 2.747-1.026 2.747-1.026.546 1.375.202 2.392.1 2.645.64.698 1.03 1.591 1.03 2.682 0 3.842-2.338 4.687-4.566 4.935.359.309.678.92.678 1.854 0 1.337-.012 2.417-.012 2.744 0 .267.18.577.688.48C19.135 20.165 22 16.418 22 12A10 10 0 0012 2z" clip-rule="evenodd"/>
-                                </svg>
-                            </a>
-                        </div>
+                    <div class="mt-6 grid grid-cols-1 gap-3">
+                        <a href="#" class="w-full inline-flex items-center justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 48 48">
+                              <path d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/><path d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" fill="#FF3D00"/><path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-4.819C29.211 35.091 26.715 36 24 36c-5.222 0-9.601-3.108-11.28-7.39l-6.57 4.82C9.656 39.663 16.318 44 24 44z" fill="#4CAF50"/><path d="M43.611 20.083H42V20H24v8h11.303c-.792 2.235-2.24 4.13-4.14 5.571l6.19 4.819c3.636-3.37 5.65-8.169 5.65-13.389C48 22.659 46.138 20.083 43.611 20.083z" fill="#1976D2"/>
+                            </svg>
+                            Sign in with Google
+                        </a>
                     </div>
                 </div>
 
@@ -142,5 +138,7 @@
         </div>
 
     </div>
+    
+    <script src="{{ url_for('static', path='main.js') }}"></script>
 </body>
 </html>

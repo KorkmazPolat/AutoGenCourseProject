@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-3xl p-10 mb-10">
+{% block title %}{{ course_title }} - Result - ALPHA{% endblock %}
 
-  <!-- Header -->
+{% block content %}
+<div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl p-8 md:p-10 mb-10 animate-fadeIn">
+
   <div class="flex flex-col md:flex-row items-center justify-between mb-8">
     <div>
       <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ course_title }}</h1>
@@ -11,22 +12,21 @@
       <p class="text-gray-600 italic">{{ hook }}</p>
       {% endif %}
     </div>
-    <a href="/" class="mt-4 md:mt-0 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition">Back to Home</a>
+    <a href="/dashboard" class="mt-4 md:mt-0 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition">Back to Dashboard</a>
   </div>
 
-  <!-- Video Section -->
   {% if video_url %}
   <div class="mb-8">
-    <video controls preload="metadata" class="w-full rounded-xl shadow-lg">
-      <source src="{{ video_url }}" type="video/mp4" />
-      {% if captions_url %}
-      <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
-      {% endif %}
-      {% if chapters_url %}
-      <track kind="chapters" src="{{ chapters_url }}" srclang="en" label="Chapters" />
-      {% endif %}
-    </video>
-    <p class="text-gray-500 text-sm mt-2">Voice: {{ voice }} | Model: {{ model }} | File: {{ video_file }}</p>
+      <video controls preload="metadata" class="w-full rounded-xl shadow-lg">
+          <source src="{{ video_url }}" type="video/mp4" />
+          {% if captions_url %}
+          <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
+          {% endif %}
+          {% if chapters_url %}
+          <track kind="chapters" src="{{ chapters_url }}" srclang="en" label="Chapters" />
+          {% endif %}
+      </video>
+      <p class="text-gray-500 text-sm mt-2">Voice: {{ voice }} | Model: {{ model }} | File: {{ video_file }}</p>
   </div>
   {% else %}
   <p class="text-red-600 font-semibold mb-8">No video file was generated.</p>
@@ -41,7 +41,6 @@
   </div>
   {% endif %}
 
-  <!-- Outline Section -->
   <div class="mb-8">
     <h2 class="text-2xl font-bold mb-4 text-gray-800">Course Outline</h2>
     {% if outline %}
@@ -58,42 +57,5 @@
     {% endif %}
   </div>
 
-  <!-- Optional Collapsible Modules Section -->
-  {% if modules %}
-  <div>
-    <h2 class="text-2xl font-bold mb-4 text-gray-800">Modules</h2>
-    <div class="space-y-3">
-      {% for module in modules %}
-      <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition">
-        <button type="button" class="w-full px-4 py-3 flex justify-between items-center text-left focus:outline-none" onclick="this.nextElementSibling.classList.toggle('hidden')">
-          <span class="font-semibold text-gray-700">{{ module.title }}</span>
-          <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        <div class="px-4 py-2 hidden text-gray-600">
-          <ul class="list-disc list-inside">
-            {% for topic in module.topics %}
-            <li>{{ topic }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
 </div>
-
-<!-- Optional JS for collapsible icons -->
-<script>
-document.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const icon = btn.querySelector('svg');
-    icon.classList.toggle('rotate-180');
-  });
-});
-</script>
-
 {% endblock %}

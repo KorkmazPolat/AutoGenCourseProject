@@ -12,11 +12,12 @@ from uuid import uuid4
 
 import yaml
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, File, FastAPI, Form, HTTPException, Request, UploadFile
+from fastapi import BackgroundTasks, File, FastAPI, Form, HTTPException, Request, UploadFile, Depends
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware 
 from jinja2 import Template
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
@@ -323,6 +324,10 @@ app = FastAPI(
     description="FastAPI service providing course content prompts plus a simple web UI for generating narrated videos.",
     version="0.2.0",
 )
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SECRET_KEY", "default_fallback_secret_key_if_not_set")
+)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -352,10 +357,19 @@ def list_prompts() -> List[Dict[str, str]]:
         for prompt_id, definition in PROMPT_DEFINITIONS.items()
     ]
 
+async def get_session_user(request: Request):
+    """Dependency: Checks if a user is in the session. Redirects to login if not."""
+    user = request.session.get("user")
+    if not user:
+        # Kullanıcı yoksa, login'e yönlendir
+        raise HTTPException(status_code=307, detail="Not authorized", headers={"Location": "/login"})
+    return user
 
 @app.get("/login", response_class=HTMLResponse, tags=["web"])
 def render_login_form(request: Request):
     """Serves the professional login page."""
+    if "user" in request.session:
+        return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse(
         "login.html", 
         {
@@ -375,10 +389,8 @@ def render_root(request: Request):
 # main.py dosyasına, @app.post("/login", ...) sonrasına ekleyin
 
 @app.get("/dashboard", response_class=HTMLResponse, tags=["web"])
-def render_dashboard(request: Request):
+def render_dashboard(request: Request, user: str = Depends(get_session_user)):
     """Serves the main application page (course generator form)."""
-    # Bu, daha önce sildiğiniz @app.get("/") fonksiyonunun
-    # /dashboard adresine taşınmış halidir.
     return templates.TemplateResponse(
         "index.html",
         {
@@ -388,7 +400,6 @@ def render_dashboard(request: Request):
         }
     )
 
-# ... (geri kalan kodunuz, _build_messages vb. buradan devam eder)
 
 @app.post("/login", response_class=HTMLResponse, tags=["web"])
 async def handle_login(
@@ -398,12 +409,11 @@ async def handle_login(
 ):
     """Handles the login form submission."""
     
-    # Geçici sahte kullanıcı kontrolü
     if email.lower() == "admin@alpha.com" and password == "AlphaDev!2025":
-        # Başarılı, /dashboard'a yönlendir
+        request.session["user"] = email.lower()
         return RedirectResponse(url="/dashboard", status_code=303)
     else:
-        # Başarısız, hata ile login sayfasını tekrar göster
+        
         return templates.TemplateResponse(
             "login.html",
             {
@@ -414,6 +424,13 @@ async def handle_login(
             },
             status_code=401
         )
+    
+@app.get("/logout", response_class=HTMLResponse, tags=["web"])
+async def handle_logout(request: Request):
+    """Clears the user session and redirects to login."""
+    request.session.clear() # Session'ı temizle
+    return RedirectResponse(url="/login", status_code=303)
+
 
 def _build_messages(
     prompt_id: str,
@@ -1004,106 +1021,35 @@ def create_full_course(
             theme=theme,
             logo_path=logo_path,
         )
-        video_file = video_result.get("video_file")
-        video_url = ""
-        captions_url = ""
-        chapters_url = ""
-        if video_file:
-            video_url = f"/videos/{Path(video_file).name}"
-        cap_file = video_result.get("captions_file")
-        chap_file = video_result.get("chapters_file")
-        if cap_file:
-            captions_url = f"/videos/{Path(cap_file).name}"
-        if chap_file:
-            chapters_url = f"/videos/{Path(chap_file).name}"
-        video_result["video_url"] = video_url
-        if captions_url:
-            video_result["captions_url"] = captions_url
-        if chapters_url:
-            video_result["chapters_url"] = chapters_url
         assets_for_module["video_script"] = video_result
+        
+        # Format video URLs for the template
+        video_path = video_result.get("video_file")
+        if video_path:
+            path_obj = Path(video_path)
+            assets_for_module["video_script"]["video_url"] = f"/videos/{path_obj.name}"
+            cap_file = video_result.get("captions_file")
+            chap_file = video_result.get("chapters_file")
+            if cap_file:
+                assets_for_module["video_script"]["captions_url"] = f"/videos/{Path(cap_file).name}"
+            if chap_file:
+                assets_for_module["video_script"]["chapters_url"] = f"/videos/{Path(chap_file).name}"
 
-        # Reading material
-        assets_for_module["reading_material"] = _generate_material_payload(
-            "reading_material",
-            module_payload,
-            preview=False,
-            create_video=False,
-            voice=voice,
-            tts_model=tts_model,
-        )
-
-        # Quiz questions
-        assets_for_module["quiz_questions"] = _generate_material_payload(
-            "quiz_questions",
-            module_payload,
-            preview=False,
-            create_video=False,
-            voice=voice,
-            tts_model=tts_model,
-        )
-
+        # Generate reading and quiz (no video)
+        for prompt_id in ("reading_material", "quiz_questions"):
+            assets_for_module[prompt_id] = _generate_material_payload(
+                prompt_id,
+                module_payload,
+                preview=False,
+                create_video=False,
+            )
+        
         module_assets.append(
             {
                 "info": module,
                 "assets": assets_for_module,
             }
         )
-
-    # Side-effect: save a standalone HTML copy into exports folder (non-blocking)
-    try:
-        EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        export_name = f"{_slugify_title(course_title)}-{timestamp}"
-        export_dir = EXPORTS_DIR / export_name
-        videos_dir = export_dir / "videos"
-        videos_dir.mkdir(parents=True, exist_ok=True)
-
-        # Prepare assets with relative URLs and copy media
-        exported_modules: List[Dict[str, Any]] = []
-        for mod in module_assets:
-            info = mod.get("info", {})
-            assets = mod.get("assets", {})
-            video_pack = dict(assets.get("video_script", {}) or {})
-            for key in ("video_file", "captions_file", "chapters_file"):
-                src = video_pack.get(key)
-                if not src:
-                    continue
-                p = Path(src)
-                if p.exists():
-                    dest = videos_dir / p.name
-                    try:
-                        shutil.copy2(p, dest)
-                    except Exception:
-                        pass
-                    if key == "video_file":
-                        video_pack["video_url"] = f"videos/{dest.name}"
-                    elif key == "captions_file":
-                        video_pack["captions_url"] = f"videos/{dest.name}"
-                    elif key == "chapters_file":
-                        video_pack["chapters_url"] = f"videos/{dest.name}"
-            new_assets = dict(assets)
-            new_assets["video_script"] = video_pack
-            exported_modules.append({"info": info, "assets": new_assets})
-
-        # Render and write HTML using same template but without request
-        env = getattr(templates, "env", None) or getattr(templates, "environment", None)
-        if env is not None:
-            template = env.get_template("full_course.html")
-            html = template.render(
-                course_title=course_title,
-                audience=audience,
-                tone=tone,
-                duration_minutes=duration_minutes,
-                learning_outcomes=outcomes,
-                blueprint=blueprint_content,
-                modules_output=exported_modules,
-                voice=voice or "alloy",
-            )
-            (export_dir / "index.html").write_text(html, encoding="utf-8")
-    except Exception:
-        # Ignore export errors; interactive flow continues
-        pass
 
     return templates.TemplateResponse(
         "full_course.html",
@@ -1116,55 +1062,6 @@ def create_full_course(
             "learning_outcomes": outcomes,
             "blueprint": blueprint_content,
             "modules_output": module_assets,
-            "voice": voice or "alloy",
+            "voice": voice or "alloy", # Pass voice to template
         },
     )
-
-
-@app.get("/exported/{export_name}/{path:path}", tags=["web"])
-def serve_exported_file(export_name: str, path: str = "index.html") -> FileResponse:
-    base = (EXPORTS_DIR / Path(export_name)).resolve()
-    target = (base / path).resolve()
-    if not str(target).startswith(str(base)):
-        raise HTTPException(status_code=403, detail="Forbidden")
-    if not target.exists():
-        raise HTTPException(status_code=404, detail="Exported file not found.")
-    suffix = target.suffix.lower()
-    media = "application/octet-stream"
-    if suffix in (".html", ".htm"):
-        media = "text/html"
-    elif suffix == ".css":
-        media = "text/css"
-    elif suffix == ".js":
-        media = "application/javascript"
-    elif suffix == ".mp4":
-        media = "video/mp4"
-    elif suffix == ".vtt":
-        media = "text/vtt"
-    elif suffix in (".png", ".jpg", ".jpeg", ".gif", ".webp"):
-        media = f"image/{suffix.lstrip('.')}"
-    return FileResponse(target, media_type=media)
-
-
-@app.get("/exports", response_class=HTMLResponse, tags=["web"])
-def list_exports(request: Request):
-    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    items: List[Dict[str, str]] = []
-    for entry in sorted(EXPORTS_DIR.iterdir(), key=lambda p: p.name, reverse=True):
-        if entry.is_dir():
-            items.append({
-                "name": entry.name,
-                "path": str(entry),
-                "url": f"/exported/{entry.name}/index.html",
-            })
-    # Render a simple list page (amateur look)
-    html = [
-        "<!DOCTYPE html>",
-        "<html><head><meta charset='utf-8'><title>Exports</title></head><body>",
-        "<h1>Saved Courses</h1>",
-        "<ul>",
-    ]
-    for it in items:
-        html.append(f"<li><a href='{it['url']}'>{it['name']}</a></li>")
-    html += ["</ul>", "<p><a href='/'>&larr; back</a></p>", "</body></html>"]
-    return HTMLResponse("\n".join(html))

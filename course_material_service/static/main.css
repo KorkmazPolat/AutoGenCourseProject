@@ -1,33 +1,34 @@
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-in-out forwards;
+/* static/main.css dosyasının sonuna ekleyin */
+
+/* Geçersiz (Invalid) Form Alanı Stili */
+.form-input.is-invalid {
+    border-color: #ef4444; /* Kırmızı-500 */
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
 }
 
-/* Card Hover Shadow */
-.card-hover:hover {
-  transform: translateY(-4px) scale(1.02);
-  transition: all 0.3s ease;
+/* Geçerli (Valid) Form Alanı Stili */
+.form-input.is-valid {
+    border-color: #22c55e; /* Yeşil-500 */
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
 }
 
-/* Input focus */
-input:focus, textarea:focus {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.3);
-  outline: none;
+/* Hata Mesajı Stili */
+.form-error-message {
+    color: #ef4444; /* Kırmızı-500 */
+    font-size: 0.875rem; /* text-sm */
+    margin-top: 0.25rem; /* mt-1 */
+    display: none; /* Varsayılan olarak gizli */
 }
 
-/* Login page animation */
-@keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(-20px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeIn {
-  animation: fadeIn 0.7s ease-out forwards;
+/* Hata mesajını göster */
+.form-input.is-invalid + .form-error-message {
+    display: block;
 }
 
-/* Gradient background handled inline in HTML */
-
+/* Butonun devre dışı (disabled) hali */
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    background: #9ca3af; /* Gri-400 */
+}
