@@ -5,12 +5,18 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from moviepy.editor import (
-    AudioFileClip,
-    ImageClip,
-    concatenate_videoclips,
-)  # type: ignore[import]
+
+## video_builder.py
+
+from moviepy import VideoFileClip, AudioFileClip, ImageClip, TextClip, CompositeVideoClip, concatenate_videoclips
+
+
+
+# Pillow (PIL) imports
 from PIL import Image, ImageDraw, ImageFont  # type: ignore[import]
+
+
+
 
 
 class VideoGenerationError(RuntimeError):
@@ -24,7 +30,6 @@ class SlideSpec:
     content: str
     visual_hints: Optional[List[str]] = None
     content_blocks: Optional[List[Dict[str, Any]]] = None
-
 
 def _resolve_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     """Attempt to load a truetype font, falling back to the default bitmap font."""
