@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Courses - ALPHA{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">Saved Courses</h1>
+
+  {% if exports and exports|length > 0 %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% for item in exports %}
+        <a href="{{ item.index_url }}" class="block p-5 rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition">
+          <div class="text-lg font-semibold text-gray-800 truncate">{{ item.name }}</div>
+          <div class="text-sm text-gray-500 mt-1">Open export</div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="p-6 rounded-lg border border-dashed border-gray-300 bg-white text-gray-600">
+      No saved courses yet. Generate a course to see it here.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

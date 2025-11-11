@@ -329,6 +329,7 @@ app.add_middleware(
     secret_key=os.getenv("SECRET_KEY", "default_fallback_secret_key_if_not_set")
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/exports-files", StaticFiles(directory=str(EXPORTS_DIR)), name="exports_files")
 
 
 
@@ -363,6 +364,28 @@ async def get_session_user(request: Request):
     if not user:
         raise HTTPException(status_code=307, detail="Not authorized", headers={"Location": "/login"})
     return user
+
+@app.get("/exports", response_class=HTMLResponse, tags=["web"])
+def list_saved_exports(request: Request, user: str = Depends(get_session_user)):
+    """List saved course export folders with links to their index pages."""
+    exports: List[Dict[str, str]] = []
+    if EXPORTS_DIR.exists():
+        for entry in sorted(EXPORTS_DIR.iterdir()):
+            if entry.is_dir():
+                name = entry.name
+                index_url = f"/exports-files/{name}/index.html"
+                exports.append({
+                    "name": name,
+                    "index_url": index_url,
+                })
+    return templates.TemplateResponse(
+        "exports.html",
+        {
+            "request": request,
+            "exports": exports,
+            "current_year": datetime.utcnow().year,
+        },
+    )
 
 @app.get("/login", response_class=HTMLResponse, tags=["web"])
 def render_login_form(request: Request):
