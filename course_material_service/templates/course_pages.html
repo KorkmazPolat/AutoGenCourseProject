@@ -1,248 +1,237 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>{{ course_title }} | Module Pages</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 24px;
-        background: #f0f4f8;
-        color: #1f2933;
-      }
-      main {
-        max-width: 900px;
-        margin: 0 auto;
-        background: #ffffff;
-        padding: 24px;
-        border: 1px solid #d2d6dc;
-      }
-      h1,
-      h2,
-      h3,
-      h4 {
-        margin-top: 24px;
-      }
-      h1 {
-        margin-top: 0;
-      }
-      ul,
-      ol {
-        padding-left: 20px;
-      }
-      .module {
-        border: 1px solid #d2d6dc;
-        padding: 16px;
-        margin-bottom: 24px;
-        background: #f8fafc;
-      }
-      .muted {
-        color: #52606d;
-        font-size: 0.9rem;
-      }
-      a.back {
-        text-decoration: none;
-        color: #2563eb;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 12px;
-      }
-      table th,
-      table td {
-        border: 1px solid #d2d6dc;
-        padding: 8px;
-        text-align: left;
-      }
-      /* Quiz styles */
-      .quiz-form { margin-top: 8px; }
-      .choice-list { list-style: none; padding-left: 0; }
-      .choice-list li { margin: 4px 0; }
-      .question { padding: 8px; border-left: 4px solid transparent; }
-      .question.correct { background: #f0fdf4; border-left-color: #22c55e; }
-      .question.incorrect { background: #fef2f2; border-left-color: #ef4444; }
-      .badge { display: inline-block; padding: 2px 6px; font-size: 0.8rem; border-radius: 999px; margin-left: 6px; }
-      .badge.correct { background: #dcfce7; color: #166534; }
-      .badge.incorrect { background: #fee2e2; color: #991b1b; }
-      .quiz-actions { margin-top: 10px; }
-      .quiz-actions button { padding: 8px 12px; background: #2563eb; color: #fff; border: none; cursor: pointer; }
-      .quiz-result { margin-top: 10px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
-      .quiz-result .stats { font-weight: bold; }
-      .quiz-result .wrong-list { margin-top: 6px; }
-    </style>
-  </head>
-  <body>
-    <main>
-      <a class="back" href="/">&larr; back</a>
-      <h1>{{ course_title }}</h1>
-      <p class="muted">Basic print-style view of each module's materials.</p>
+{% extends "base.html" %}
 
+{% block title %}{{ course_title }} - Module Pages - ALPHA{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto mb-10">
+  <div class="bg-white shadow-2xl rounded-2xl p-8 md:p-10 mb-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">{{ course_title }}</h1>
+        <p class="text-gray-600 mt-1">Curated module materials: video, reading, and quiz.</p>
+      </div>
+      <div class="space-x-2">
+        <a href="/dashboard" class="inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">Dashboard</a>
+        <a href="/exports" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">Saved Courses</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-12 gap-6">
+    <aside class="col-span-12 md:col-span-4 lg:col-span-3">
+      <div class="sticky top-6 bg-white rounded-2xl shadow-xl p-5">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3">Modules</h2>
+        {% if modules_output %}
+        <nav class="space-y-1" aria-label="Module navigation">
+          {% for module in modules_output %}
+          {% set info = module.info %}
+          <a href="#module-{{ info.number }}" class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition">
+            <span class="font-medium">{{ info.number }}.</span> {{ info.title }}
+          </a>
+          {% endfor %}
+        </nav>
+        {% else %}
+        <p class="text-gray-500">No modules yet.</p>
+        {% endif %}
+      </div>
+    </aside>
+
+    <section class="col-span-12 md:col-span-8 lg:col-span-9">
       {% if learning_outcomes %}
-      <h2>Course outcomes</h2>
-      <ul>
-        {% for outcome in learning_outcomes %}
-        <li>{{ outcome }}</li>
-        {% endfor %}
-      </ul>
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Course Outcomes</h2>
+        <ul class="list-disc pl-6 text-gray-700">
+          {% for outcome in learning_outcomes %}
+          <li>{{ outcome }}</li>
+          {% endfor %}
+        </ul>
+      </div>
       {% endif %}
 
       {% if modules_output %}
-      {% for module in modules_output %}
-      {% set info = module.info %}
-      {% set assets = module.assets %}
-      {% set video = assets.get("video_script", {}).get("content") %}
-      {% set reading = assets.get("reading_material", {}).get("content") %}
-      {% set quiz = assets.get("quiz_questions", {}).get("content") %}
-      <div class="module">
-        <h2>Module {{ info.number }}: {{ info.title }}</h2>
-        {% if info.summary %}<p>{{ info.summary }}</p>{% endif %}
-        {% if info.outcomes %}<p><strong>Module outcomes:</strong> {{ info.outcomes | join(", ") }}</p>{% endif %}
-        {% if info.key_topics %}<p><strong>Key topics:</strong> {{ info.key_topics | join(", ") }}</p>{% endif %}
-        {% if info.learning_activities %}
-        <p><strong>Planned activities:</strong></p>
-        <ul>
-          {% for activity in info.learning_activities %}
-          <li>
-            {{ activity.activity_type }} — {{ activity.description }}
-            {% if activity.duration_minutes %}({{ activity.duration_minutes }} min){% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-
-        {% if video %}
-        <h3>Video script</h3>
-        {% if video.hook %}<p><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
-        {% if video.outline %}
-        <h4>Outline</h4>
-        <ul>
-          {% for item in video.outline %}
-          <li>{{ item.timestamp }} — {{ item.topic }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if video.narration %}
-        <h4>Narration</h4>
-        <ul>
-          {% for block in video.narration %}
-          <li>
-            <strong>{{ block.section }}</strong>: {{ block.summary }}<br />
-            {{ block.script }}
-          </li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if video.recap %}<p><strong>Recap:</strong> {{ video.recap }}</p>{% endif %}
-        {% if video.call_to_action %}<p><strong>Call to action:</strong> {{ video.call_to_action }}</p>{% endif %}
-        {% endif %}
-
-        {% if reading %}
-        <h3>Reading companion</h3>
-        {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
-        {% if reading.sections %}
-        <h4>Sections</h4>
-        <ul>
-          {% for section in reading.sections %}
-          <li>
-            <strong>{{ section.heading }}</strong>
-            {% if section.key_points %}
-            <ul>
-              {% for point in section.key_points %}
-              <li>{{ point }}</li>
+        {% for module in modules_output %}
+          {% set info = module.info %}
+          {% set assets = module.assets %}
+          {% set video = assets.get("video_script", {}).get("content") %}
+          {% set reading = assets.get("reading_material", {}).get("content") %}
+          {% set quiz = assets.get("quiz_questions", {}).get("content") %}
+          <div id="module-{{ info.number }}" class="rounded-2xl bg-white shadow-xl p-6 mb-8 border border-gray-100">
+            <div class="flex items-start justify-between">
+              <h2 class="text-xl font-semibold text-gray-900">Module {{ info.number }}: {{ info.title }}</h2>
+              <a href="#" class="text-sm text-blue-600 hover:text-blue-700" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">Back to top</a>
+            </div>
+            {% if info.summary %}<p class="text-gray-700 mt-1">{{ info.summary }}</p>{% endif %}
+            {% if info.outcomes %}<p class="text-gray-700"><span class="font-semibold">Module outcomes:</span> {{ info.outcomes | join(", ") }}</p>{% endif %}
+            {% if info.key_topics %}<p class="text-gray-700"><span class="font-semibold">Key topics:</span> {{ info.key_topics | join(", ") }}</p>{% endif %}
+            {% if info.learning_activities %}
+            <p class="text-gray-800 font-semibold mt-2">Planned activities</p>
+            <ul class="list-disc pl-6 text-gray-700">
+              {% for activity in info.learning_activities %}
+              <li>
+                {{ activity.activity_type }} — {{ activity.description }} {% if activity.duration_minutes %}<span class="text-gray-500">({{ activity.duration_minutes }} min)</span>{% endif %}
+              </li>
               {% endfor %}
             </ul>
             {% endif %}
-            <p>{{ section.content }}</p>
-            {% if section.outcome_alignment %}
-            <p class="muted">Outcomes: {{ section.outcome_alignment | join(", ") }}</p>
-            {% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if reading.examples %}
-        <h4>Examples</h4>
-        <ul>
-          {% for example in reading.examples %}
-          <li>
-            <strong>{{ example.title }}</strong> — {{ example.description }}
-            {% if example.outcome_alignment %}
-            <span class="muted">(Outcomes: {{ example.outcome_alignment | join(", ") }})</span>
-            {% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if reading.glossary %}
-        <h4>Glossary</h4>
-        <ul>
-          {% for term in reading.glossary %}
-          <li><strong>{{ term.term }}</strong>: {{ term.definition }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if reading.reflections %}
-        <h4>Reflection prompts</h4>
-        <ul>
-          {% for prompt in reading.reflections %}
-          <li>{{ prompt }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% endif %}
 
-        {% if quiz %}
-        <h3>Quiz</h3>
-        {% if quiz.questions %}
-        <form class="quiz-form" id="quiz-form-{{ info.number }}">
-          <ol>
-            {% for question in quiz.questions %}
-            {% set qidx = loop.index0 %}
-            <li class="question" data-answer="{{ question.answer }}" data-stem="{{ question.stem|e }}">
-              <div>
-                <strong>{{ question.stem }}</strong>
-                <span class="badge" aria-live="polite"></span>
+            {% if video %}
+            <div class="mt-4 border-t border-gray-100 pt-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Video script</h3>
+                <button type="button" class="toggle-section text-sm text-blue-600 hover:text-blue-700" data-target="#video-{{ info.number }}">Toggle</button>
               </div>
-              <ul class="choice-list">
-                {% for choice in question.choices %}
-                <li>
-                  <label>
-                    <input type="radio" name="q{{ qidx }}-m{{ info.number }}" value="{{ choice.label }}" />
-                    {{ choice.label }}. {{ choice.text }}
-                  </label>
-                </li>
-                {% endfor %}
-              </ul>
-              {% if question.learning_outcome %}
-              <p class="muted">Outcome: {{ question.learning_outcome }}</p>
-              {% endif %}
-              {% if question.rationale %}
-              <p class="muted rationale" style="display:none;">Rationale: {{ question.rationale }}</p>
-              {% endif %}
-            </li>
-            {% endfor %}
-          </ol>
-          <div class="quiz-actions">
-            <button type="button" class="submit-quiz" data-module="{{ info.number }}">Check answers</button>
+              <div id="video-{{ info.number }}" class="mt-2 space-y-2">
+                {% if video.hook %}<p><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
+                {% if video.outline %}
+                <h4 class="font-semibold mt-2">Outline</h4>
+                <ul class="list-disc pl-6 text-gray-700">
+                  {% for item in video.outline %}
+                  <li>{{ item.timestamp }} — {{ item.topic }}</li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+                {% if video.narration %}
+                <h4 class="font-semibold mt-2">Narration</h4>
+                <ul class="list-disc pl-6 text-gray-700">
+                  {% for block in video.narration %}
+                  <li>
+                    <strong>{{ block.section }}</strong>: {{ block.summary }}<br />
+                    {{ block.script }}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+                {% if video.recap %}<p><strong>Recap:</strong> {{ video.recap }}</p>{% endif %}
+                {% if video.call_to_action %}<p><strong>Call to action:</strong> {{ video.call_to_action }}</p>{% endif %}
+              </div>
+            </div>
+            {% endif %}
+
+            {% if reading %}
+            <div class="mt-6 border-t border-gray-100 pt-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Reading companion</h3>
+                <button type="button" class="toggle-section text-sm text-blue-600 hover:text-blue-700" data-target="#reading-{{ info.number }}">Toggle</button>
+              </div>
+              <div id="reading-{{ info.number }}" class="mt-2">
+                {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
+                {% if reading.sections %}
+                <h4 class="font-semibold mt-2">Sections</h4>
+                <ul class="list-disc pl-6 text-gray-700">
+                  {% for section in reading.sections %}
+                  <li>
+                    <strong>{{ section.heading }}</strong>
+                    {% if section.key_points %}
+                    <ul>
+                      {% for point in section.key_points %}
+                      <li>{{ point }}</li>
+                      {% endfor %}
+                    </ul>
+                    {% endif %}
+                    <p>{{ section.content }}</p>
+                    {% if section.outcome_alignment %}
+                    <p class="muted">Outcomes: {{ section.outcome_alignment | join(", ") }}</p>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+                {% if reading.examples %}
+                <h4 class="font-semibold mt-2">Examples</h4>
+                <ul class="list-disc pl-6 text-gray-700">
+                  {% for example in reading.examples %}
+                  <li>
+                    <strong>{{ example.title }}</strong> — {{ example.description }}
+                    {% if example.outcome_alignment %}
+                    <span class="muted">(Outcomes: {{ example.outcome_alignment | join(", ") }})</span>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+                {% if reading.glossary %}
+                <h4 class="font-semibold mt-2">Glossary</h4>
+                <ul class="list-disc pl-6 text-gray-700">
+                  {% for term in reading.glossary %}
+                  <li><strong>{{ term.term }}</strong>: {{ term.definition }}</li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+                {% if reading.reflections %}
+                <h4 class="font-semibold mt-2">Reflection prompts</h4>
+                <ul class="list-disc pl-6 text-gray-700">
+                  {% for prompt in reading.reflections %}
+                  <li>{{ prompt }}</li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+
+            {% if quiz %}
+            <div class="mt-6 border-t border-gray-100 pt-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Quiz</h3>
+                <button type="button" class="toggle-section text-sm text-blue-600 hover:text-blue-700" data-target="#quiz-{{ info.number }}">Toggle</button>
+              </div>
+              <div id="quiz-{{ info.number }}" class="mt-2">
+                {% if quiz.questions %}
+                <form class="quiz-form" id="quiz-form-{{ info.number }}">
+                  <ol class="list-decimal pl-6">
+                    {% for question in quiz.questions %}
+                    {% set qidx = loop.index0 %}
+                    <li class="question" data-answer="{{ question.answer }}" data-stem="{{ question.stem|e }}">
+                      <div>
+                        <strong>{{ question.stem }}</strong>
+                        <span class="badge" aria-live="polite"></span>
+                      </div>
+                      <ul class="choice-list">
+                        {% for choice in question.choices %}
+                        <li>
+                          <label>
+                            <input type="radio" name="q{{ qidx }}-m{{ info.number }}" value="{{ choice.label }}" />
+                            {{ choice.label }}. {{ choice.text }}
+                          </label>
+                        </li>
+                        {% endfor %}
+                      </ul>
+                      {% if question.learning_outcome %}
+                      <p class="muted">Outcome: {{ question.learning_outcome }}</p>
+                      {% endif %}
+                      {% if question.rationale %}
+                      <p class="muted rationale" style="display:none;">Rationale: {{ question.rationale }}</p>
+                      {% endif %}
+                    </li>
+                    {% endfor %}
+                  </ol>
+                  <div class="quiz-actions mt-2">
+                    <button type="button" class="submit-quiz bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded" data-module="{{ info.number }}">Check answers</button>
+                  </div>
+                  <div class="quiz-result text-sm text-gray-700" id="quiz-result-{{ info.number }}" aria-live="polite"></div>
+                </form>
+                {% endif %}
+                {% if quiz.remediation %}
+                <p><strong>Remediation tip:</strong> {{ quiz.remediation }}</p>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
           </div>
-          <div class="quiz-result" id="quiz-result-{{ info.number }}" aria-live="polite"></div>
-        </form>
-        {% endif %}
-        {% if quiz.remediation %}
-        <p><strong>Remediation tip:</strong> {{ quiz.remediation }}</p>
-        {% endif %}
-        {% endif %}
-      </div>
-      {% endfor %}
+        {% endfor %}
       {% else %}
-      <p>No module materials were generated.</p>
+      <p class="text-gray-600">No module materials were generated.</p>
       {% endif %}
 
-      <p class="muted">All materials are auto-generated drafts. Adjust prompts to refine each module.</p>
-    </main>
-    <script>
+    </section>
+  </div>
+
+  <p class="text-gray-500 text-sm mt-6">All materials are auto-generated drafts. Adjust prompts to refine each module.</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
       (function () {
         function evaluateQuiz(form) {
           const questions = Array.from(form.querySelectorAll('.question'));
@@ -290,12 +279,30 @@
 
         document.addEventListener('click', function (e) {
           const btn = e.target.closest('.submit-quiz');
-          if (!btn) return;
-          const mod = btn.getAttribute('data-module');
-          const form = document.getElementById('quiz-form-' + mod);
-          if (form) evaluateQuiz(form);
+          if (btn) {
+            const mod = btn.getAttribute('data-module');
+            const form = document.getElementById('quiz-form-' + mod);
+            if (form) evaluateQuiz(form);
+            return;
+          }
+          const toggle = e.target.closest('.toggle-section');
+          if (toggle) {
+            const targetSel = toggle.getAttribute('data-target');
+            const el = targetSel && document.querySelector(targetSel);
+            if (el) el.style.display = (el.style.display === 'none') ? '' : 'none';
+          }
+        });
+
+        // Smooth scroll for sidebar links
+        document.querySelectorAll('a[href^="#module-\"]').forEach(a => {
+          a.addEventListener('click', function (e) {
+            const id = this.getAttribute('href');
+            const target = id && document.querySelector(id);
+            if (!target) return;
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
         });
       })();
     </script>
-  </body>
-</html>
+{% endblock %}

@@ -1,69 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>{{ course_title }} | Full Course</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #eef2f7; color: #1f2933; }
-      main { max-width: 980px; margin: 0 auto; background: #ffffff; padding: 24px; border: 1px solid #d2d6dc; }
-      h1, h2, h3, h4 { margin-top: 24px; }
-      h1 { margin-top: 0; }
-      ul, ol { padding-left: 20px; }
-      .module { border: 1px solid #d2d6dc; padding: 16px; margin-bottom: 24px; background: #f8fafc; }
-      .muted { color: #52606d; font-size: 0.9rem; }
-      a.back { text-decoration: none; color: #2563eb; }
-      video { width: 100%; height: auto; margin-top: 12px; background: #000; }
-      .asset-block { margin-top: 16px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-      table th, table td { border: 1px solid #d2d6dc; padding: 8px; text-align: left; }
-      .meta { margin: 8px 0; }
-      /* Quiz styles */
-      .quiz-form { margin-top: 8px; }
-      .choice-list { list-style: none; padding-left: 0; }
-      .choice-list li { margin: 4px 0; }
-      .question { padding: 8px; border-left: 4px solid transparent; }
-      .question.correct { background: #f0fdf4; border-left-color: #22c55e; }
-      .question.incorrect { background: #fef2f2; border-left-color: #ef4444; }
-      .badge { display: inline-block; padding: 2px 6px; font-size: 0.8rem; border-radius: 999px; margin-left: 6px; }
-      .badge.correct { background: #dcfce7; color: #166534; }
-      .badge.incorrect { background: #fee2e2; color: #991b1b; }
-      .quiz-actions { margin-top: 10px; }
-      .quiz-actions button { padding: 8px 12px; background: #2563eb; color: #fff; border: none; cursor: pointer; }
-      .quiz-result { margin-top: 10px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
-      .quiz-result .stats { font-weight: bold; }
-      .quiz-result .wrong-list { margin-top: 6px; }
-    </style>
-  </head>
-  <body>
-    <main>
-      <a class="back" href="/">&larr; back</a>
-      <h1>{{ course_title }}</h1>
-      <p class="muted">Full course build: blueprint, per-module videos, readings, and quizzes.</p>
+{% extends "base.html" %}
 
-      {% if learning_outcomes %}
-      <h2>Course outcomes</h2>
-      <ul>
-        {% for outcome in learning_outcomes %}
-        <li>{{ outcome }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
+{% block title %}{{ course_title }} - Full Course - ALPHA{% endblock %}
 
-      {% if blueprint %}
-      <h2>Blueprint overview</h2>
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white shadow-2xl rounded-2xl p-8 md:p-10 mb-10">
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800">{{ course_title }}</h1>
+      <p class="text-gray-600">Full course build: blueprint, per-module videos, readings, and quizzes.</p>
+    </div>
+    <a href="/dashboard" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition">Back</a>
+  </div>
+
+  {% if learning_outcomes %}
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Course Outcomes</h2>
+    <ul class="list-disc pl-6 text-gray-700">
+      {% for outcome in learning_outcomes %}
+      <li>{{ outcome }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if blueprint %}
+  <h2 class="text-2xl font-bold text-gray-800 mb-2">Blueprint overview</h2>
       {% if blueprint.overview %}
-      <p><strong>Positioning:</strong> {{ blueprint.overview.positioning }}</p>
-      <p class="meta"><strong>Audience:</strong> {{ blueprint.overview.target_audience }}</p>
-      <p class="meta"><strong>Total duration:</strong> {{ blueprint.overview.total_duration_hours }}</p>
-      <p class="meta"><strong>Pacing:</strong> {{ blueprint.overview.pacing_strategy }}</p>
+      <p><span class="font-semibold">Positioning:</span> {{ blueprint.overview.positioning }}</p>
+      <p class="meta"><span class="font-semibold">Audience:</span> {{ blueprint.overview.target_audience }}</p>
+      <p class="meta"><span class="font-semibold">Total duration:</span> {{ blueprint.overview.total_duration_hours }}</p>
+      <p class="meta"><span class="font-semibold">Pacing:</span> {{ blueprint.overview.pacing_strategy }}</p>
       {% if blueprint.overview.prerequisites %}
       <p class="meta"><strong>Prerequisites:</strong> {{ blueprint.overview.prerequisites | join(", ") }}</p>
       {% endif %}
       {% endif %}
       {% endif %}
 
-      {% if modules_output %}
-      {% for module in modules_output %}
+  {% if modules_output %}
+  {% for module in modules_output %}
       {% set info = module.info %}
       {% set assets = module.assets %}
       {% set video_pack = assets.get("video_script", {}) %}
@@ -73,16 +47,16 @@
       {% set chapters_url = video_pack.get("chapters_url") %}
       {% set reading = assets.get("reading_material", {}).get("content") %}
       {% set quiz = assets.get("quiz_questions", {}).get("content") %}
-      <div class="module">
-        <h2>Module {{ info.number }}: {{ info.title }}</h2>
-        {% if info.summary %}<p>{{ info.summary }}</p>{% endif %}
-        {% if info.outcomes %}<p><strong>Module outcomes:</strong> {{ info.outcomes | join(", ") }}</p>{% endif %}
-        {% if info.key_topics %}<p><strong>Key topics:</strong> {{ info.key_topics | join(", ") }}</p>{% endif %}
+      <div class="rounded-xl border border-gray-200 bg-gray-50 p-5 mb-6">
+        <h2 class="text-xl font-semibold text-gray-800">Module {{ info.number }}: {{ info.title }}</h2>
+        {% if info.summary %}<p class="text-gray-700 mt-1">{{ info.summary }}</p>{% endif %}
+        {% if info.outcomes %}<p class="text-gray-700"><span class="font-semibold">Module outcomes:</span> {{ info.outcomes | join(", ") }}</p>{% endif %}
+        {% if info.key_topics %}<p class="text-gray-700"><span class="font-semibold">Key topics:</span> {{ info.key_topics | join(", ") }}</p>{% endif %}
 
         {% if video_url %}
-        <div class="asset-block">
-          <h3>Lesson Video</h3>
-          <video controls preload="metadata">
+        <div class="asset-block mt-2">
+          <h3 class="text-lg font-semibold text-gray-800">Lesson Video</h3>
+          <video class="w-full rounded-lg shadow" controls preload="metadata">
             <source src="{{ video_url }}" type="video/mp4" />
             {% if captions_url %}
             <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
@@ -92,25 +66,25 @@
             {% endif %}
             Your browser does not support the video tag.
           </video>
-          <p class="muted">Narration voice: {{ voice }}</p>
+          <p class="text-gray-500 text-sm">Narration voice: {{ voice }}</p>
         </div>
         {% endif %}
 
         {% if video %}
-        <div class="asset-block">
-          <h3>Video script</h3>
+        <div class="asset-block mt-2">
+          <h3 class="text-lg font-semibold text-gray-800">Video script</h3>
           {% if video.hook %}<p><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
           {% if video.outline %}
-          <h4>Outline</h4>
-          <ul>
+          <h4 class="font-semibold mt-2">Outline</h4>
+          <ul class="list-disc pl-6 text-gray-700">
             {% for item in video.outline %}
             <li>{{ item.timestamp }} — {{ item.topic }}</li>
             {% endfor %}
           </ul>
           {% endif %}
           {% if video.narration %}
-          <h4>Narration</h4>
-          <ul>
+          <h4 class="font-semibold mt-2">Narration</h4>
+          <ul class="list-disc pl-6 text-gray-700">
             {% for block in video.narration %}
             <li>
               <strong>{{ block.section }}</strong>: {{ block.summary }}<br />
@@ -125,12 +99,12 @@
         {% endif %}
 
         {% if reading %}
-        <div class="asset-block">
-          <h3>Reading companion</h3>
+        <div class="asset-block mt-2">
+          <h3 class="text-lg font-semibold text-gray-800">Reading companion</h3>
           {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
           {% if reading.sections %}
-          <h4>Sections</h4>
-          <ul>
+          <h4 class="font-semibold mt-2">Sections</h4>
+          <ul class="list-disc pl-6 text-gray-700">
             {% for section in reading.sections %}
             <li>
               <strong>{{ section.heading }}</strong>
@@ -150,8 +124,8 @@
           </ul>
           {% endif %}
           {% if reading.examples %}
-          <h4>Examples</h4>
-          <ul>
+          <h4 class="font-semibold mt-2">Examples</h4>
+          <ul class="list-disc pl-6 text-gray-700">
             {% for example in reading.examples %}
             <li>
               <strong>{{ example.title }}</strong> — {{ example.description }}
@@ -163,16 +137,16 @@
           </ul>
           {% endif %}
           {% if reading.glossary %}
-          <h4>Glossary</h4>
-          <ul>
+          <h4 class="font-semibold mt-2">Glossary</h4>
+          <ul class="list-disc pl-6 text-gray-700">
             {% for term in reading.glossary %}
             <li><strong>{{ term.term }}</strong>: {{ term.definition }}</li>
             {% endfor %}
           </ul>
           {% endif %}
           {% if reading.reflections %}
-          <h4>Reflection prompts</h4>
-          <ul>
+          <h4 class="font-semibold mt-2">Reflection prompts</h4>
+          <ul class="list-disc pl-6 text-gray-700">
             {% for prompt in reading.reflections %}
             <li>{{ prompt }}</li>
             {% endfor %}
@@ -182,11 +156,11 @@
         {% endif %}
 
         {% if quiz %}
-        <div class="asset-block">
-          <h3>Quiz</h3>
+        <div class="asset-block mt-2">
+          <h3 class="text-lg font-semibold text-gray-800">Quiz</h3>
           {% if quiz.questions %}
           <form class="quiz-form" id="quiz-form-{{ info.number }}">
-            <ol>
+            <ol class="list-decimal pl-6">
               {% for question in quiz.questions %}
               {% set qidx = loop.index0 %}
               <li class="question" data-answer="{{ question.answer }}" data-stem="{{ question.stem|e }}">
@@ -213,10 +187,10 @@
               </li>
               {% endfor %}
             </ol>
-            <div class="quiz-actions">
-              <button type="button" class="submit-quiz" data-module="{{ info.number }}">Check answers</button>
+            <div class="quiz-actions mt-2">
+              <button type="button" class="submit-quiz bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded" data-module="{{ info.number }}">Check answers</button>
             </div>
-            <div class="quiz-result" id="quiz-result-{{ info.number }}" aria-live="polite"></div>
+            <div class="quiz-result text-sm text-gray-700" id="quiz-result-{{ info.number }}" aria-live="polite"></div>
           </form>
           {% endif %}
           {% if quiz.remediation %}
@@ -226,13 +200,16 @@
         {% endif %}
       </div>
       {% endfor %}
-      {% else %}
-      <p>No modules were produced.</p>
-      {% endif %}
+  {% else %}
+  <p class="text-gray-600">No modules were produced.</p>
+  {% endif %}
 
-      <p class="muted">All materials are auto-generated drafts. Refine prompts and regenerate as needed.</p>
-    </main>
-    <script>
+  <p class="text-gray-500 text-sm">All materials are auto-generated drafts. Refine prompts and regenerate as needed.</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
       (function () {
         function evaluateQuiz(form) {
           const questions = Array.from(form.querySelectorAll('.question'));
@@ -287,5 +264,4 @@
         });
       })();
     </script>
-  </body>
-  </html>
+{% endblock %}
