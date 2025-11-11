@@ -418,40 +418,68 @@ def _synthesize_audio_clip(
 
 
 def _pair_presentation_and_narration(
-    presentation: Sequence[Dict[str, Any]],
-    narration: Sequence[Dict[str, Any]],
+    presentation: Sequence[Dict[str, Any]] | Sequence[Any],
+    narration: Sequence[Dict[str, Any]] | Sequence[Any],
 ) -> List[Tuple[SlideSpec, str]]:
-    """Align presentation pages with narration scripts by index order."""
+    """Align presentation pages with narration scripts by index order.
+
+    Be tolerant of slightly malformed payloads by accepting:
+    - presentation as a list of dicts OR a list of strings (headings)
+    - narration as a list of dicts with 'script' OR a list of strings (script text)
+    """
     if not presentation or not narration:
         raise VideoGenerationError("Presentation and narration data must both be provided.")
 
-    ordered_presentation = sorted(
-        (
-            SlideSpec(
-                page=item["page"],
-                heading=item.get("heading", ""),
-                content=item.get("content", ""),
-                visual_hints=item.get("visual_hints"),
-                content_blocks=item.get("content_blocks"),
+    # Normalize presentation into SlideSpec list
+    normalized_slides: List[SlideSpec] = []
+    for idx, item in enumerate(presentation, start=1):
+        if isinstance(item, dict):
+            try:
+                page_num = int(item.get("page", idx))
+            except Exception:
+                page_num = idx
+            normalized_slides.append(
+                SlideSpec(
+                    page=page_num,
+                    heading=str(item.get("heading", "")),
+                    content=str(item.get("content", "")),
+                    visual_hints=item.get("visual_hints"),
+                    content_blocks=item.get("content_blocks"),
+                )
             )
-            for item in presentation
-        ),
-        key=lambda slide: slide.page,
-    )
+        elif isinstance(item, str):
+            normalized_slides.append(SlideSpec(page=idx, heading=item.strip(), content=""))
+        else:
+            raise VideoGenerationError(
+                f"Invalid presentation item at index {idx-1}: expected object or string, got {type(item).__name__}."
+            )
+
+    ordered_presentation = sorted(normalized_slides, key=lambda slide: slide.page)
+
+    # Normalize narration into list of script strings
+    normalized_scripts: List[str] = []
+    for idx, item in enumerate(narration, start=1):
+        if isinstance(item, dict):
+            script = item.get("script") or item.get("text") or item.get("content") or ""
+            normalized_scripts.append(str(script))
+        elif isinstance(item, str):
+            normalized_scripts.append(item)
+        else:
+            raise VideoGenerationError(
+                f"Invalid narration item at index {idx-1}: expected object or string, got {type(item).__name__}."
+            )
 
     # If lengths differ, align to the shorter list to avoid hard failure
-    if len(ordered_presentation) != len(narration):
-        min_len = min(len(ordered_presentation), len(narration))
+    if len(ordered_presentation) != len(normalized_scripts):
+        min_len = min(len(ordered_presentation), len(normalized_scripts))
         if min_len == 0:
-            raise VideoGenerationError(
-                f"Presentation pages ({len(ordered_presentation)}) and narration sections ({len(narration)}) are not usable."
-            )
+            raise VideoGenerationError(f"Presentation pages ({len(ordered_presentation)}) and narration sections ({len(normalized_scripts)}) are not usable.")
         ordered_presentation = ordered_presentation[:min_len]
-        narration = narration[:min_len]
+        normalized_scripts = normalized_scripts[:min_len]
 
     pairs: List[Tuple[SlideSpec, str]] = []
     for idx, slide in enumerate(ordered_presentation):
-        script = narration[idx].get("script", "")
+        script = normalized_scripts[idx]
         if not isinstance(script, str) or not script.strip():
             raise VideoGenerationError(f"Narration script for slide {slide.page} is missing or empty.")
         pairs.append((slide, script))

@@ -319,31 +319,30 @@ reading_material:
   messages:
     - role: system
       template: |
-        You are a technical writer producing an accessible yet rigorous handout.
-        Respond only with minified JSON conforming to this schema:
+        You are a senior instructional writer producing an accessible, practical, and outcome‑aligned handout.
+        Respond ONLY with minified JSON matching this schema exactly (no extra keys):
         {
           "summary": "string",
           "sections": [
-            {
-              "heading": "string",
-              "key_points": ["string"],
-              "content": "string",
-              "outcome_alignment": ["string"]
-            }
+            {"heading": "string", "key_points": ["string"], "content": "string", "outcome_alignment": ["string"]}
           ],
           "examples": [
-            {
-              "title": "string",
-              "description": "string",
-              "outcome_alignment": ["string"]
-            }
+            {"title": "string", "description": "string", "outcome_alignment": ["string"]}
           ],
-          "glossary": [
-            {"term": "string", "definition": "string"}
-          ],
+          "glossary": [{"term": "string", "definition": "string"}],
           "reflections": ["string"]
         }
-        Cover every learning outcome across sections and examples.
+        Quality and structure requirements:
+        - Produce 4–6 "sections". Each section must:
+          - Include 3–5 concise "key_points". Mix definitions, steps, and “Pitfall:” notes for common misconceptions.
+          - Provide a 120–180 word "content" paragraph with concrete details, short sentences, and examples (no fluff).
+          - Set "outcome_alignment" to the most relevant 1–2 outcomes from the provided list (verbatim strings).
+        - "examples": Provide 2–3 short, real‑world mini‑cases with light numbers or metrics; tie each to outcomes.
+        - "glossary": Provide 8–12 important terms with crisp definitions (≤ 22 words each).
+        - "reflections": Provide 4–6 prompts that drive application (e.g., “How would you…”, “Where could this fail…?”).
+        - Include at least one section with a short step‑by‑step mini‑activity (use key_points as steps).
+        - Avoid generic phrasing, filler, or repeating the outcomes verbatim as content.
+        - Prefer active voice, specific nouns/verbs, and domain‑true statements. No markdown, no code fences.
     - role: user
       template: |
         Course Title: {{ course_title }}
