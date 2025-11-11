@@ -146,6 +146,23 @@ def _slugify_title(title: str) -> str:
     safe = "-".join(filter(None, safe.split("-")))
     return safe or "course"
 
+def _export_html(template_name: str, context: Dict[str, Any], *, base_slug: str) -> Path:
+    """Render a template to HTML and write it under EXPORTS_DIR/<slug>-<timestamp>/index.html.
+
+    The export relies on app routes for assets (e.g., /static, /videos). Only HTML is persisted.
+    """
+    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    dir_name = f"{_slugify_title(base_slug)}-{timestamp}"
+    out_dir = EXPORTS_DIR / dir_name
+    out_dir.mkdir(parents=True, exist_ok=True)
+    # Render with the provided context; requires 'request' in context for url_for in templates
+    template = templates.get_template(template_name)
+    html = template.render(context)
+    output_file = out_dir / "index.html"
+    output_file.write_text(html, encoding="utf-8")
+    return output_file
+
 
 def _keep_uploaded_files() -> bool:
     toggle = os.getenv("RAG_KEEP_UPLOADS", "true").strip().lower()
@@ -804,7 +821,7 @@ def create_course_video(
     content = result.get("content", {})
     rag_context = result.get("rag_context")
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "result.html",
         {
             "request": request,
@@ -821,6 +838,30 @@ def create_course_video(
             "rag_context": rag_context,
         },
     )
+    # Save an export snapshot of the result page
+    try:
+        _export_html(
+            "result.html",
+            {
+                "request": request,
+                "course_title": course_title,
+                "hook": content.get("hook", ""),
+                "recap": content.get("recap", ""),
+                "outline": content.get("outline", []),
+                "video_url": video_url,
+                "captions_url": captions_url,
+                "chapters_url": chapters_url,
+                "voice": voice or "alloy",
+                "model": result.get("model"),
+                "video_file": Path(video_path).name if video_path else None,
+                "rag_context": rag_context,
+            },
+            base_slug=course_title,
+        )
+    except Exception:
+        # Export is best-effort; do not block the response
+        pass
+    return response
 
 
 @app.post("/create-course-plan", response_class=HTMLResponse, tags=["web"])
@@ -943,9 +984,7 @@ def create_course_pages(
             }
         )
 
-    return templates.TemplateResponse(
-        "course_pages.html",
-        {
+    page_context = {
             "request": request,
             "course_title": course_title,
             "audience": audience,
@@ -954,7 +993,15 @@ def create_course_pages(
             "learning_outcomes": outcomes,
             "blueprint": blueprint_content,
             "modules_output": module_assets,
-        },
+        }
+    # Persist export snapshot
+    try:
+        _export_html("course_pages.html", page_context, base_slug=course_title)
+    except Exception:
+        pass
+    return templates.TemplateResponse(
+        "course_pages.html",
+        page_context,
     )
 
 
@@ -1071,9 +1118,7 @@ def create_full_course(
             }
         )
 
-    return templates.TemplateResponse(
-        "full_course.html",
-        {
+    page_context = {
             "request": request,
             "course_title": course_title,
             "audience": audience,
@@ -1083,5 +1128,12 @@ def create_full_course(
             "blueprint": blueprint_content,
             "modules_output": module_assets,
             "voice": voice or "alloy", # Pass voice to template
-        },
+        }
+    try:
+        _export_html("full_course.html", page_context, base_slug=course_title)
+    except Exception:
+        pass
+    return templates.TemplateResponse(
+        "full_course.html",
+        page_context,
     )

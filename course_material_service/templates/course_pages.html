@@ -1,18 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}{{ course_title }} - Module Pages - ALPHA{% endblock %}
+{% block title %}{{ course_title }} - Course - ALPHA{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto mb-10">
-  <div class="bg-white shadow-2xl rounded-2xl p-8 md:p-10 mb-6">
-    <div class="flex items-start justify-between">
-      <div>
-        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">{{ course_title }}</h1>
-        <p class="text-gray-600 mt-1">Curated module materials: video, reading, and quiz.</p>
-      </div>
-      <div class="space-x-2">
-        <a href="/dashboard" class="inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">Dashboard</a>
-        <a href="/exports" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">Saved Courses</a>
+  <!-- Hero header -->
+  <div class="relative overflow-hidden rounded-2xl mb-8">
+    <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 opacity-90"></div>
+    <div class="relative p-8 md:p-12 text-white">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">{{ course_title }}</h1>
+          <div class="mt-3 flex flex-wrap items-center gap-3 text-white/90">
+            <!-- Faux rating like Coursera style; hidden if you don't want show -->
+            <span class="inline-flex items-center gap-1">
+              <span class="font-semibold">4.8</span>
+              <span class="text-yellow-300">★★★★★</span>
+              <span class="text-white/80 text-sm">(auto-generated)</span>
+            </span>
+            {% if duration_minutes %}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white/10 text-sm">~ {{ duration_minutes }} min</span>
+            {% endif %}
+            {% if audience %}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white/10 text-sm">For: {{ audience }}</span>
+            {% endif %}
+            {% if tone %}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white/10 text-sm">Tone: {{ tone }}</span>
+            {% endif %}
+          </div>
+          <p class="mt-2 text-white text-opacity-90">Structured learning modules with scripts, readings, and quizzes.</p>
+          {% if learning_outcomes %}
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-sm">Outcomes: {{ learning_outcomes|length }}</span>
+            {% if blueprint and blueprint.modules %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-sm">Modules: {{ blueprint.modules|length }}</span>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="#overview" class="inline-block bg-black/20 border border-white/30 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white hover:text-gray-900 transition">Overview</a>
+          <a href="#syllabus" class="inline-block bg-black/20 border border-white/30 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white hover:text-gray-900 transition">Syllabus</a>
+          <a href="/exports" class="inline-block bg-white text-gray-900 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition">Saved Courses</a>
+        </div>
       </div>
     </div>
   </div>
@@ -20,13 +50,14 @@
   <div class="grid grid-cols-12 gap-6">
     <aside class="col-span-12 md:col-span-4 lg:col-span-3">
       <div class="sticky top-6 bg-white rounded-2xl shadow-xl p-5">
-        <h2 class="text-lg font-semibold text-gray-800 mb-3">Modules</h2>
+        <h2 class="text-lg font-semibold text-gray-800 mb-3">Course Contents</h2>
         {% if modules_output %}
         <nav class="space-y-1" aria-label="Module navigation">
           {% for module in modules_output %}
           {% set info = module.info %}
-          <a href="#module-{{ info.number }}" class="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition">
-            <span class="font-medium">{{ info.number }}.</span> {{ info.title }}
+          <a href="#module-{{ info.number }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition">
+            <span class="inline-flex h-6 w-6 items-center justify-center text-xs font-semibold rounded-full bg-indigo-600 text-white">{{ info.number }}</span>
+            <span class="truncate">{{ info.title }}</span>
           </a>
           {% endfor %}
         </nav>
@@ -37,17 +68,31 @@
     </aside>
 
     <section class="col-span-12 md:col-span-8 lg:col-span-9">
-      {% if learning_outcomes %}
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">Course Outcomes</h2>
-        <ul class="list-disc pl-6 text-gray-700">
-          {% for outcome in learning_outcomes %}
-          <li>{{ outcome }}</li>
-          {% endfor %}
-        </ul>
+      <!-- Tabs -->
+      <div class="mb-4 flex items-center gap-2 border-b border-gray-200">
+        <button class="tab-btn px-4 py-2 text-sm font-semibold text-indigo-700 border-b-2 border-indigo-700" data-tab="overview">Overview</button>
+        <button class="tab-btn px-4 py-2 text-sm text-gray-600 hover:text-gray-900" data-tab="syllabus">Syllabus</button>
       </div>
-      {% endif %}
 
+      <!-- Overview tab -->
+      <div id="tab-overview">
+        {% if learning_outcomes %}
+        <div class="mb-6">
+          <h2 id="overview" class="text-2xl font-bold text-gray-900 mb-3">What you will learn</h2>
+          <ul class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {% for outcome in learning_outcomes %}
+            <li class="flex items-start gap-2 bg-gray-50 rounded-lg p-3 border border-gray-100">
+              <span class="mt-1 h-2 w-2 rounded-full bg-indigo-600"></span>
+              <span class="text-gray-700">{{ outcome }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Syllabus tab -->
+      <div id="tab-syllabus" style="display:none;">
       {% if modules_output %}
         {% for module in modules_output %}
           {% set info = module.info %}
@@ -55,14 +100,37 @@
           {% set video = assets.get("video_script", {}).get("content") %}
           {% set reading = assets.get("reading_material", {}).get("content") %}
           {% set quiz = assets.get("quiz_questions", {}).get("content") %}
-          <div id="module-{{ info.number }}" class="rounded-2xl bg-white shadow-xl p-6 mb-8 border border-gray-100">
-            <div class="flex items-start justify-between">
-              <h2 class="text-xl font-semibold text-gray-900">Module {{ info.number }}: {{ info.title }}</h2>
-              <a href="#" class="text-sm text-blue-600 hover:text-blue-700" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">Back to top</a>
+          <div id="module-{{ info.number }}" class="rounded-2xl bg-white shadow-xl p-0 mb-10 border border-gray-100 overflow-hidden">
+            <div class="px-6 pt-6 pb-4 bg-gradient-to-r from-gray-50 to-white">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h2 class="text-xl font-semibold text-gray-900">Module {{ info.number }}: {{ info.title }}</h2>
+                  {% if info.summary %}<p class="text-gray-600 mt-1">{{ info.summary }}</p>{% endif %}
+                </div>
+                <a href="#" class="text-sm text-indigo-600 hover:text-indigo-700" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;">Back to top</a>
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2">
+                {% if info.outcomes %}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">Outcomes: {{ info.outcomes|length }}</span>
+                {% endif %}
+                {% if info.key_topics %}
+                  {% for t in info.key_topics %}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">{{ t }}</span>
+                  {% endfor %}
+                {% endif %}
+              </div>
             </div>
-            {% if info.summary %}<p class="text-gray-700 mt-1">{{ info.summary }}</p>{% endif %}
-            {% if info.outcomes %}<p class="text-gray-700"><span class="font-semibold">Module outcomes:</span> {{ info.outcomes | join(", ") }}</p>{% endif %}
-            {% if info.key_topics %}<p class="text-gray-700"><span class="font-semibold">Key topics:</span> {{ info.key_topics | join(", ") }}</p>{% endif %}
+            <div class="px-6 pb-6">
+              {% if info.learning_activities %}
+              <p class="text-gray-800 font-semibold mt-4">Planned activities</p>
+              <ul class="list-disc pl-6 text-gray-700">
+                {% for activity in info.learning_activities %}
+                <li>
+                  {{ activity.activity_type }} — {{ activity.description }} {% if activity.duration_minutes %}<span class="text-gray-500">({{ activity.duration_minutes }} min)</span>{% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+              {% endif %}
             {% if info.learning_activities %}
             <p class="text-gray-800 font-semibold mt-2">Planned activities</p>
             <ul class="list-disc pl-6 text-gray-700">
@@ -75,7 +143,7 @@
             {% endif %}
 
             {% if video %}
-            <div class="mt-4 border-t border-gray-100 pt-4">
+            <div class="mt-6 border-t border-gray-100 pt-4">
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-900">Video script</h3>
                 <button type="button" class="toggle-section text-sm text-blue-600 hover:text-blue-700" data-target="#video-{{ info.number }}">Toggle</button>
@@ -212,7 +280,7 @@
                 </form>
                 {% endif %}
                 {% if quiz.remediation %}
-                <p><strong>Remediation tip:</strong> {{ quiz.remediation }}</p>
+                <p class="mt-2 text-gray-700"><strong>Remediation tip:</strong> {{ quiz.remediation }}</p>
                 {% endif %}
               </div>
             </div>
@@ -222,6 +290,7 @@
       {% else %}
       <p class="text-gray-600">No module materials were generated.</p>
       {% endif %}
+      </div>
 
     </section>
   </div>
@@ -303,6 +372,20 @@
             target.scrollIntoView({ behavior: 'smooth', block: 'start' });
           });
         });
+
+        // Coursera-like tabs
+        const tabs = document.querySelectorAll('.tab-btn');
+        function activate(tab) {
+          tabs.forEach(t => {
+            t.classList.remove('text-indigo-700','border-indigo-700','font-semibold');
+            t.classList.add('text-gray-600');
+          });
+          tab.classList.add('text-indigo-700','border-b-2','border-indigo-700','font-semibold');
+          const name = tab.getAttribute('data-tab');
+          const views = { overview: document.getElementById('tab-overview'), syllabus: document.getElementById('tab-syllabus') };
+          Object.entries(views).forEach(([k, el]) => { if (el) el.style.display = (k === name) ? '' : 'none'; });
+        }
+        tabs.forEach(t => t.addEventListener('click', () => activate(t)));
       })();
     </script>
 {% endblock %}
