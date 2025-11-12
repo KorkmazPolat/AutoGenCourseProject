@@ -19,11 +19,15 @@ pip install -r requirements.txt
 
 ## Çalıştırma
 
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
+1. cd .\course_material_service\ (doğru dizine gitme)
+2. pip install -r requirements.txt  (gereklilikleri yükleme)
+3. mkdir export    (kursların kaydolucağı folder oluşturma "course_material_service" içerisine) 
+4. uvicorn main:app --reload    (çalıştırma)
+  Uygulama `http://localhost:8000` adresinde çalışır.
+5. (opsiyonel) split terminal den "docker run -p 6333:6333 qdrant/qdrant" ile vectör veri tabanı başlatılır.
+  5. adım için "docker desktop uygulaması yüklü olmak zorundadır."
 
-Uygulama `http://localhost:8000` adresinde çalışır.
+Note: video_builder.py dosyasında 8. satır "from moviepy.editor import (" da "moviepy.editor" olması sıkıntı çıkarırsa "moviepy" kullanmak çözebilir.
 
 ## RAG (Retrieval-Augmented Generation) Desteği
 
@@ -35,13 +39,8 @@ Bu sürümle birlikte uygulama PDF formatındaki kaynak dokümanları Qdrant vek
 
 ### Qdrant'i Docker ile Başlatma
 
-```bash
-docker run -d \
-  -p 6333:6333 \
-  -p 6334:6334 \
-  -v qdrant_storage:/qdrant/storage \
-  qdrant/qdrant
-```
+split terminal den 
+"docker run -p 6333:6333 qdrant/qdrant" ile vectör veri tabanı başlatılır.
 
 Varsayılan olarak uygulama `http://localhost:6333` adresine bağlanır. Farklı bir barındırıcı/port kullanıyorsanız aşağıdaki ortam değişkenlerini ayarlayabilirsiniz.
 
@@ -59,15 +58,6 @@ Varsayılan olarak uygulama `http://localhost:6333` adresine bağlanır. Farklı
 ### Web Arayüzü
 
 Formu doldururken PDF yükleme alanı belgeyi otomatik olarak Qdrant'a aktarır ve durum mesajını ekrandan takip edebilirsiniz. Kurs üretimi tamamlandığında kullanılan kaynak pasajları sonuç sayfasında **Source Context** bölümünde görülür.
-
-### REST API ile PDF Yükleme
-
-Arayüzü kullanmadan da aşağıdaki uç noktadan PDF ingest edebilirsiniz:
-
-```bash
-curl -X POST http://localhost:8000/documents/upload \
-  -F "file=@/path/to/document.pdf"
-```
 
 Yanıt örneği:
 
