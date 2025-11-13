@@ -22,9 +22,9 @@ from jinja2 import Template
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
 
-from rag_ingest import IngestError, ingest_pdf_into_qdrant
-from rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
-from video_builder import VideoGenerationError, generate_video_from_script
+from .rag_ingest import IngestError, ingest_pdf_into_qdrant
+from .rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
+from .video_builder import VideoGenerationError, generate_video_from_script
 import shutil
 
 
@@ -205,7 +205,8 @@ def _load_prompt_definitions() -> Dict[str, PromptDefinition]:
 
 PROMPT_DEFINITIONS = _load_prompt_definitions()
 
-load_dotenv(dotenv_path=".env", override=True)
+# Ensure we load the package-local .env (course_material_service/.env)
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=True)
 
 
 def _parse_learning_outcomes(raw_text: str) -> List[str]:
@@ -221,7 +222,8 @@ def _parse_learning_outcomes(raw_text: str) -> List[str]:
 
 
 def _rag_enabled() -> bool:
-    toggle = os.getenv("RAG_ENABLED", "true").strip().lower()
+    # Default disabled unless RAG_ENABLED is explicitly truthy
+    toggle = os.getenv("RAG_ENABLED", "false").strip().lower()
     return toggle not in {"0", "false", "off", "no"}
 
 
@@ -333,6 +335,14 @@ def _get_openai_client() -> OpenAI:
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY environment variable must be set for generation.")
+    # Print masked API key once (function is cached)
+    try:
+        masked = (
+            f"{api_key[:4]}...{api_key[-4:]}" if isinstance(api_key, str) and len(api_key) > 8 else "***"
+        )
+        print(f"Using OPENAI_API_KEY: {masked}")
+    except Exception:
+        pass
     return OpenAI(api_key=api_key)
 
 
@@ -345,7 +355,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SECRET_KEY", "default_fallback_secret_key_if_not_set")
 )
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(Path(__file__).resolve().parent / "static")), name="static")
 app.mount("/exports-files", StaticFiles(directory=str(EXPORTS_DIR)), name="exports_files")
 
 
@@ -732,6 +742,12 @@ async def upload_course_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
 ) -> Dict[str, Any]:
+    # Short-circuit when RAG is disabled
+    if not _rag_enabled():
+        return {
+            "status": "disabled",
+            "detail": "RAG ingestion is disabled. Set RAG_ENABLED=1 to enable.",
+        }
     content_type = (file.content_type or "").lower()
     filename = file.filename or "document.pdf"
     if "pdf" not in content_type and not filename.lower().endswith(".pdf"):

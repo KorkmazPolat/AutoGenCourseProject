@@ -9,10 +9,11 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from qdrant_client import QdrantClient
 
-from rag_ingest import build_qdrant_client
+from .rag_ingest import build_qdrant_client
 
 
-load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=False)
+# Load package-local .env; allow overriding any pre-set values for consistency
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=True)
 
 
 class RagRetrieverError(RuntimeError):
@@ -32,6 +33,14 @@ def _get_openai_embedding_client() -> OpenAI:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RagRetrieverError("OPENAI_API_KEY must be set to retrieve supporting context.")
+    # Print masked API key for visibility during development
+    try:
+        masked = (
+            f"{api_key[:4]}...{api_key[-4:]}" if isinstance(api_key, str) and len(api_key) > 8 else "***"
+        )
+        print(f"Using OPENAI_API_KEY (embeddings): {masked}")
+    except Exception:
+        pass
     return OpenAI(api_key=api_key)
 
 
