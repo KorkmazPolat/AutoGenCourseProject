@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field, field_validator
 from .rag_ingest import IngestError, ingest_pdf_into_qdrant
 from .rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
 from .video_builder import VideoGenerationError, generate_video_from_script
+from routes.generate_course import router as agent_course_router
 import shutil
 
 
@@ -357,6 +358,7 @@ app.add_middleware(
 )
 app.mount("/static", StaticFiles(directory=str(Path(__file__).resolve().parent / "static")), name="static")
 app.mount("/exports-files", StaticFiles(directory=str(EXPORTS_DIR)), name="exports_files")
+app.include_router(agent_course_router)
 
 
 
@@ -391,6 +393,17 @@ async def get_session_user(request: Request):
     if not user:
         raise HTTPException(status_code=307, detail="Not authorized", headers={"Location": "/login"})
     return user
+
+
+@app.get("/agent-pipeline", response_class=HTMLResponse, tags=["web"])
+def agent_pipeline_page(request: Request, user: str = Depends(get_session_user)):
+    """Visualize the agentic AutoGenCourseProject pipeline as an interactive tree."""
+    return templates.TemplateResponse(
+        "agent_pipeline.html",
+        {
+            "request": request,
+        },
+    )
 
 @app.get("/exports", response_class=HTMLResponse, tags=["web"])
 def list_saved_exports(request: Request, user: str = Depends(get_session_user)):
