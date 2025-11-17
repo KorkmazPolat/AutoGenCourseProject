@@ -26,6 +26,7 @@ from .rag_ingest import IngestError, ingest_pdf_into_qdrant
 from .rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
 from .video_builder import VideoGenerationError, generate_video_from_script
 from routes.generate_course import router as agent_course_router
+from manager.agent_manager import AgentManager
 import shutil
 
 
@@ -1162,6 +1163,236 @@ def create_full_course(
         _export_html("full_course.html", page_context, base_slug=course_title)
     except Exception:
         pass
+    return templates.TemplateResponse(
+        "full_course.html",
+        page_context,
+    )
+
+
+@app.post("/create-full-course-agent", response_class=HTMLResponse, tags=["web"])
+def create_full_course_agentic(
+    request: Request,
+    course_title: str = Form(...),
+    learning_outcomes: str = Form(...),
+    audience: Optional[str] = Form(None),
+    tone: Optional[str] = Form(None),
+    duration_minutes: Optional[str] = Form(None),
+) -> HTMLResponse:
+    """Build a complete course using the agentic AgentManager pipeline."""
+    outcomes = _parse_learning_outcomes(learning_outcomes)
+
+    manager = AgentManager()
+    result = manager.run(outcomes)
+
+    course_plan = result.get("course_plan", {})
+    modules = course_plan.get("modules") or []
+
+    page_context = {
+        "request": request,
+        "course_title": course_plan.get("title") or course_title,
+        "audience": audience,
+        "tone": tone,
+        "duration_minutes": duration_minutes,
+        "learning_outcomes": outcomes,
+        "course_plan": course_plan,
+        "modules": modules,
+        "lessons": result.get("lessons") or [],
+        "videos": result.get("videos") or [],
+        "quizzes": result.get("quizzes") or [],
+        "final_validation": result.get("final_validation") or {},
+    }
+
+    return templates.TemplateResponse(
+        "agentic_full_course.html",
+        page_context,
+    )
+
+
+@app.post("/agentic-finalize-course", response_class=HTMLResponse, tags=["web"])
+def agentic_finalize_course(
+    request: Request,
+    course_title: str = Form(...),
+    learning_outcomes: Optional[str] = Form(None),
+    learning_outcomes_json: Optional[str] = Form(None),
+    audience: Optional[str] = Form(None),
+    tone: Optional[str] = Form(None),
+    duration_minutes: Optional[str] = Form(None),
+    voice: Optional[str] = Form(None),
+    tts_model: Optional[str] = Form(None),
+    theme: Optional[str] = Form(None),
+    logo_path: Optional[str] = Form(None),
+) -> HTMLResponse:
+    """Finalize an agentic course by rendering videos from generated scripts.
+
+    Accepts either newline-separated ``learning_outcomes`` or a JSON array
+    provided in ``learning_outcomes_json``. Falls back gracefully so that
+    older forms that only submit raw text continue to work.
+    """
+
+    outcomes: List[str]
+
+    # Prefer JSON payload when present and valid
+    if learning_outcomes_json:
+        raw_json = (learning_outcomes_json or "").strip()
+        try:
+            parsed = json.loads(raw_json)
+        except json.JSONDecodeError as exc:
+            # If JSON fails but we still have the plain-text version, fall back
+            if learning_outcomes:
+                outcomes = _parse_learning_outcomes(learning_outcomes)
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid learning_outcomes_json: {exc}",
+                ) from exc
+        else:
+            if not isinstance(parsed, list):
+                raise HTTPException(
+                    status_code=400,
+                    detail="learning_outcomes_json must be a JSON array of strings.",
+                )
+            outcomes = [str(item).strip() for item in parsed if str(item).strip()]
+            if not outcomes:
+                raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+    elif learning_outcomes is not None:
+        outcomes = _parse_learning_outcomes(learning_outcomes)
+    else:
+        raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+
+    # Use agentic plan as the source of truth for the structure (modules and
+    # lessons), and adapt the generated lessons/quizzes into the data
+    # structures expected by full_course.html so the full course layout is
+    # driven by the agentic plan.
+
+    manager = AgentManager()
+    result = manager.run(outcomes)
+
+    course_plan = result.get("course_plan", {}) or {}
+    modules = course_plan.get("modules") or []
+    lessons = result.get("lessons") or []
+    quizzes = result.get("quizzes") or []
+
+    # Build modules_output from agentic plan. We aggregate all lessons for a
+    # module into a single video/reading/quiz block so the UI matches the
+    # legacy full_course.html template but the content comes from AgentManager.
+    modules_output: List[Dict[str, Any]] = []
+    lesson_index = 0
+
+    for module_idx, module in enumerate(modules, start=1):
+        module_title = module.get("title") if isinstance(module, dict) else getattr(module, "title", None)
+        module_lessons_names = module.get("lessons") if isinstance(module, dict) else getattr(module, "lessons", [])
+        module_lessons_names = module_lessons_names or []
+
+        # Slice lessons/quizzes corresponding to this module based on the
+        # order AgentManager generates them (module-by-module, lesson-by-lesson).
+        count = len(module_lessons_names)
+        module_lessons = lessons[lesson_index : lesson_index + count] if count else []
+        module_quizzes = quizzes[lesson_index : lesson_index + count] if count else []
+        lesson_index += count
+
+        # Build a summary from the first lesson, if available.
+        primary_lesson: Dict[str, Any] = module_lessons[0] if module_lessons else {}
+        title = primary_lesson.get("title") or module_title or f"Module {module_idx}"
+        summary = primary_lesson.get("summary") or ""
+
+        # VIDEO SCRIPT: aggregate all lesson texts as narration blocks.
+        narration_blocks: List[Dict[str, Any]] = []
+        for lesson in module_lessons:
+            narration_blocks.append(
+                {
+                    "section": lesson.get("title") or title,
+                    "summary": lesson.get("summary") or "",
+                    "script": lesson.get("text", ""),
+                }
+            )
+
+        video_content: Dict[str, Any] = {
+            "hook": summary or f"Overview of {title}",
+            "narration": narration_blocks,
+        }
+
+        # READING: treat each lesson as a section in the reading.
+        reading_sections: List[Dict[str, Any]] = []
+        for lesson in module_lessons:
+            reading_sections.append(
+                {
+                    "heading": lesson.get("title") or title,
+                    "content": lesson.get("text", ""),
+                    "key_points": [],
+                    "outcome_alignment": [],
+                }
+            )
+
+        reading_content: Dict[str, Any] = {
+            "summary": summary,
+            "sections": reading_sections,
+        }
+
+        # QUIZ: merge all agentic quizzes for this module into the template
+        # format expected by full_course.html.
+        quiz_questions: List[Dict[str, Any]] = []
+        labels = ["A", "B", "C", "D", "E", "F"]
+        for quiz in module_quizzes:
+            q_list = quiz.get("questions") if isinstance(quiz, dict) else quiz.get("questions")
+            if not q_list:
+                continue
+            for q in q_list:
+                options = q.get("options") or []
+                choices = []
+                for idx_opt, opt_text in enumerate(options):
+                    label = labels[idx_opt] if idx_opt < len(labels) else str(idx_opt + 1)
+                    choices.append({"label": label, "text": opt_text})
+                correct_index = q.get("correct_index", 0)
+                try:
+                    correct_label = choices[correct_index]["label"]
+                except Exception:
+                    correct_label = choices[0]["label"] if choices else "A"
+                quiz_questions.append(
+                    {
+                        "stem": q.get("question", ""),
+                        "choices": choices,
+                        "answer": correct_label,
+                        "learning_outcome": None,
+                        "rationale": None,
+                    }
+                )
+
+        quiz_content: Optional[Dict[str, Any]]
+        if quiz_questions:
+            quiz_content = {
+                "questions": quiz_questions,
+                "remediation": None,
+            }
+        else:
+            quiz_content = None
+
+        assets_for_module: Dict[str, Any] = {
+            "video_script": {"content": video_content},
+            "reading_material": {"content": reading_content},
+            "quiz_questions": {"content": quiz_content},
+        }
+
+        modules_output.append(
+            {
+                "info": {
+                    "number": module_idx,
+                    "title": module_title or title,
+                    "summary": summary,
+                },
+                "assets": assets_for_module,
+            }
+        )
+
+    page_context = {
+        "request": request,
+        "course_title": course_plan.get("title") or course_title,
+        "audience": audience,
+        "tone": tone,
+        "duration_minutes": duration_minutes,
+        "modules_output": modules_output,
+        "voice": voice or "alloy",
+    }
+
     return templates.TemplateResponse(
         "full_course.html",
         page_context,

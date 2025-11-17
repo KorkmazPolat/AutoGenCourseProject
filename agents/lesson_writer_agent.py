@@ -70,10 +70,31 @@ class LessonWriterAgent(BaseAgent):
             or ""
         )
 
+        # Ensure we always have reasonably rich lesson text so that downstream
+        # video/reading views have real content to display.
+        final_summary = summary or title
+        final_text = text or final_summary or title
+
+        # If the body is very short, expand it into a few simple paragraphs
+        # based on the summary and title. This avoids empty lessons when the
+        # LLM returns only a brief sentence.
+        if len(final_text.strip()) < 200 and final_summary:
+            paragraphs: List[str] = []
+            paragraphs.append(f"In this lesson, you will explore: {final_summary}")
+            paragraphs.append(
+                f"We start by introducing {title}, then walk through practical examples "
+                "and simple explanations so that even beginners can follow."
+            )
+            paragraphs.append(
+                "By the end of this lesson, you should feel more confident applying "
+                f"what you have learned about {title}."
+            )
+            final_text = "\n\n".join(paragraphs)
+
         normalized = {
             "title": title,
-            "text": text or summary or title,
-            "summary": summary or title,
+            "text": final_text,
+            "summary": final_summary,
         }
         return normalized
 
@@ -86,7 +107,22 @@ class LessonWriterAgent(BaseAgent):
             learning_outcomes=writer_input.learning_outcomes,
         )
         llm_result = self.call_llm(prompt)
-        raw_payload = self.validate_json(llm_result)
-        normalized_payload = self._normalize_llm_lesson(raw_payload)
-        lesson = LessonContent.parse_obj(normalized_payload)
-        return lesson.to_json()
+
+        # Be defensive: if the LLM returns non-JSON text, fall back to a
+        # minimal LessonContent instead of raising and breaking the pipeline.
+        try:
+            raw_payload = self.validate_json(llm_result)
+            normalized_payload = self._normalize_llm_lesson(raw_payload)
+            lesson = LessonContent.parse_obj(normalized_payload)
+            return lesson.to_json()
+        except Exception:
+            # Fallback: treat raw text as the lesson body
+            text = str(llm_result).strip()
+            title = writer_input.lesson_name or "Lesson"
+            summary = text.split("\n", 1)[0][:200] if text else title
+            lesson = LessonContent(
+                title=title,
+                text=text or summary or title,
+                summary=summary,
+            )
+            return lesson.to_json()
