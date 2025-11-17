@@ -67,7 +67,19 @@ class VideoScriptAgent(BaseAgent):
         return script.to_json()
 
     def generate(self, input_json: Dict[str, Any]) -> Dict[str, Any]:
-        lesson = LessonContent.parse_obj(input_json)
+        # Be defensive in case previous steps or validation produced partial lesson data
+        title = (input_json.get("title") or input_json.get("lesson") or "").strip()
+        text = (input_json.get("text") or input_json.get("body") or "").strip()
+        summary = (input_json.get("summary") or input_json.get("recap") or "").strip()
+
+        if not title:
+            title = "Lesson"
+        if not text:
+            text = summary or title
+        if not summary:
+            summary = title
+
+        lesson = LessonContent(title=title, text=text, summary=summary)
         template = self.load_template("video_script.jinja")
         prompt = template.render(lesson=lesson.dict())
         llm_result = self.call_llm(prompt)
