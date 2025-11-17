@@ -1,0 +1,10 @@
+Generate 3–5 multiple-choice questions based on the following lesson text:
+{{ lesson | tojson }}
+
+Each question must include:
+- "question": the text
+- "options": a list of answer options
+- "correct_index": index into options of the correct answer
+
+Output JSON Quiz ONLY.
+
