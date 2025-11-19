@@ -19,6 +19,8 @@ router = APIRouter()
 class GenerateCourseRequest(BaseModel):
     learning_outcomes: List[str]
     skip_video: bool = False
+    num_modules: int | None = None
+    num_lessons: int | None = None
 
 
 async def save_course_to_db(db: AsyncSession, result: Dict[str, Any], learning_outcomes: List[str]):
@@ -172,7 +174,9 @@ async def generate_course(
     result = await run_in_threadpool(
         manager.run, 
         payload.learning_outcomes, 
-        skip_video=payload.skip_video
+        skip_video=payload.skip_video,
+        num_modules=payload.num_modules,
+        num_lessons=payload.num_lessons
     )
     
     # Save to DB

@@ -1060,6 +1060,12 @@ def system_architecture(request: Request):
     return templates.TemplateResponse("system_architecture.html", {"request": request})
 
 
+@app.get("/course-builder", response_class=HTMLResponse, tags=["web"])
+def course_builder(request: Request):
+    """Visual drag-and-drop course builder interface."""
+    return templates.TemplateResponse("course_builder.html", {"request": request})
+
+
 @app.get("/videos/{filename}", tags=["web"])
 def get_video(filename: str) -> FileResponse:
     """Serve generated video files."""
@@ -1205,12 +1211,14 @@ def create_full_course_agentic(
     tone: Optional[str] = Form(None),
     duration_minutes: Optional[str] = Form(None),
     skip_video: bool = Form(False),
+    num_modules: Optional[int] = Form(None),
+    num_lessons: Optional[int] = Form(None),
 ) -> HTMLResponse:
     """Build a complete course using the agentic AgentManager pipeline."""
     outcomes = _parse_learning_outcomes(learning_outcomes)
 
     manager = AgentManager()
-    result = manager.run(outcomes, skip_video=skip_video)
+    result = manager.run(outcomes, skip_video=skip_video, num_modules=num_modules, num_lessons=num_lessons)
 
     course_plan = result.get("course_plan", {})
     modules = course_plan.get("modules") or []
@@ -1249,6 +1257,7 @@ def agentic_finalize_course(
     tts_model: Optional[str] = Form(None),
     theme: Optional[str] = Form(None),
     logo_path: Optional[str] = Form(None),
+    skip_video: bool = Form(False),
 ) -> HTMLResponse:
     """Finalize an agentic course by rendering videos from generated scripts.
 
@@ -1293,7 +1302,7 @@ def agentic_finalize_course(
     # driven by the agentic plan.
 
     manager = AgentManager()
-    result = manager.run(outcomes)
+    result = manager.run(outcomes, skip_video=skip_video)
 
     course_plan = result.get("course_plan", {}) or {}
     modules = course_plan.get("modules") or []

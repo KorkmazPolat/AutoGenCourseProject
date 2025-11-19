@@ -27,7 +27,7 @@ class AgentManager:
         self.video_generator = VideoGeneratorAgent()
         self.validator = ValidationAgent()
 
-    def run(self, learning_outcomes: List[str], skip_video: bool = False) -> Dict[str, Any]:
+    def run(self, learning_outcomes: List[str], skip_video: bool = False, num_modules: int | None = None, num_lessons: int | None = None) -> Dict[str, Any]:
         logger.info("Starting REAL agentic course generation pipeline.")
 
         # 1. Research Phase
@@ -41,7 +41,9 @@ class AgentManager:
         course_plan_json = self.course_planner.generate(
             {
                 "learning_outcomes": learning_outcomes,
-                "research_context": research_result
+                "research_context": research_result,
+                "num_modules": num_modules,
+                "num_lessons": num_lessons
             }
         )
         

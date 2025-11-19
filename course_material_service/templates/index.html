@@ -45,6 +45,18 @@
                         class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
                         value="{{ values.get('duration_minutes','') }}">
                 </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1" for="num_modules">Number of Modules</label>
+                    <input id="num_modules" name="num_modules" type="number" placeholder="e.g., 2"
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        value="{{ values.get('num_modules','') }}">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1" for="num_lessons">Lessons per Module</label>
+                    <input id="num_lessons" name="num_lessons" type="number" placeholder="e.g., 3"
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        value="{{ values.get('num_lessons','') }}">
+                </div>
             </div>
         </div>
 

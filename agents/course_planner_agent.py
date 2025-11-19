@@ -55,7 +55,11 @@ class CoursePlannerAgent(BaseAgent):
     def generate(self, input_json: Dict[str, Any]) -> Dict[str, Any]:
         planner_input = CoursePlannerInput.parse_obj(input_json)
         template = self.load_template("course_plan.jinja")
-        prompt = template.render(learning_outcomes=planner_input.learning_outcomes)
+        prompt = template.render(
+            learning_outcomes=planner_input.learning_outcomes,
+            num_modules=planner_input.num_modules,
+            num_lessons=planner_input.num_lessons
+        )
         llm_result = self.call_llm(prompt)
         raw_payload = self.validate_json(llm_result)
         normalized_payload = self._normalize_llm_plan(raw_payload)

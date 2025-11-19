@@ -7,6 +7,8 @@ from pydantic import BaseModel
 
 class CoursePlannerInput(BaseModel):
     learning_outcomes: List[str]
+    num_modules: int | None = None
+    num_lessons: int | None = None
 
 
 class LessonWriterInput(BaseModel):
