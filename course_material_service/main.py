@@ -361,6 +361,13 @@ app.mount("/static", StaticFiles(directory=str(Path(__file__).resolve().parent /
 app.mount("/exports-files", StaticFiles(directory=str(EXPORTS_DIR)), name="exports_files")
 app.include_router(agent_course_router)
 
+from .database import init_db
+from . import models # Register models
+
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
+
 
 
 

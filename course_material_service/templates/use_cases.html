@@ -764,5 +764,217 @@
         </div>
     </div>
 
+    <!-- DATABASE SCHEMA DIAGRAM (UML) -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">🗄️ Database Schema (UML Class Diagram)</h2>
+        <p class="diagram-subtitle">UML representation of the system's data models and relationships</p>
+        <div class="bg-white rounded-lg p-4 overflow-x-auto">
+            <svg width="1100" height="900" viewBox="0 0 1100 900" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!-- UML Composition Diamond (Filled) -->
+                    <marker id="uml-composition" markerWidth="16" markerHeight="12" refX="16" refY="6" orient="auto">
+                        <path d="M0,6 L8,0 L16,6 L8,12 Z" fill="#1f2937" stroke="#1f2937" stroke-width="1" />
+                    </marker>
+                    <!-- UML Association Arrow (Open) -->
+                    <marker id="uml-association" markerWidth="12" markerHeight="12" refX="0" refY="6" orient="auto">
+                        <path d="M0,6 L10,6" stroke="#1f2937" stroke-width="1" fill="none" />
+                    </marker>
+                </defs>
+
+                <style>
+                    .uml-class {
+                        fill: #ffffff;
+                        stroke: #1f2937;
+                        stroke-width: 2;
+                    }
+
+                    .uml-header {
+                        fill: #f3f4f6;
+                        stroke: #1f2937;
+                        stroke-width: 1;
+                    }
+
+                    .uml-text {
+                        font-family: monospace;
+                        font-size: 12px;
+                        fill: #1f2937;
+                    }
+
+                    .uml-title {
+                        font-family: sans-serif;
+                        font-size: 14px;
+                        font-weight: bold;
+                        fill: #000;
+                        text-anchor: middle;
+                    }
+
+                    .uml-line {
+                        stroke: #1f2937;
+                        stroke-width: 1.5;
+                        fill: none;
+                    }
+                </style>
+
+                <!-- User Class -->
+                <g transform="translate(50, 50)">
+                    <rect x="0" y="0" width="220" height="160" class="uml-class" />
+                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
+                    <text x="110" y="20" class="uml-title">User</text>
+                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
+
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ email: String</text>
+                    <text x="10" y="90" class="uml-text">+ hashed_password: String</text>
+                    <text x="10" y="110" class="uml-text">+ full_name: String</text>
+                    <text x="10" y="130" class="uml-text">+ is_admin: Boolean</text>
+                    <text x="10" y="150" class="uml-text">+ created_at: DateTime</text>
+                </g>
+
+                <!-- Enrollment Class -->
+                <g transform="translate(400, 50)">
+                    <rect x="0" y="0" width="220" height="120" class="uml-class" />
+                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
+                    <text x="110" y="20" class="uml-title">Enrollment</text>
+                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
+
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ user_id: Integer [FK]</text>
+                    <text x="10" y="90" class="uml-text">+ course_id: Integer [FK]</text>
+                    <text x="10" y="110" class="uml-text">+ progress_percent: Float</text>
+                </g>
+
+                <!-- Course Class -->
+                <g transform="translate(750, 50)">
+                    <rect x="0" y="0" width="240" height="180" class="uml-class" />
+                    <rect x="0" y="0" width="240" height="30" class="uml-header" />
+                    <text x="120" y="20" class="uml-title">Course</text>
+                    <line x1="0" y1="30" x2="240" y2="30" stroke="#1f2937" stroke-width="1" />
+
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ title: String</text>
+                    <text x="10" y="90" class="uml-text">+ description: Text</text>
+                    <text x="10" y="110" class="uml-text">+ learning_outcomes: JSON</text>
+                    <text x="10" y="130" class="uml-text">+ thumbnail_url: String</text>
+                    <text x="10" y="150" class="uml-text">+ is_published: Boolean</text>
+                    <text x="10" y="170" class="uml-text">+ created_at: DateTime</text>
+                </g>
+
+                <!-- CourseModule Class -->
+                <g transform="translate(750, 300)">
+                    <rect x="0" y="0" width="240" height="120" class="uml-class" />
+                    <rect x="0" y="0" width="240" height="30" class="uml-header" />
+                    <text x="120" y="20" class="uml-title">CourseModule</text>
+                    <line x1="0" y1="30" x2="240" y2="30" stroke="#1f2937" stroke-width="1" />
+
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ course_id: Integer [FK]</text>
+                    <text x="10" y="90" class="uml-text">+ title: String</text>
+                    <text x="10" y="110" class="uml-text">+ order_index: Integer</text>
+                </g>
+
+                <!-- Lesson Class -->
+                <g transform="translate(750, 500)">
+                    <rect x="0" y="0" width="240" height="140" class="uml-class" />
+                    <rect x="0" y="0" width="240" height="30" class="uml-header" />
+                    <text x="120" y="20" class="uml-title">Lesson</text>
+                    <line x1="0" y1="30" x2="240" y2="30" stroke="#1f2937" stroke-width="1" />
+
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ module_id: Integer [FK]</text>
+                    <text x="10" y="90" class="uml-text">+ title: String</text>
+                    <text x="10" y="110" class="uml-text">+ content: Text</text>
+                    <text x="10" y="130" class="uml-text">+ duration_minutes: Integer</text>
+                </g>
+
+                <!-- LessonAsset Class -->
+                <g transform="translate(400, 500)">
+                    <rect x="0" y="0" width="220" height="120" class="uml-class" />
+                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
+                    <text x="110" y="20" class="uml-title">LessonAsset</text>
+                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
+
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ lesson_id: Integer [FK]</text>
+                    <text x="10" y="90" class="uml-text">+ asset_type: String</text>
+                    <text x="10" y="110" class="uml-text">+ file_path: String</text>
+                </g>
+
+                <!-- QuizAttempt Class -->
+                <g transform="translate(50, 500)">
+                    <rect x="0" y="0" width="220" height="140" class="uml-class" />
+                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
+                    <text x="110" y="20" class="uml-title">QuizAttempt</text>
+                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
+
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ user_id: Integer [FK]</text>
+                    <text x="10" y="90" class="uml-text">+ asset_id: Integer [FK]</text>
+                    <text x="10" y="110" class="uml-text">+ score: Float</text>
+                    <text x="10" y="130" class="uml-text">+ attempted_at: DateTime</text>
+                </g>
+
+                <!-- LessonCompletion Class -->
+                <g transform="translate(400, 300)">
+                    <rect x="0" y="0" width="220" height="100" class="uml-class" />
+                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
+                    <text x="110" y="20" class="uml-title">LessonCompletion</text>
+                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
+
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ user_id: Integer [FK]</text>
+                    <text x="10" y="90" class="uml-text">+ lesson_id: Integer [FK]</text>
+                </g>
+
+                <!-- Relationships -->
+
+                <!-- User - Enrollment (1..*) -->
+                <path d="M 270 110 L 400 110" class="uml-line" />
+                <text x="280" y="100" class="uml-text">1</text>
+                <text x="380" y="100" class="uml-text">*</text>
+
+                <!-- Course - Enrollment (1..*) -->
+                <path d="M 750 110 L 620 110" class="uml-line" />
+                <text x="730" y="100" class="uml-text">1</text>
+                <text x="630" y="100" class="uml-text">*</text>
+
+                <!-- Course - Module (Composition) -->
+                <path d="M 870 230 L 870 300" class="uml-line" marker-start="url(#uml-composition)" />
+                <text x="880" y="250" class="uml-text">1</text>
+                <text x="880" y="290" class="uml-text">*</text>
+
+                <!-- Module - Lesson (Composition) -->
+                <path d="M 870 420 L 870 500" class="uml-line" marker-start="url(#uml-composition)" />
+                <text x="880" y="440" class="uml-text">1</text>
+                <text x="880" y="490" class="uml-text">*</text>
+
+                <!-- Lesson - Asset (Composition) -->
+                <path d="M 750 560 L 620 560" class="uml-line" marker-start="url(#uml-composition)" />
+                <text x="730" y="550" class="uml-text">1</text>
+                <text x="630" y="550" class="uml-text">*</text>
+
+                <!-- User - QuizAttempt (1..*) -->
+                <path d="M 110 210 L 110 500" class="uml-line" />
+                <text x="120" y="230" class="uml-text">1</text>
+                <text x="120" y="490" class="uml-text">*</text>
+
+                <!-- Asset - QuizAttempt (1..*) -->
+                <path d="M 400 560 L 270 560" class="uml-line" />
+                <text x="380" y="550" class="uml-text">1</text>
+                <text x="280" y="550" class="uml-text">*</text>
+
+                <!-- User - Completion (1..*) -->
+                <path d="M 270 130 L 320 130 L 320 350 L 400 350" class="uml-line" fill="none" />
+                <text x="280" y="120" class="uml-text">1</text>
+                <text x="380" y="340" class="uml-text">*</text>
+
+                <!-- Lesson - Completion (1..*) -->
+                <path d="M 750 520 L 680 520 L 680 350 L 620 350" class="uml-line" fill="none" />
+                <text x="730" y="510" class="uml-text">1</text>
+                <text x="630" y="340" class="uml-text">*</text>
+
+            </svg>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
