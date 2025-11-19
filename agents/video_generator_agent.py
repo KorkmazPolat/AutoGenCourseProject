@@ -12,12 +12,67 @@ class VideoGeneratorAgent(BaseAgent):
 
     def generate(self, input_json: Dict[str, Any]) -> Dict[str, Any]:
         script = VideoScript.parse_obj(input_json)
-        _ = script
-        # TODO: Use MoviePy to assemble video scenes based on script.
-        # TODO: Use a TTS engine to generate audio for each scene.
-        output_dir = Path("generated_videos")
+        # Ensure the static videos directory exists
+        project_root = Path(__file__).resolve().parents[1]
+        output_dir = project_root / "course_material_service" / "static" / "videos"
         output_dir.mkdir(parents=True, exist_ok=True)
-        video_path = output_dir / "lesson_video.mp4"
-        # Placeholder: assume video has been generated at video_path.
-        return {"video_path": str(video_path)}
+        
+        # Generate a unique filename
+        import uuid
+        filename = f"lesson_{uuid.uuid4().hex[:8]}.mp4"
+        video_path = output_dir / filename
+        
+        # Call the video builder
+        # Note: We need an OpenAI client for TTS. BaseAgent has one.
+        if not self._llm_client:
+             # Fallback or error if no client
+             pass
+
+        try:
+            from course_material_service.video_builder import generate_video_from_script
+            
+            # Map VideoScript schema to what video_builder expects
+            # VideoScript: { "lesson": str, "scenes": [{"text": str, "duration": int}] }
+            # video_builder expects: { "presentation": [...], "narration": [...] }
+            # We will synthesize a simple presentation from the scenes.
+            
+            presentation = []
+            narration = []
+            
+            for i, scene in enumerate(script.scenes, 1):
+                presentation.append({
+                    "page": i,
+                    "heading": script.lesson,
+                    "content": scene.text[:100] + "..." # Show snippet on slide
+                })
+                narration.append({
+                    "script": scene.text
+                })
+                
+            video_payload = {
+                "presentation": presentation,
+                "narration": narration,
+                "hook": f"Lesson: {script.lesson}",
+                "call_to_action": "Thanks for watching!"
+            }
+            
+            generate_video_from_script(
+                video_payload=video_payload,
+                output_path=video_path,
+                client=self._llm_client,
+                voice="alloy", # Default
+                tts_model="gpt-4o-mini-tts" # Default
+            )
+            
+            # Return the absolute path, but the service will need to serve it relative to static
+            return {
+                "video_file": str(video_path),
+                "captions_file": str(video_path.with_suffix(".vtt")),
+                "chapters_file": str(video_path.with_name(video_path.stem + ".chapters.vtt"))
+            }
+            
+        except Exception as e:
+            # Log error and return empty/placeholder to avoid crashing the whole pipeline
+            print(f"Video generation failed: {e}")
+            return {"error": str(e)}
 

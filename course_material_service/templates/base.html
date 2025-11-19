@@ -1,50 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ALPHA{% endblock %}</title>
-    
+
     <link rel="icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', path='main.css') }}">
-    
+
     {% block head %}{% endblock %}
 </head>
 
 <body class="bg-gray-100">
 
     <div class="flex h-screen">
-        
-        <aside class="w-64 flex-shrink-0 bg-gradient-to-b from-blue-700 to-purple-800 text-white flex flex-col shadow-2xl">
+
+        <aside
+            class="w-64 flex-shrink-0 bg-gradient-to-b from-blue-700 to-purple-800 text-white flex flex-col shadow-2xl">
             <div class="flex items-center justify-center h-20 shadow-lg">
                 <span class="text-white text-3xl font-extrabold tracking-wide">ALPHA</span>
             </div>
-            
+
             <nav class="flex-1 px-4 py-6 space-y-2">
-                <a href="/dashboard" 
-                   class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253"></path></svg>
+                <a href="/dashboard"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
+                        </path>
+                    </svg>
                     <span>Course Generator</span>
                 </a>
-                <a href="/agent-pipeline" 
-                   class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h6"/>
+                <a href="/exports"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                     </svg>
-                    <span>Agentic Pipeline</span>
-                </a>
-                <a href="/exports" 
-                   class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span>Saved Courses</span>
                 </a>
-                </nav>
-            
+                <a href="/system-architecture"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <span>Architecture</span>
+                </a>
+                <a href="/use-cases"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                        </path>
+                    </svg>
+                    <span>Use Cases</span>
+                </a>
+            </nav>
+
             <div class="px-4 py-4 border-t border-purple-700">
-                <a href="/logout" 
-                   class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
-                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <a href="/logout"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg text-purple-100 hover:bg-purple-900 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                        </path>
+                    </svg>
                     <span>Sign Out</span>
                 </a>
             </div>
@@ -53,9 +82,10 @@
         <main class="flex-1 overflow-y-auto p-6 md:p-10">
             {% block content %}{% endblock %}
         </main>
-        
-        </div>
+
+    </div>
 
     {% block scripts %}{% endblock %}
 </body>
+
 </html>

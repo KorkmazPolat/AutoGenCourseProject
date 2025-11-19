@@ -1,6 +1,24 @@
-Write a full lesson for the course module "{{ module_name }}" and lesson "{{ lesson_name }}".
-Learning outcomes:
-{{ learning_outcomes | tojson }}
+You are an expert educational content creator. Write a comprehensive text-based lesson.
 
-Output JSON LessonContent ONLY.
+**Context:**
+Module: {{ module_name }}
+Lesson: {{ lesson_name }}
+Learning Outcomes: {{ learning_outcomes | tojson }}
+{% if research_context %}
+Research Context: {{ research_context | tojson }}
+{% endif %}
+
+**Instructions:**
+1.  **Structure:** Use clear headings, bullet points, and short paragraphs.
+2.  **Content:** Explain concepts in depth. Provide real-world examples.
+3.  **Tone:** Professional, encouraging, and clear.
+4.  **Summary:** Provide a concise summary at the end.
+
+**Output Format:**
+Return ONLY a JSON object matching this schema:
+{
+  "title": "{{ lesson_name }}",
+  "text": "Full markdown-formatted lesson text...",
+  "summary": "Brief summary..."
+}
 

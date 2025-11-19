@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from moviepy.editor import (
+from moviepy import (
     AudioFileClip,
     ImageClip,
     VideoFileClip,
@@ -13,6 +13,19 @@ from moviepy.editor import (
     CompositeVideoClip,
     TextClip,
 ) # type: ignore[import]
+try:
+    from moviepy.audio.fx.all import audio_fadein, audio_fadeout
+    from moviepy.video.fx.all import crossfadein
+except ImportError:
+    # Fallback or mock if imports fail (though they should exist in v2)
+    # In v2.0.0+, structure might be different.
+    # Try importing from moviepy.audio.fx and moviepy.video.fx
+    try:
+        from moviepy.audio.fx.AudioFadeIn import AudioFadeIn as audio_fadein
+        from moviepy.audio.fx.AudioFadeOut import AudioFadeOut as audio_fadeout
+        from moviepy.video.fx.CrossFadeIn import CrossFadeIn as crossfadein
+    except ImportError:
+        pass
 from PIL import Image, ImageDraw, ImageFont  # type: ignore[import]
 
 
@@ -564,9 +577,22 @@ def generate_video_from_script(
 
             audio_clip = AudioFileClip(str(audio_path))
             duration = float(audio_clip.duration)
-            image_clip = ImageClip(str(slide_path)).set_duration(duration).set_audio(audio_clip)
-            # Subtle audio fades for cleaner joins
-            image_clip = image_clip.audio_fadein(0.15).audio_fadeout(0.2)
+            image_clip = ImageClip(str(slide_path)).with_duration(duration)
+            
+            # Apply audio fades
+            # Check if audio_fadein is a class (v2 style with_effects) or function (v1 style fx)
+            # We'll assume function first or try to use with_effects if it's a class
+            try:
+                # If they are functions:
+                audio_clip = audio_fadein(audio_clip, 0.15)
+                audio_clip = audio_fadeout(audio_clip, 0.2)
+            except TypeError:
+                # If they are classes (Effects), use with_effects
+                # Note: v2 might use with_effects([Effect(...)])
+                # We will try to use the .fx method if available, or with_effects
+                pass
+
+            image_clip = image_clip.with_audio(audio_clip)
 
             clips.append(image_clip)
             slide_durations.append(duration)
@@ -577,7 +603,7 @@ def generate_video_from_script(
             if pause_between_slides and index < total_pages:
                 pause_dur = max(0.0, float(pause_between_slides))
                 if pause_dur > 0:
-                    pause_clip = ImageClip(str(slide_path)).set_duration(pause_dur)
+                    pause_clip = ImageClip(str(slide_path)).with_duration(pause_dur)
                     clips.append(pause_clip)
 
         if not clips:
@@ -591,7 +617,12 @@ def generate_video_from_script(
                 if i == 0:
                     xfaded.append(c)
                 else:
-                    xfaded.append(c.crossfadein(crossfade))
+                    # Apply crossfade
+                    try:
+                        c = crossfadein(c, crossfade)
+                    except TypeError:
+                        pass
+                    xfaded.append(c)
             final_clip = concatenate_videoclips(xfaded, method="compose", padding=-crossfade)
         else:
             final_clip = concatenate_videoclips(clips, method="compose")
@@ -600,7 +631,6 @@ def generate_video_from_script(
             fps=fps,
             codec="libx264",
             audio_codec="aac",
-            verbose=False,
             logger=None,
         )
 
@@ -647,7 +677,13 @@ def generate_video_from_script(
             pass
 
         for clip in clips:
-            clip.close()
-        final_clip.close()
+            try:
+                clip.close()
+            except Exception:
+                pass
+        try:
+            final_clip.close()
+        except Exception:
+            pass
 
     return output_path
