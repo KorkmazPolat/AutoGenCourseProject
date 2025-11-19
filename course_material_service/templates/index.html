@@ -3,66 +3,70 @@
 {% block title %}Course Generator - ALPHA{% endblock %}
 
 {% block head %}
-  {{ super() }}
-  {% endblock %}
+{{ super() }}
+{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto bg-white p-8 md:p-10 rounded-2xl shadow-xl animate-fadeIn">
-    
+
     <div class="text-left mb-8">
         <h1 class="text-3xl font-bold text-gray-800">Course Generator</h1>
         <p class="text-gray-600 text-lg mt-2">Enter your course details and watch it come to life!</p>
     </div>
 
     <form id="course-form" method="post" action="/create-course-plan" class="space-y-6">
-        
+
         <div>
             <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Core Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1" for="course_title">Course Title</label>
-                    <input id="course_title" name="course_title" type="text" 
-                           placeholder="e.g., Introduction to Python" 
-                           class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" 
-                           value="{{ values.get('course_title','') }}" required>
+                    <input id="course_title" name="course_title" type="text" placeholder="e.g., Introduction to Python"
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        value="{{ values.get('course_title','') }}" required>
                 </div>
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1" for="audience">Audience</label>
-                    <input id="audience" name="audience" type="text" 
-                           placeholder="e.g., Beginner developers" 
-                           class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" 
-                           value="{{ values.get('audience','') }}">
+                    <input id="audience" name="audience" type="text" placeholder="e.g., Beginner developers"
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        value="{{ values.get('audience','') }}">
                 </div>
                 <div>
                     <label class="block text-gray-700 font-semibold mb-1" for="tone">Tone</label>
-                    <input id="tone" name="tone" type="text" 
-                           placeholder="e.g., Professional and engaging" 
-                           class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" 
-                           value="{{ values.get('tone','') }}">
+                    <input id="tone" name="tone" type="text" placeholder="e.g., Professional and engaging"
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        value="{{ values.get('tone','') }}">
                 </div>
-                 <div>
-                    <label class="block text-gray-700 font-semibold mb-1" for="duration_minutes">Target Duration (Minutes)</label>
-                    <input id="duration_minutes" name="duration_minutes" type="number" 
-                           placeholder="e.g., 10 (for a single video)" 
-                           class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" 
-                           value="{{ values.get('duration_minutes','') }}">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-1" for="duration_minutes">Target Duration
+                        (Minutes)</label>
+                    <input id="duration_minutes" name="duration_minutes" type="number"
+                        placeholder="e.g., 10 (for a single video)"
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        value="{{ values.get('duration_minutes','') }}">
                 </div>
             </div>
         </div>
 
         <div>
             <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Source Material (PDF)</h2>
-             <div>
-                <label class="block text-gray-700 font-semibold mb-1" for="document-dropzone">Upload Course Materials</label>
-                <div id="document-dropzone" class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-indigo-200 bg-indigo-50/40 rounded-xl py-6 px-4 text-center text-indigo-900 transition-all duration-300 ease-in-out cursor-pointer hover:border-indigo-400 hover:bg-indigo-50">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-1" for="document-dropzone">Upload Course
+                    Materials</label>
+                <div id="document-dropzone"
+                    class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-indigo-200 bg-indigo-50/40 rounded-xl py-6 px-4 text-center text-indigo-900 transition-all duration-300 ease-in-out cursor-pointer hover:border-indigo-400 hover:bg-indigo-50">
                     <input id="document-input" type="file" accept="application/pdf" class="hidden">
-                    <svg class="w-10 h-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    <svg class="w-10 h-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                     <p class="text-sm font-semibold">Drag & drop a PDF here</p>
                     <p class="text-sm text-indigo-600">
-                      or
-                      <button type="button" id="document-browse" class="font-semibold underline underline-offset-4 hover:text-indigo-800">browse files</button>
+                        or
+                        <button type="button" id="document-browse"
+                            class="font-semibold underline underline-offset-4 hover:text-indigo-800">browse
+                            files</button>
                     </p>
                     <p class="text-xs text-indigo-500">Upload source material to ground the AI outputs.</p>
                 </div>
@@ -74,10 +78,18 @@
             <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Learning Outcomes</h2>
             <div>
                 <label class="block text-gray-700 font-semibold mb-1" for="learning_outcomes">Outcomes</label>
-                <textarea id="learning_outcomes" name="learning_outcomes" rows="5" 
-                          placeholder="- Explain why prompt design matters&#10;- Compare prompting patterns&#10;- Use prompts to debug failures" 
-                          class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" required>{{ values.get('learning_outcomes','') }}</textarea>
+                <textarea id="learning_outcomes" name="learning_outcomes" rows="5"
+                    placeholder="- Explain why prompt design matters&#10;- Compare prompting patterns&#10;- Use prompts to debug failures"
+                    class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                    required>{{ values.get('learning_outcomes','') }}</textarea>
                 <p class="text-xs text-gray-500 mt-1">Enter one outcome per line. This is crucial for generation.</p>
+            </div>
+            <div class="flex items-center mt-4">
+                <input id="skip_video" name="skip_video" type="checkbox" value="true"
+                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="skip_video" class="ml-2 block text-sm text-gray-900">
+                    Skip Video Generation (Fast Mode)
+                </label>
             </div>
         </div>
 
@@ -87,15 +99,15 @@
                 Choose between the classic generator and the new agentic AI pipeline.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button type="submit" formaction="/create-full-course" 
-                        class="w-full px-4 py-4 font-semibold rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm md:text-base">
+                <button type="submit" formaction="/create-full-course"
+                    class="w-full px-4 py-4 font-semibold rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm md:text-base">
                     Full Course (Legacy Pipeline)
                     <span class="block text-xs font-normal text-green-100 mt-1">
                         RAG-powered prompts and existing video builder
                     </span>
                 </button>
-                <button type="submit" formaction="/create-full-course-agent" 
-                        class="w-full px-4 py-4 font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm md:text-base">
+                <button type="submit" formaction="/create-full-course-agent"
+                    class="w-full px-4 py-4 font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm md:text-base">
                     Full Course (Agentic AI)
                     <span class="block text-xs font-normal text-blue-100 mt-1">
                         Multi-agent planner, lessons, quizzes, and validation
@@ -119,6 +131,6 @@
 {% endblock %}
 
 {% block scripts %}
-  {{ super() }}
-  <script src="{{ url_for('static', path='main.js') }}" defer></script>
+{{ super() }}
+<script src="{{ url_for('static', path='main.js') }}" defer></script>
 {% endblock %}

@@ -13,11 +13,12 @@ router = APIRouter()
 
 class GenerateCourseRequest(BaseModel):
     learning_outcomes: List[str]
+    skip_video: bool = False
 
 
 @router.post("/generate-course")
 def generate_course(payload: GenerateCourseRequest) -> Dict[str, Any]:
     manager = AgentManager()
-    result = manager.run(payload.learning_outcomes)
+    result = manager.run(payload.learning_outcomes, skip_video=payload.skip_video)
     return result
 

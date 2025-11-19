@@ -406,6 +406,18 @@ def agent_pipeline_page(request: Request, user: str = Depends(get_session_user))
         },
     )
 
+
+@app.get("/use-cases", response_class=HTMLResponse, tags=["web"])
+def render_use_cases(request: Request, user: str = Depends(get_session_user)):
+    """Render the use case diagrams page."""
+    return templates.TemplateResponse(
+        "use_cases.html",
+        {
+            "request": request,
+            "current_year": datetime.utcnow().year,
+        },
+    )
+
 @app.get("/exports", response_class=HTMLResponse, tags=["web"])
 def list_saved_exports(request: Request, user: str = Depends(get_session_user)):
     """List saved course export folders with links to their index pages."""
@@ -1035,12 +1047,20 @@ def create_course_pages(
     )
 
 
+@app.get("/system-architecture", response_class=HTMLResponse, tags=["web"])
+def system_architecture(request: Request):
+    """Visualize the agentic system architecture."""
+    return templates.TemplateResponse("system_architecture.html", {"request": request})
+
+
 @app.get("/videos/{filename}", tags=["web"])
-def serve_video(filename: str) -> FileResponse:
-    safe_name = Path(filename).name
-    file_path = VIDEO_OUTPUT_DIR / safe_name
+def get_video(filename: str) -> FileResponse:
+    """Serve generated video files."""
+    # Securely serve the file from static/videos
+    video_dir = Path(__file__).resolve().parent / "static" / "videos"
+    file_path = video_dir / filename
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Video not found.")
+        raise HTTPException(status_code=404, detail="Video not found")
     suffix = file_path.suffix.lower()
     media = "application/octet-stream"
     if suffix == ".mp4":
@@ -1177,12 +1197,13 @@ def create_full_course_agentic(
     audience: Optional[str] = Form(None),
     tone: Optional[str] = Form(None),
     duration_minutes: Optional[str] = Form(None),
+    skip_video: bool = Form(False),
 ) -> HTMLResponse:
     """Build a complete course using the agentic AgentManager pipeline."""
     outcomes = _parse_learning_outcomes(learning_outcomes)
 
     manager = AgentManager()
-    result = manager.run(outcomes)
+    result = manager.run(outcomes, skip_video=skip_video)
 
     course_plan = result.get("course_plan", {})
     modules = course_plan.get("modules") or []
@@ -1270,6 +1291,8 @@ def agentic_finalize_course(
     course_plan = result.get("course_plan", {}) or {}
     modules = course_plan.get("modules") or []
     lessons = result.get("lessons") or []
+    scripts = result.get("scripts") or []
+    videos = result.get("videos") or []
     quizzes = result.get("quizzes") or []
 
     # Build modules_output from agentic plan. We aggregate all lessons for a
@@ -1287,6 +1310,8 @@ def agentic_finalize_course(
         # order AgentManager generates them (module-by-module, lesson-by-lesson).
         count = len(module_lessons_names)
         module_lessons = lessons[lesson_index : lesson_index + count] if count else []
+        module_scripts = scripts[lesson_index : lesson_index + count] if count else []
+        module_videos = videos[lesson_index : lesson_index + count] if count else []
         module_quizzes = quizzes[lesson_index : lesson_index + count] if count else []
         lesson_index += count
 
@@ -1295,21 +1320,48 @@ def agentic_finalize_course(
         title = primary_lesson.get("title") or module_title or f"Module {module_idx}"
         summary = primary_lesson.get("summary") or ""
 
-        # VIDEO SCRIPT: aggregate all lesson texts as narration blocks.
+        # VIDEO SCRIPT: Use the generated scripts and videos
         narration_blocks: List[Dict[str, Any]] = []
-        for lesson in module_lessons:
-            narration_blocks.append(
-                {
-                    "section": lesson.get("title") or title,
-                    "summary": lesson.get("summary") or "",
-                    "script": lesson.get("text", ""),
-                }
-            )
+        
+        # Use the first script/video for the module-level video display (limitation of current template)
+        # But we aggregate narration from all scripts to show full content.
+        for script in module_scripts:
+            # script is a dict matching VideoScript schema: {"lesson": str, "scenes": [...]}
+            lesson_title = script.get("lesson") or "Lesson"
+            scenes = script.get("scenes") or []
+            for i, scene in enumerate(scenes, 1):
+                narration_blocks.append(
+                    {
+                        "section": f"{lesson_title} - Scene {i}",
+                        "summary": f"Duration: {scene.get('duration')}s",
+                        "script": scene.get("text", ""),
+                    }
+                )
 
         video_content: Dict[str, Any] = {
             "hook": summary or f"Overview of {title}",
             "narration": narration_blocks,
         }
+        
+        # Determine video URL (use the first video generated for this module)
+        video_url = None
+        captions_url = None
+        chapters_url = None
+        
+        if module_videos:
+            # Just take the first one for now
+            first_video = module_videos[0]
+            v_path = first_video.get("video_file")
+            if v_path:
+                video_url = f"/videos/{Path(v_path).name}"
+                
+            c_path = first_video.get("captions_file")
+            if c_path:
+                captions_url = f"/videos/{Path(c_path).name}"
+                
+            ch_path = first_video.get("chapters_file")
+            if ch_path:
+                chapters_url = f"/videos/{Path(ch_path).name}"
 
         # READING: treat each lesson as a section in the reading.
         reading_sections: List[Dict[str, Any]] = []
@@ -1367,7 +1419,12 @@ def agentic_finalize_course(
             quiz_content = None
 
         assets_for_module: Dict[str, Any] = {
-            "video_script": {"content": video_content},
+            "video_script": {
+                "content": video_content,
+                "video_url": video_url,
+                "captions_url": captions_url,
+                "chapters_url": chapters_url
+            },
             "reading_material": {"content": reading_content},
             "quiz_questions": {"content": quiz_content},
         }

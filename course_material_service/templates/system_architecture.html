@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}System Architecture - Agentic AI{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+</script>
+<style>
+    /* Custom styles for diagram animation */
+    .node.active rect,
+    .node.active circle,
+    .node.active polygon {
+        fill: #3b82f6 !important;
+        /* blue-500 */
+        stroke: #1d4ed8 !important;
+        /* blue-700 */
+        stroke-width: 3px !important;
+        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+        transition: all 0.5s ease;
+    }
+
+    .node.done rect,
+    .node.done circle,
+    .node.done polygon {
+        fill: #10b981 !important;
+        /* emerald-500 */
+        stroke: #047857 !important;
+        /* emerald-700 */
+        stroke-width: 2px !important;
+    }
+
+    .edgePath.active path {
+        stroke: #3b82f6 !important;
+        stroke-width: 3px !important;
+        animation: dash 1s linear infinite;
+    }
+
+    @keyframes dash {
+        to {
+            stroke-dashoffset: -20;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-10 text-center">
+        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight mb-4">Agentic System Architecture</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            Visualize and interact with the specialized AI agents.
+            Enter your learning outcomes below to watch the system "think" through the problem.
+        </p>
+    </div>
+
+    <!-- Interactive Input Section -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-10 border border-gray-100">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Run the System</h2>
+        <form id="architecture-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="course_title">Course Title</label>
+                <input type="text" id="course_title" name="course_title"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="e.g., Advanced Python Patterns">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="learning_outcomes">Learning
+                    Outcomes</label>
+                <textarea id="learning_outcomes" name="learning_outcomes" rows="4"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="- Understand singleton pattern&#10;- Implement factory pattern"></textarea>
+            </div>
+            <div class="flex items-center">
+                <input id="skip_video" name="skip_video" type="checkbox"
+                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="skip_video" class="ml-2 block text-sm text-gray-900">
+                    Skip Video Generation (Fast Mode)
+                </label>
+            </div>
+            <button type="submit" id="run-btn"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                <span>Start Agentic Generation</span>
+                <svg id="spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+            </button>
+        </form>
+        <div id="error-msg" class="mt-4 text-red-600 hidden"></div>
+    </div>
+
+    <!-- Live Visualization -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-10 relative overflow-hidden">
+        <div class="flex justify-between items-center mb-6 border-b pb-2">
+            <h2 class="text-2xl font-bold text-gray-800">Live Workflow Visualization</h2>
+            <span id="status-badge"
+                class="px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-600">Idle</span>
+        </div>
+
+        <div class="mermaid flex justify-center" id="mermaid-diagram">
+            graph TD
+            User(["User Input"]) --> Research["Research Agent"]
+            Research -->|Research Context| Planner["Course Planner Agent"]
+            Planner -->|Draft Plan| ReviewPlan["Review Agent (Plan)"]
+
+            ReviewPlan -->|Feedback| Planner
+            ReviewPlan -->|Approved Plan| LoopStart(("Start Lesson Loop"))
+
+            LoopStart --> Writer["Lesson Writer Agent"]
+            Writer -->|Draft Lesson| ReviewLesson["Review Agent (Lesson)"]
+
+            ReviewLesson -->|Critique & Score| Decision{"Score > 7?"}
+            Decision -- No -->|Feedback| Writer
+            Decision -- Yes --> ParallelStart(("Parallel Assets"))
+
+            ParallelStart --> Script["Video Script Agent"]
+            ParallelStart --> Quiz["Quiz Agent"]
+
+            Script --> Video["Video Generator Agent"]
+
+            Video --> Final["Final Course Package"]
+            Quiz --> Final
+
+            style Research fill:#e0e7ff,stroke:#4338ca,stroke-width:2px
+            style Planner fill:#dbeafe,stroke:#1e40af,stroke-width:2px
+            style ReviewPlan fill:#fce7f3,stroke:#be185d,stroke-width:2px
+            style ReviewLesson fill:#fce7f3,stroke:#be185d,stroke-width:2px
+            style Writer fill:#d1fae5,stroke:#047857,stroke-width:2px
+            style Video fill:#ffedd5,stroke:#c2410c,stroke-width:2px
+        </div>
+
+        <!-- Results Overlay (Hidden initially) -->
+        <div id="results-overlay"
+            class="hidden absolute inset-0 bg-white/95 flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+            <div class="text-center p-8">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                    <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Course Generated Successfully!</h3>
+                <p class="text-gray-600 mb-6">The agents have completed their work. Your course is ready.</p>
+                <div class="flex gap-4 justify-center">
+                    <button id="view-course-btn"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition">
+                        View Full Course
+                    </button>
+                    <button onclick="document.getElementById('results-overlay').classList.add('hidden')"
+                        class="text-gray-500 hover:text-gray-700 font-medium">
+                        Close & View Diagram
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Roles Grid (Static Info) -->
+    <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10 opacity-75 hover:opacity-100 transition-opacity">
+        <!-- Research Agent -->
+        <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-indigo-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Research Agent</h3>
+            <p class="text-gray-600 text-sm mb-4">The "Brain"</p>
+            <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                <li>Analyzes learning outcomes</li>
+                <li>Identifies key concepts & misconceptions</li>
+                <li>Determines target audience profile</li>
+            </ul>
+        </div>
+
+        <!-- Course Planner -->
+        <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-600">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Course Planner</h3>
+            <p class="text-gray-600 text-sm mb-4">The "Architect"</p>
+            <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                <li>Structures the course into modules</li>
+                <li>Sequences lessons logically</li>
+                <li>Ensures coverage of all outcomes</li>
+            </ul>
+        </div>
+
+        <!-- Review Agent -->
+        <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-pink-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Review Agent</h3>
+            <p class="text-gray-600 text-sm mb-4">The "Critic"</p>
+            <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                <li>Evaluates plans and lessons</li>
+                <li>Scores content quality (0-10)</li>
+                <li>Triggers refinement loops</li>
+            </ul>
+        </div>
+
+        <!-- Lesson Writer -->
+        <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-green-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Lesson Writer</h3>
+            <p class="text-gray-600 text-sm mb-4">The "Author"</p>
+            <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                <li>Drafts detailed educational content</li>
+                <li>Incorporates research context</li>
+            </ul>
+        </div>
+
+        <!-- Video Script Agent -->
+        <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-yellow-500">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Video Script Agent</h3>
+            <p class="text-gray-600 text-sm mb-4">The "Screenwriter"</p>
+            <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                <li>Converts lessons into video scripts</li>
+                <li>Writes visual descriptions & narration</li>
+            </ul>
+        </div>
+
+        <!-- Video Generator -->
+        <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-orange-600">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Video Generator</h3>
+            <p class="text-gray-600 text-sm mb-4">The "Producer"</p>
+            <ul class="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                <li>Synthesizes voiceover (TTS)</li>
+                <li>Generates slide visuals</li>
+                <li>Renders final MP4 video files</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Data Flow Details -->
+    <div class="bg-gray-50 rounded-2xl p-8 border border-gray-200">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Data Flow & Context</h2>
+        <p class="text-gray-700 mb-4">
+            Unlike a simple chain, our agents share a <strong>Research Context</strong>. This ensures that even when the
+            <em>Video Script Agent</em> is working, it understands the original audience analysis performed by the
+            <em>Research Agent</em> at the very beginning.
+        </p>
+        <div class="mermaid">
+            sequenceDiagram
+            participant User
+            participant RA as Research Agent
+            participant CP as Course Planner
+            participant LW as Lesson Writer
+            participant VA as Review Agent
+
+            User->>RA: Learning Outcomes
+            RA->>RA: Analyze & Research
+            RA-->>CP: Research Context
+            RA-->>LW: Research Context
+
+            CP->>CP: Create Plan
+            CP->>VA: Review Plan
+            VA-->>CP: Feedback
+
+            loop For Each Lesson
+            LW->>LW: Write Draft
+            LW->>VA: Review Draft
+            alt Score < 7 VA-->>LW: Critique (Refine)
+                LW->>LW: Rewrite
+                else Score >= 7
+                VA-->>LW: Approve
+                end
+                end
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const form = document.getElementById('architecture-form');
+    const runBtn = document.getElementById('run-btn');
+    const spinner = document.getElementById('spinner');
+    const errorMsg = document.getElementById('error-msg');
+    const statusBadge = document.getElementById('status-badge');
+    const resultsOverlay = document.getElementById('results-overlay');
+    const viewCourseBtn = document.getElementById('view-course-btn');
+
+    // Map steps to Mermaid node IDs
+    const stepNodes = [
+        { id: 'Research', label: 'Researching...' },
+        { id: 'Planner', label: 'Planning Course...' },
+        { id: 'ReviewPlan', label: 'Reviewing Plan...' },
+        { id: 'LoopStart', label: 'Starting Lessons...' },
+        { id: 'Writer', label: 'Writing Lesson...' },
+        { id: 'ReviewLesson', label: 'Reviewing Lesson...' },
+        { id: 'Decision', label: 'Checking Quality...' },
+        { id: 'ParallelStart', label: 'Generating Assets...' },
+        { id: 'Script', label: 'Writing Script...' },
+        { id: 'Quiz', label: 'Creating Quiz...' },
+        { id: 'Video', label: 'Rendering Video...' },
+        { id: 'Final', label: 'Finalizing...' }
+    ];
+
+    function setNodeState(nodeId, state) {
+        // Mermaid renders nodes with IDs like 'flowchart-Research-...'
+        // We need to find the element that *contains* the ID in its attributes or text
+        // A more robust way with Mermaid is to use the data-id attribute if available, or search by text content
+        // But Mermaid's SVG structure is complex.
+        // Hack: select by aria-label or text content if possible, or just try to find the group.
+
+        // Actually, Mermaid adds `id` attributes to the g elements corresponding to the node IDs in the graph definition.
+        // e.g. <g class="node default" id="flowchart-Research-...">
+
+        const svg = document.querySelector('#mermaid-diagram svg');
+        if (!svg) return;
+
+        // Find all groups that look like nodes
+        const nodes = Array.from(svg.querySelectorAll('.node'));
+        const target = nodes.find(n => n.id.includes(nodeId));
+
+        if (target) {
+            target.classList.remove('active', 'done');
+            if (state === 'active') target.classList.add('active');
+            if (state === 'done') target.classList.add('done');
+        }
+    }
+
+    function resetDiagram() {
+        const svg = document.querySelector('#mermaid-diagram svg');
+        if (!svg) return;
+        const nodes = svg.querySelectorAll('.node');
+        nodes.forEach(n => n.classList.remove('active', 'done'));
+    }
+
+    async function simulateProgress() {
+        // Since the backend is synchronous, we simulate the visual flow
+        // In a real streaming setup, we'd listen for events.
+
+        for (const step of stepNodes) {
+            if (runBtn.disabled === false) break; // Stopped
+
+            statusBadge.textContent = step.label;
+            statusBadge.className = "px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 animate-pulse";
+
+            setNodeState(step.id, 'active');
+
+            // Random delay to simulate work
+            await new Promise(r => setTimeout(r, 800 + Math.random() * 1000));
+
+            setNodeState(step.id, 'done');
+        }
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Reset UI
+        errorMsg.classList.add('hidden');
+        resultsOverlay.classList.add('hidden');
+        runBtn.disabled = true;
+        runBtn.classList.add('opacity-75', 'cursor-not-allowed');
+        spinner.classList.remove('hidden');
+        resetDiagram();
+
+        const formData = new FormData(form);
+        const outcomes = formData.get('learning_outcomes').split('\n').filter(x => x.trim());
+        const title = formData.get('course_title');
+
+        if (outcomes.length === 0) {
+            errorMsg.textContent = "Please enter at least one learning outcome.";
+            errorMsg.classList.remove('hidden');
+            runBtn.disabled = false;
+            runBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            spinner.classList.add('hidden');
+            return;
+        }
+
+        // Start simulation in background
+        const simulation = simulateProgress();
+
+        try {
+            // We use the existing endpoint which returns JSON
+            // But we want to redirect to the agentic full course page with the data.
+            // Actually, the existing /create-full-course-agent endpoint renders HTML directly.
+            // Let's use fetch to post to /create-full-course-agent, but that endpoint expects Form data and returns HTML.
+            // To make this smooth, we can use the JSON endpoint /generate-course (from routes/generate_course.py)
+            // and then POST the result to a "render" endpoint, OR just use the form submission to the existing endpoint
+            // but that would cause a page reload and we lose the animation.
+
+            // Strategy: Use the JSON API, get the data, then POST it to a new "render-results" endpoint 
+            // or just construct a form and submit it to /create-full-course-agent (which accepts form data).
+
+            const skipVideo = document.getElementById('skip_video').checked;
+
+            const response = await fetch('/generate-course', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    learning_outcomes: outcomes,
+                    skip_video: skipVideo
+                })
+            });
+
+            if (!response.ok) throw new Error('Generation failed');
+
+            const data = await response.json();
+
+            // Wait for simulation to finish (or fast forward)
+            // We'll just let the simulation finish the current step and then mark all as done
+            statusBadge.textContent = "Completed";
+            statusBadge.className = "px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800";
+
+            // Show success
+            resultsOverlay.classList.remove('hidden');
+
+            // The "View Full Course" button needs to POST the data to /create-full-course-agent
+            // We can't easily pass the huge JSON via GET.
+            // We'll hijack the button click to submit a hidden form.
+            viewCourseBtn.onclick = (e) => {
+                e.preventDefault();
+                const hiddenForm = document.createElement('form');
+                hiddenForm.method = 'POST';
+                hiddenForm.action = '/agentic-finalize-course'; // This endpoint accepts JSON outcomes
+
+                const titleInput = document.createElement('input');
+                titleInput.type = 'hidden';
+                titleInput.name = 'course_title';
+                titleInput.value = title || "Agentic Course";
+                hiddenForm.appendChild(titleInput);
+
+                const outcomesInput = document.createElement('input');
+                outcomesInput.type = 'hidden';
+                outcomesInput.name = 'learning_outcomes_json';
+                outcomesInput.value = JSON.stringify(outcomes);
+                hiddenForm.appendChild(outcomesInput);
+
+                document.body.appendChild(hiddenForm);
+                hiddenForm.submit();
+            };
+
+        } catch (err) {
+            console.error(err);
+            errorMsg.textContent = "An error occurred during generation. Please try again.";
+            errorMsg.classList.remove('hidden');
+            statusBadge.textContent = "Error";
+            statusBadge.className = "px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800";
+        } finally {
+            runBtn.disabled = false;
+            runBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            spinner.classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}
