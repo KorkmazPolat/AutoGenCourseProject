@@ -148,3 +148,44 @@ class AgentManager:
             "final_validation": final_validation,
             "research": research_result, # Return research for UI
         }
+    def generate_lesson_bundle(self, module_title: str, lesson_title: str, lesson_desc: str, skip_video: bool = False) -> Dict[str, Any]:
+        """
+        Generates content for a single lesson (text, script, quiz, video) based on title and description.
+        """
+        logger.info("Generating bundle for lesson '%s'", lesson_title)
+        
+        # 1. Generate Lesson Text
+        # We treat the description as the 'learning outcome' or context for this specific lesson
+        lesson_json = self.lesson_writer.generate(
+            {
+                "module_name": module_title,
+                "lesson_name": lesson_title,
+                "learning_outcomes": [lesson_desc], # Use desc as outcome
+                "research_context": {"key_concepts": [lesson_desc]} # Minimal context
+            }
+        )
+        
+        lesson_validation = self.validator.generate(lesson_json)
+        validated_lesson = lesson_validation["validated_content"]
+        
+        # 2. Generate Script
+        script_json = self.video_script_agent.generate(validated_lesson)
+        script_validation = self.validator.generate(script_json)
+        validated_script = script_validation["validated_content"]
+        
+        # 3. Generate Quiz
+        quiz_json = self.quiz_agent.generate(validated_lesson)
+        quiz_validation = self.validator.generate(quiz_json)
+        validated_quiz = quiz_validation["validated_content"]
+        
+        # 4. Generate Video
+        video_info = None
+        if not skip_video:
+            video_info = self.video_generator.generate(validated_script)
+            
+        return {
+            "lesson": validated_lesson,
+            "script": validated_script,
+            "quiz": validated_quiz,
+            "video": video_info
+        }

@@ -1,304 +1,407 @@
 {% extends "base.html" %}
 
-{% block title %}Course Builder - Visual Canvas{% endblock %}
+{% block title %}Studio - Structured Course Builder{% endblock %}
 
 {% block head %}
 {{ super() }}
 <style>
-    /* Canvas and Grid */
-    .canvas-container {
-        position: relative;
-        width: 100%;
-        height: calc(100vh - 200px);
-        background:
-            linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-            linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px);
-        background-size: 30px 30px;
-        background-color: #fafbfc;
-        border-radius: 16px;
+    :root {
+        --sidebar-width: 280px;
+        --properties-width: 320px;
+        --header-height: 70px;
+        --primary-color: #6366f1;
+        --primary-hover: #4f46e5;
+        --bg-canvas: #f1f5f9;
+        --card-bg: #ffffff;
+        --border-color: #e2e8f0;
+    }
+
+    /* Layout Overrides */
+    body {
         overflow: hidden;
-        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
-    .canvas-viewport {
-        position: relative;
+    main {
+        padding: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    .builder-container {
+        display: flex;
+        height: 100vh;
         width: 100%;
-        height: 100%;
-        overflow: auto;
+        background-color: var(--bg-canvas);
     }
 
-    .canvas-content {
-        position: relative;
-        width: 3000px;
-        height: 3000px;
-    }
-
-    /* Component Cards on Canvas */
-    .canvas-component {
-        position: absolute;
-        min-width: 200px;
-        max-width: 300px;
+    /* Left Sidebar: Component Library */
+    .library-panel {
+        width: var(--sidebar-width);
         background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        cursor: move;
-        transition: all 0.2s ease;
-        z-index: 10;
-    }
-
-    .canvas-component:hover {
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-        transform: translateY(-2px);
-    }
-
-    .canvas-component.selected {
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
         z-index: 20;
+        flex-shrink: 0;
     }
 
-    .canvas-component.dragging {
-        opacity: 0.7;
+    .library-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .library-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: -0.02em;
+    }
+
+    .library-items {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .draggable-item {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        cursor: grab;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .draggable-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
+    }
+
+    .draggable-item:active {
         cursor: grabbing;
-        z-index: 30;
     }
 
-    /* Component Header */
-    .component-header {
-        padding: 12px 16px;
-        border-bottom: 2px solid;
+    .item-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 1.25rem;
+    }
+
+    /* Main Content: Course Structure */
+    .structure-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .top-bar {
+        height: var(--header-height);
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-radius: 12px 12px 0 0;
+        padding: 0 32px;
+        z-index: 10;
     }
 
-    .component-header.video {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        border-color: #f87171;
+    .course-meta h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
     }
 
-    .component-header.quiz {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        border-color: #34d399;
-    }
-
-    .component-header.reading {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        border-color: #60a5fa;
-    }
-
-    .component-header.assignment {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border-color: #fbbf24;
-    }
-
-    /* Component Body */
-    .component-body {
-        padding: 16px;
-    }
-
-    .component-title {
-        font-size: 14px;
+    .action-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
         font-weight: 600;
-        color: #1f2937;
-        margin-bottom: 8px;
-        word-wrap: break-word;
-    }
-
-    .component-description {
-        font-size: 12px;
-        color: #6b7280;
-        line-height: 1.4;
-        word-wrap: break-word;
-    }
-
-    /* Connection Points */
-    .connection-point {
-        position: absolute;
-        width: 14px;
-        height: 14px;
-        background: white;
-        border: 3px solid #6366f1;
-        border-radius: 50%;
+        font-size: 0.9rem;
         cursor: pointer;
-        z-index: 50;
-        transition: all 0.2s ease;
-        pointer-events: all;
+        transition: all 0.2s;
     }
 
-    .connection-point:hover {
-        width: 18px;
-        height: 18px;
-        background: #6366f1;
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
-        transform: scale(1.2);
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
     }
 
-    .connection-point.active {
-        background: #6366f1;
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4);
-        animation: pulse 1s ease-in-out infinite;
+    .btn-primary:hover {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
     }
 
-    @keyframes pulse {
-
-        0%,
-        100% {
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4);
-        }
-
-        50% {
-            box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.2);
-        }
+    .btn-secondary {
+        background: white;
+        color: #475569;
+        border: 1px solid var(--border-color);
+        margin-right: 12px;
     }
 
-    .connection-point.top {
-        top: -7px;
-        left: 50%;
-        transform: translateX(-50%);
+    .btn-secondary:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
     }
 
-    .connection-point.top:hover {
-        transform: translateX(-50%) scale(1.2);
+    /* Modules Container */
+    .modules-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 40px;
+        scroll-behavior: smooth;
     }
 
-    .connection-point.bottom {
-        bottom: -7px;
-        left: 50%;
-        transform: translateX(-50%);
+    .modules-list {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        padding-bottom: 100px;
     }
 
-    .connection-point.bottom:hover {
-        transform: translateX(-50%) scale(1.2);
-    }
-
-    .connection-point.left {
-        left: -7px;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-
-    .connection-point.left:hover {
-        transform: translateY(-50%) scale(1.2);
-    }
-
-    .connection-point.right {
-        right: -7px;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-
-    .connection-point.right:hover {
-        transform: translateY(-50%) scale(1.2);
-    }
-
-    /* SVG Arrows */
-    .arrow-svg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 5;
-    }
-
-    .arrow-path {
-        fill: none;
-        stroke: #6366f1;
-        stroke-width: 2;
-        marker-end: url(#arrowhead);
-        transition: stroke 0.2s ease;
-    }
-
-    .arrow-path:hover {
-        stroke: #4f46e5;
-        stroke-width: 3;
-    }
-
-    /* Toolbar */
-    .floating-toolbar {
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
+    /* Module Box */
+    .module-box {
         background: white;
         border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        padding: 12px;
-        display: flex;
-        gap: 8px;
-        z-index: 100;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        animation: slideIn 0.3s ease-out;
     }
 
-    .tool-button {
-        padding: 12px 20px;
-        border-radius: 10px;
-        border: 2px solid transparent;
-        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-        cursor: pointer;
-        transition: all 0.2s ease;
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .module-box:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+
+    .module-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .module-title-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .module-handle {
+        color: #94a3b8;
+        cursor: grab;
+    }
+
+    .module-title {
+        font-weight: 700;
+        color: #334155;
+        font-size: 1.1rem;
+        background: transparent;
+        border: none;
+        outline: none;
+        width: 300px;
+    }
+
+    .module-title:focus {
+        text-decoration: underline;
+    }
+
+    .module-actions {
+        display: flex;
         gap: 8px;
+    }
+
+    .icon-btn {
+        padding: 6px;
+        border-radius: 6px;
+        color: #94a3b8;
+        cursor: pointer;
+    }
+
+    .icon-btn:hover {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .icon-btn.delete:hover {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    /* Drop Zone inside Module */
+    .module-content {
+        padding: 24px;
+        min-height: 120px;
+        background: #ffffff;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .empty-state-msg {
+        text-align: center;
+        color: #94a3b8;
+        padding: 30px;
+        border: 2px dashed #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+
+    /* Lesson Item (Inside Module) */
+    .lesson-item {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        margin-bottom: 12px;
+        cursor: grab;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .lesson-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .lesson-item:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .lesson-item.selected {
+        border-color: var(--primary-color);
+        background: #eff6ff;
+    }
+
+    .lesson-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        flex-shrink: 0;
+    }
+
+    .lesson-info {
+        flex: 1;
+    }
+
+    .lesson-title {
         font-weight: 600;
-        font-size: 14px;
-        color: #374151;
+        color: #1e293b;
+        font-size: 0.95rem;
     }
 
-    .tool-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    .lesson-desc {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-top: 2px;
     }
 
-    .tool-button.active {
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        color: white;
-        border-color: #4f46e5;
+    /* Dragging States */
+    .sortable-ghost {
+        opacity: 0.4;
+        background: #f1f5f9;
+        border: 2px dashed #cbd5e1;
     }
 
-    .tool-button.video {
-        border-color: #f87171;
+    .sortable-drag {
+        cursor: grabbing;
     }
 
-    .tool-button.quiz {
-        border-color: #34d399;
+    /* Add Module Button (Floating or Bottom) */
+    .add-module-wrapper {
+        text-align: center;
+        margin-top: 20px;
     }
 
-    .tool-button.reading {
-        border-color: #60a5fa;
+    .btn-add-module {
+        background: white;
+        border: 2px dashed #cbd5e1;
+        color: #64748b;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: 100%;
     }
 
-    .tool-button.assignment {
-        border-color: #fbbf24;
+    .btn-add-module:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: #eff6ff;
     }
 
     /* Properties Panel */
     .properties-panel {
-        position: fixed;
-        right: -350px;
-        top: 0;
-        width: 350px;
-        height: 100vh;
+        width: var(--properties-width);
         background: white;
-        box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
-        transition: right 0.3s ease;
-        z-index: 200;
-        overflow-y: auto;
+        border-left: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        z-index: 20;
+        flex-shrink: 0;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 100%;
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.05);
     }
 
     .properties-panel.open {
-        right: 0;
+        transform: translateX(0);
+        position: relative;
+        /* Push content if we want, or keep absolute overlay */
     }
+
+    /* Make properties panel static in this layout for better UX? 
+       Let's keep it overlay or push. Overlay is better for screen space.
+    */
 
     .properties-header {
-        padding: 20px;
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        color: white;
-    }
-
-    .properties-body {
-        padding: 20px;
+        padding: 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .form-group {
@@ -307,298 +410,193 @@
 
     .form-label {
         display: block;
-        font-size: 13px;
+        font-size: 0.85rem;
         font-weight: 600;
-        color: #374151;
+        color: #475569;
         margin-bottom: 8px;
     }
 
     .form-input {
         width: 100%;
-        padding: 10px 12px;
-        border: 2px solid #e5e7eb;
+        padding: 12px;
+        border: 1px solid #e2e8f0;
         border-radius: 8px;
-        font-size: 14px;
-        transition: all 0.2s ease;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
     }
 
     .form-input:focus {
         outline: none;
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        border-color: var(--primary-color);
+        ring: 2px solid rgba(99, 102, 241, 0.1);
     }
 
-    .form-textarea {
-        min-height: 100px;
+    textarea.form-input {
+        min-height: 120px;
         resize: vertical;
-        font-family: inherit;
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.9);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    .canvas-component {
-        animation: fadeIn 0.3s ease;
-    }
-
-    /* Mini Map */
-    .minimap {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 200px;
-        height: 150px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-        border: 2px solid #e5e7eb;
-        z-index: 90;
-        overflow: hidden;
-    }
-
-    .minimap-content {
-        width: 100%;
-        height: 100%;
-        background:
-            linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
-            linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px);
-        background-size: 10px 10px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="relative">
-    <!-- Top Toolbar -->
-    <div class="mb-6 bg-white rounded-2xl shadow-lg p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-1">Visual Course Builder</h1>
-                <p class="text-gray-600">Create your course structure with drag-and-drop components and connections</p>
-            </div>
-            <div class="flex gap-3">
-                <button
-                    class="px-5 py-2.5 bg-white border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all">
-                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div class="builder-container">
+    <!-- Sidebar -->
+    <div class="library-panel">
+        <div class="library-header">
+            <h2 class="library-title">Library</h2>
+            <p class="text-sm text-gray-500 mt-1">Drag items to modules</p>
+        </div>
+        <div class="library-items">
+            <div class="draggable-item" draggable="true" ondragstart="handleLibDragStart(event, 'video')">
+                <div class="item-icon bg-red-50 text-red-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                    </svg>
-                    Export
-                </button>
-                <button
-                    class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 shadow-lg transition-all">
-                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
                         </path>
                     </svg>
-                    Save Course
+                </div>
+                <div>
+                    <div class="font-bold text-gray-800">Video</div>
+                    <div class="text-xs text-gray-500">Lecture content</div>
+                </div>
+            </div>
+            <div class="draggable-item" draggable="true" ondragstart="handleLibDragStart(event, 'quiz')">
+                <div class="item-icon bg-green-50 text-green-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-bold text-gray-800">Quiz</div>
+                    <div class="text-xs text-gray-500">Assessment</div>
+                </div>
+            </div>
+            <div class="draggable-item" draggable="true" ondragstart="handleLibDragStart(event, 'reading')">
+                <div class="item-icon bg-blue-50 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-bold text-gray-800">Reading</div>
+                    <div class="text-xs text-gray-500">Text material</div>
+                </div>
+            </div>
+            <div class="draggable-item" draggable="true" ondragstart="handleLibDragStart(event, 'assignment')">
+                <div class="item-icon bg-yellow-50 text-yellow-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-bold text-gray-800">Assignment</div>
+                    <div class="text-xs text-gray-500">Project task</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Structure Area -->
+    <div class="structure-area">
+        <div class="top-bar">
+            <div class="course-meta">
+                <h1>Course Structure</h1>
+            </div>
+            <div class="actions">
+                <button class="action-btn btn-secondary" onclick="exportCourse()">Export JSON</button>
+                <button class="action-btn btn-primary" onclick="saveCourse()">Save Changes</button>
+                <button class="action-btn btn-primary" style="background: #10b981;" onclick="generateContent()"
+                    id="btnGenerate">Generate Content</button>
+            </div>
+        </div>
+
+        <div class="modules-wrapper">
+            <div class="modules-list" id="modulesList">
+                <!-- Modules injected here -->
+            </div>
+
+            <div class="add-module-wrapper">
+                <button class="btn-add-module" onclick="addModule()">
+                    + Add New Module
                 </button>
             </div>
         </div>
-    </div>
-
-    <!-- Canvas -->
-    <div class="canvas-container">
-        <div class="canvas-viewport" id="canvasViewport">
-            <div class="canvas-content" id="canvasContent">
-                <!-- SVG Layer for Arrows -->
-                <svg class="arrow-svg" id="arrowSvg">
-                    <defs>
-                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                            <polygon points="0 0, 10 3, 0 6" fill="#6366f1" />
-                        </marker>
-                    </defs>
-                </svg>
-
-                <!-- Sample Components (for demonstration) -->
-                <div class="canvas-component" style="left: 100px; top: 100px;" data-id="comp-1" data-type="video">
-                    <div class="component-header video">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                                </path>
-                            </svg>
-                            <span class="text-sm font-bold text-red-900">Video</span>
-                        </div>
-                        <button class="text-red-700 hover:text-red-900" onclick="deleteComponent('comp-1')">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="component-body">
-                        <div class="component-title">Introduction Video</div>
-                        <div class="component-description">Welcome students and introduce the course objectives</div>
-                    </div>
-                    <div class="connection-point top"></div>
-                    <div class="connection-point bottom"></div>
-                    <div class="connection-point left"></div>
-                    <div class="connection-point right"></div>
-                </div>
-
-                <div class="canvas-component" style="left: 450px; top: 100px;" data-id="comp-2" data-type="reading">
-                    <div class="component-header reading">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
-                                </path>
-                            </svg>
-                            <span class="text-sm font-bold text-blue-900">Reading</span>
-                        </div>
-                        <button class="text-blue-700 hover:text-blue-900" onclick="deleteComponent('comp-2')">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="component-body">
-                        <div class="component-title">Core Concepts</div>
-                        <div class="component-description">Read about fundamental principles and theories</div>
-                    </div>
-                    <div class="connection-point top"></div>
-                    <div class="connection-point bottom"></div>
-                    <div class="connection-point left"></div>
-                    <div class="connection-point right"></div>
-                </div>
-
-                <div class="canvas-component" style="left: 275px; top: 350px;" data-id="comp-3" data-type="quiz">
-                    <div class="component-header quiz">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                                </path>
-                            </svg>
-                            <span class="text-sm font-bold text-green-900">Quiz</span>
-                        </div>
-                        <button class="text-green-700 hover:text-green-900" onclick="deleteComponent('comp-3')">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="component-body">
-                        <div class="component-title">Knowledge Check</div>
-                        <div class="component-description">Test your understanding with 5 questions</div>
-                    </div>
-                    <div class="connection-point top"></div>
-                    <div class="connection-point bottom"></div>
-                    <div class="connection-point left"></div>
-                    <div class="connection-point right"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Floating Toolbar -->
-    <div class="floating-toolbar">
-        <button class="tool-button video" onclick="addComponent('video')">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                </path>
-            </svg>
-            Video
-        </button>
-        <button class="tool-button quiz" onclick="addComponent('quiz')">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                </path>
-            </svg>
-            Quiz
-        </button>
-        <button class="tool-button reading" onclick="addComponent('reading')">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
-                </path>
-            </svg>
-            Reading
-        </button>
-        <button class="tool-button assignment" onclick="addComponent('assignment')">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                </path>
-            </svg>
-            Assignment
-        </button>
-        <div style="width: 2px; background: #e5e7eb; margin: 0 4px;"></div>
-        <button class="tool-button" id="connectionMode" onclick="toggleConnectionMode()">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
-                </path>
-            </svg>
-            Connect
-        </button>
-    </div>
-
-    <!-- Mini Map -->
-    <div class="minimap">
-        <div class="minimap-content"></div>
     </div>
 
     <!-- Properties Panel -->
     <div class="properties-panel" id="propertiesPanel">
         <div class="properties-header">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold">Component Properties</h3>
-                <button onclick="closeProperties()" class="text-white hover:text-gray-200">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
+            <h3 class="font-bold text-gray-800">Properties</h3>
+            <button onclick="closeProperties()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <div class="properties-content p-6">
+            <div id="noSelection" class="text-center text-gray-400 mt-10">
+                <p>Select an item to edit</p>
+            </div>
+            <div id="propertiesForm" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-input" id="propTitle">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" id="propDesc"></textarea>
+                </div>
+
+                <div id="dynamicFields"></div>
+
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <button onclick="deleteSelectedItem()"
+                        class="w-full py-3 px-4 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-medium">
+                        Delete Item
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="properties-body">
-            <div class="form-group">
-                <label class="form-label">Component Type</label>
-                <input type="text" class="form-input" id="propType" readonly>
+    </div>
+
+    <!-- Progress Modal -->
+    <div id="progressModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800">Generating Content</h3>
+                <p class="text-sm text-gray-500 mt-1">Please wait while our agents create your course material.</p>
             </div>
-            <div class="form-group">
-                <label class="form-label">Title</label>
-                <input type="text" class="form-input" id="propTitle" placeholder="Enter title...">
+            <div class="p-6">
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-100 rounded-full h-4 mb-4 overflow-hidden">
+                    <div id="progressBar" class="bg-indigo-600 h-4 rounded-full transition-all duration-500"
+                        style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-sm text-gray-600 mb-6">
+                    <span id="progressText">0%</span>
+                    <span id="statusText">Initializing...</span>
+                </div>
+
+                <!-- Logs -->
+                <div class="bg-gray-50 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs text-gray-600 border border-gray-200"
+                    id="logContainer">
+                    <!-- Logs go here -->
+                </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea class="form-input form-textarea" id="propDescription"
-                    placeholder="Enter description..."></textarea>
+            <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button id="btnCloseProgress" onclick="closeProgressModal()"
+                    class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 hidden">
+                    Close
+                </button>
             </div>
-            <div class="form-group">
-                <label class="form-label">Duration (minutes)</label>
-                <input type="number" class="form-input" id="propDuration" placeholder="e.g., 15">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Learning Outcomes</label>
-                <textarea class="form-input form-textarea" id="propOutcomes"
-                    placeholder="Enter learning outcomes (one per line)..."></textarea>
-            </div>
-            <button onclick="saveProperties()"
-                class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 shadow-lg transition-all">
-                Save Changes
-            </button>
         </div>
     </div>
 </div>
@@ -607,314 +605,439 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    let componentCounter = 4;
-    let selectedComponent = null;
-    let connectionMode = false;
-    let connectionStart = null;
-    let isDragging = false;
-    let dragOffset = { x: 0, y: 0 };
-    let connections = []; // Store all connections with order
-    let connectionCounter = 1;
+    // State Management
+    let courseData = {
+        modules: [
+            {
+                id: 'mod-1',
+                title: 'Introduction',
+                items: []
+            }
+        ]
+    };
+    let selectedItem = null; // { type: 'module'|'item', id: string, parentId?: string }
+    let savedCourseId = null;
 
-    // Add Component
-    function addComponent(type) {
-        const id = `comp-${componentCounter++}`;
-        const canvasContent = document.getElementById('canvasContent');
+    // DOM Elements
+    const modulesList = document.getElementById('modulesList');
+    const propertiesPanel = document.getElementById('propertiesPanel');
+    const propertiesForm = document.getElementById('propertiesForm');
+    const noSelection = document.getElementById('noSelection');
+    const btnGenerate = document.getElementById('btnGenerate');
 
-        const typeConfig = {
-            video: { icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', color: 'red', title: 'New Video', desc: 'Video content' },
-            quiz: { icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'green', title: 'New Quiz', desc: 'Assessment questions' },
-            reading: { icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253', color: 'blue', title: 'New Reading', desc: 'Text-based content' },
-            assignment: { icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', color: 'yellow', title: 'New Assignment', desc: 'Project or task' }
-        };
+    // Progress Modal Elements
+    const progressModal = document.getElementById('progressModal');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const statusText = document.getElementById('statusText');
+    const logContainer = document.getElementById('logContainer');
+    const btnCloseProgress = document.getElementById('btnCloseProgress');
 
-        const config = typeConfig[type];
-        const component = document.createElement('div');
-        component.className = 'canvas-component';
-        component.style.left = '500px';
-        component.style.top = '500px';
-        component.dataset.id = id;
-        component.dataset.type = type;
+    // --- Initialization ---
+    function init() {
+        renderModules();
+        btnGenerate.disabled = true;
+        btnGenerate.style.opacity = 0.5;
+    }
 
-        component.innerHTML = `
-            <div class="component-header ${type}">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 text-${config.color}-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${config.icon}"></path>
-                    </svg>
-                    <span class="text-sm font-bold text-${config.color}-900">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+    // --- Rendering ---
+    function renderModules() {
+        modulesList.innerHTML = '';
+        courseData.modules.forEach(mod => {
+            const modEl = createModuleElement(mod);
+            modulesList.appendChild(modEl);
+        });
+    }
+
+    function createModuleElement(mod) {
+        const el = document.createElement('div');
+        el.className = 'module-box';
+        el.id = mod.id;
+        el.innerHTML = `
+            <div class="module-header">
+                <div class="module-title-group">
+                    <div class="module-handle">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+                    </div>
+                    <input type="text" class="module-title" value="${mod.title}" onchange="updateModuleTitle('${mod.id}', this.value)">
                 </div>
-                <button class="text-${config.color}-700 hover:text-${config.color}-900" onclick="deleteComponent('${id}')">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+                <div class="module-actions">
+                    <div class="icon-btn delete" onclick="deleteModule('${mod.id}')" title="Delete Module">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </div>
+                </div>
             </div>
-            <div class="component-body">
-                <div class="component-title">${config.title}</div>
-                <div class="component-description">${config.desc}</div>
+            <div class="module-content" 
+                 ondragover="handleDragOver(event)" 
+                 ondrop="handleDrop(event, '${mod.id}')">
+                ${mod.items.length === 0 ? '<div class="empty-state-msg">Drag items here</div>' : ''}
+                <div class="items-container"></div>
             </div>
-            <div class="connection-point top"></div>
-            <div class="connection-point bottom"></div>
-            <div class="connection-point left"></div>
-            <div class="connection-point right"></div>
         `;
 
-        canvasContent.appendChild(component);
-        makeDraggable(component);
-        setupConnectionPoints(component);
-        component.addEventListener('click', () => selectComponent(id));
+        const itemsContainer = el.querySelector('.items-container');
+        mod.items.forEach(item => {
+            itemsContainer.appendChild(createItemElement(item, mod.id));
+        });
+
+        return el;
     }
 
-    // Delete Component
-    function deleteComponent(id) {
-        const component = document.querySelector(`[data-id="${id}"]`);
-        if (component) {
-            // Remove all connections involving this component
-            connections = connections.filter(conn => {
-                if (conn.fromId === id || conn.toId === id) {
-                    // Remove the SVG elements
-                    if (conn.pathElement) conn.pathElement.remove();
-                    if (conn.labelElement) conn.labelElement.remove();
-                    return false;
-                }
-                return true;
-            });
-            component.remove();
-            redrawAllConnections();
+    function createItemElement(item, moduleId) {
+        const el = document.createElement('div');
+        el.className = 'lesson-item';
+        el.draggable = true;
+        el.id = item.id;
+        el.dataset.moduleId = moduleId;
+
+        // Config
+        const config = getItemConfig(item.type);
+
+        el.innerHTML = `
+            <div class="lesson-icon bg-${config.color}-50 text-${config.color}-600">
+                ${config.icon}
+            </div>
+            <div class="lesson-info">
+                <div class="lesson-title">${item.title}</div>
+                <div class="lesson-desc">${item.desc || config.defaultDesc}</div>
+            </div>
+            <div class="text-gray-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+            </div>
+        `;
+
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectItem(item.id, moduleId);
+        });
+
+        el.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('itemId', item.id);
+            e.dataTransfer.setData('sourceModuleId', moduleId);
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        return el;
+    }
+
+    function getItemConfig(type) {
+        const icons = {
+            video: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>',
+            quiz: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>',
+            reading: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253"></path></svg>',
+            assignment: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>'
+        };
+        const colors = { video: 'red', quiz: 'green', reading: 'blue', assignment: 'yellow' };
+        const descs = { video: 'Video Lesson', quiz: 'Quiz Assessment', reading: 'Reading Material', assignment: 'Project' };
+
+        return {
+            icon: icons[type] || icons.reading,
+            color: colors[type] || 'gray',
+            defaultDesc: descs[type] || 'Content'
+        };
+    }
+
+    // --- Actions ---
+    function addModule() {
+        const newMod = {
+            id: 'mod-' + Date.now(),
+            title: 'New Module',
+            items: []
+        };
+        courseData.modules.push(newMod);
+        renderModules();
+        setTimeout(() => {
+            const el = document.getElementById(newMod.id);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }
+
+    function updateModuleTitle(id, val) {
+        const mod = courseData.modules.find(m => m.id === id);
+        if (mod) mod.title = val;
+    }
+
+    function deleteModule(id) {
+        if (confirm('Delete this module and all its contents?')) {
+            courseData.modules = courseData.modules.filter(m => m.id !== id);
+            renderModules();
+            closeProperties();
         }
     }
 
-    // Make Draggable
-    function makeDraggable(element) {
-        element.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.connection-point') || e.target.closest('button')) return;
-
-            isDragging = true;
-            element.classList.add('dragging');
-
-            const rect = element.getBoundingClientRect();
-            const canvasRect = document.getElementById('canvasContent').getBoundingClientRect();
-
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
-
-            function onMouseMove(e) {
-                if (!isDragging) return;
-
-                const canvasRect = document.getElementById('canvasContent').getBoundingClientRect();
-                let newX = e.clientX - canvasRect.left - dragOffset.x;
-                let newY = e.clientY - canvasRect.top - dragOffset.y;
-
-                newX = Math.max(0, Math.min(newX, 3000 - element.offsetWidth));
-                newY = Math.max(0, Math.min(newY, 3000 - element.offsetHeight));
-
-                element.style.left = newX + 'px';
-                element.style.top = newY + 'px';
-
-                // Update all connections involving this component
-                redrawAllConnections();
-            }
-
-            function onMouseUp() {
-                isDragging = false;
-                element.classList.remove('dragging');
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-            }
-
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        });
+    // --- Drag and Drop Logic ---
+    function handleLibDragStart(e, type) {
+        e.dataTransfer.setData('type', type);
+        e.dataTransfer.setData('source', 'library');
     }
 
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
 
-    // Setup Connection Points
-    function setupConnectionPoints(component) {
-        const points = component.querySelectorAll('.connection-point');
-        points.forEach(point => {
-            point.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
+    function handleDrop(e, targetModuleId) {
+        e.preventDefault();
+        const source = e.dataTransfer.getData('source');
 
-                console.log('Connection point clicked!', connectionMode ? 'Connection mode ON' : 'Connection mode OFF');
+        if (source === 'library') {
+            // New Item
+            const type = e.dataTransfer.getData('type');
+            const newItem = {
+                id: 'item-' + Date.now(),
+                type: type,
+                title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+                desc: ''
+            };
 
-                if (connectionMode) {
-                    if (!connectionStart) {
-                        // First click - select starting point
-                        connectionStart = { component, point };
-                        point.classList.add('active');
-                        console.log('Starting connection from:', component.dataset.id);
-                    } else {
-                        // Second click - create connection
-                        if (connectionStart.component !== component) {
-                            createConnection(connectionStart.component, component);
-                            console.log('Connection created!');
-                        } else {
-                            console.log('Cannot connect component to itself');
-                        }
-                        connectionStart.point.classList.remove('active');
-                        connectionStart = null;
-                    }
-                } else {
-                    console.log('Please enable Connection Mode first by clicking the Connect button');
+            const mod = courseData.modules.find(m => m.id === targetModuleId);
+            if (mod) {
+                mod.items.push(newItem);
+                renderModules();
+                selectItem(newItem.id, targetModuleId);
+            }
+        } else {
+            // Reordering or Moving Item
+            const itemId = e.dataTransfer.getData('itemId');
+            const sourceModuleId = e.dataTransfer.getData('sourceModuleId');
+
+            if (itemId && sourceModuleId) {
+                // Find item and remove from source
+                const sourceMod = courseData.modules.find(m => m.id === sourceModuleId);
+                const itemIndex = sourceMod.items.findIndex(i => i.id === itemId);
+                if (itemIndex > -1) {
+                    const [item] = sourceMod.items.splice(itemIndex, 1);
+
+                    // Add to target
+                    const targetMod = courseData.modules.find(m => m.id === targetModuleId);
+                    targetMod.items.push(item);
+
+                    renderModules();
                 }
-            });
-        });
+            }
+        }
     }
 
-    // Create Connection
-    function createConnection(fromComp, toComp) {
-        const connection = {
-            id: `conn-${connectionCounter}`,
-            order: connectionCounter++,
-            fromId: fromComp.dataset.id,
-            toId: toComp.dataset.id,
-            pathElement: null,
-            labelElement: null
+    // --- Selection & Properties ---
+    function selectItem(itemId, moduleId) {
+        document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('selected'));
+
+        const el = document.getElementById(itemId);
+        if (el) el.classList.add('selected');
+
+        const mod = courseData.modules.find(m => m.id === moduleId);
+        const item = mod.items.find(i => i.id === itemId);
+
+        if (item) {
+            selectedItem = { type: 'item', data: item, moduleId };
+            openProperties();
+        }
+    }
+
+    function openProperties() {
+        if (!selectedItem) return;
+
+        propertiesPanel.classList.add('open');
+        noSelection.style.display = 'none';
+        propertiesForm.style.display = 'block';
+
+        const titleInput = document.getElementById('propTitle');
+        const descInput = document.getElementById('propDesc');
+
+        titleInput.value = selectedItem.data.title;
+        descInput.value = selectedItem.data.desc;
+
+        titleInput.oninput = (e) => {
+            selectedItem.data.title = e.target.value;
+            const el = document.getElementById(selectedItem.data.id);
+            if (el) el.querySelector('.lesson-title').textContent = e.target.value;
         };
 
-        connections.push(connection);
-        drawConnection(connection);
+        descInput.oninput = (e) => {
+            selectedItem.data.desc = e.target.value;
+            const el = document.getElementById(selectedItem.data.id);
+            if (el) el.querySelector('.lesson-desc').textContent = e.target.value;
+        };
+
+        renderDynamicFields(selectedItem.data);
     }
 
-    // Draw Connection
-    function drawConnection(connection) {
-        const fromComp = document.querySelector(`[data-id="${connection.fromId}"]`);
-        const toComp = document.querySelector(`[data-id="${connection.toId}"]`);
+    function renderDynamicFields(item) {
+        const container = document.getElementById('dynamicFields');
+        container.innerHTML = '';
 
-        if (!fromComp || !toComp) return;
-
-        const svg = document.getElementById('arrowSvg');
-        const canvasRect = document.getElementById('canvasContent').getBoundingClientRect();
-
-        const fromRect = fromComp.getBoundingClientRect();
-        const toRect = toComp.getBoundingClientRect();
-
-        const x1 = fromRect.left + fromRect.width / 2 - canvasRect.left;
-        const y1 = fromRect.top + fromRect.height / 2 - canvasRect.top;
-        const x2 = toRect.left + toRect.width / 2 - canvasRect.left;
-        const y2 = toRect.top + toRect.height / 2 - canvasRect.top;
-
-        // Create path
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        const controlX = (x1 + x2) / 2;
-        const controlY = (y1 + y2) / 2;
-        const d = `M ${x1} ${y1} Q ${controlX} ${controlY} ${x2} ${y2}`;
-        path.setAttribute('d', d);
-        path.setAttribute('class', 'arrow-path');
-        path.setAttribute('data-connection-id', connection.id);
-        path.style.cursor = 'pointer';
-        path.style.pointerEvents = 'stroke';
-
-        // Add click handler to delete connection
-        path.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (confirm(`Delete connection #${connection.order}?`)) {
-                deleteConnection(connection.id);
-            }
-        });
-
-        // Create order label
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        const labelX = (x1 + x2) / 2;
-        const labelY = (y1 + y2) / 2;
-        text.setAttribute('x', labelX);
-        text.setAttribute('y', labelY);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('dominant-baseline', 'middle');
-        text.setAttribute('class', 'connection-label');
-        text.setAttribute('data-connection-id', connection.id);
-        text.style.pointerEvents = 'none';
-        text.innerHTML = `<tspan style="font-size: 14px; font-weight: 700; fill: white; stroke: #6366f1; stroke-width: 3; paint-order: stroke;">${connection.order}</tspan>`;
-
-        // Remove old elements if they exist
-        if (connection.pathElement) connection.pathElement.remove();
-        if (connection.labelElement) connection.labelElement.remove();
-
-        svg.appendChild(path);
-        svg.appendChild(text);
-
-        connection.pathElement = path;
-        connection.labelElement = text;
-    }
-
-    // Delete Connection
-    function deleteConnection(connectionId) {
-        const connection = connections.find(c => c.id === connectionId);
-        if (connection) {
-            if (connection.pathElement) connection.pathElement.remove();
-            if (connection.labelElement) connection.labelElement.remove();
-            connections = connections.filter(c => c.id !== connectionId);
+        if (item.type === 'video') {
+            container.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Duration (mins)</label>
+                    <input type="number" class="form-input" value="${item.duration || ''}" onchange="updateItemData('duration', this.value)">
+                </div>
+            `;
+        } else if (item.type === 'quiz') {
+            container.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Questions</label>
+                    <input type="number" class="form-input" value="${item.questions || 5}" onchange="updateItemData('questions', this.value)">
+                </div>
+            `;
         }
     }
 
-    // Redraw All Connections
-    function redrawAllConnections() {
-        connections.forEach(connection => {
-            drawConnection(connection);
-        });
-    }
-
-
-    // Toggle Connection Mode
-    function toggleConnectionMode() {
-        connectionMode = !connectionMode;
-        const btn = document.getElementById('connectionMode');
-        if (connectionMode) {
-            btn.classList.add('active');
-            console.log('✅ CONNECTION MODE ENABLED - Click connection points to create arrows');
-        } else {
-            btn.classList.remove('active');
-            console.log('❌ CONNECTION MODE DISABLED');
-            if (connectionStart) {
-                connectionStart.point.classList.remove('active');
-                connectionStart = null;
-            }
+    window.updateItemData = function (key, value) {
+        if (selectedItem) {
+            selectedItem.data[key] = value;
         }
-    }
+    };
 
-    // Select Component
-    function selectComponent(id) {
-        document.querySelectorAll('.canvas-component').forEach(c => c.classList.remove('selected'));
-        const component = document.querySelector(`[data-id="${id}"]`);
-        component.classList.add('selected');
-        selectedComponent = component;
-
-        // Open properties panel
-        document.getElementById('propertiesPanel').classList.add('open');
-        document.getElementById('propType').value = component.dataset.type;
-        document.getElementById('propTitle').value = component.querySelector('.component-title').textContent;
-        document.getElementById('propDescription').value = component.querySelector('.component-description').textContent;
-    }
-
-    // Close Properties
     function closeProperties() {
-        document.getElementById('propertiesPanel').classList.remove('open');
-        if (selectedComponent) {
-            selectedComponent.classList.remove('selected');
-            selectedComponent = null;
+        propertiesPanel.classList.remove('open');
+        selectedItem = null;
+        document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('selected'));
+    }
+
+    function deleteSelectedItem() {
+        if (selectedItem && selectedItem.type === 'item') {
+            const mod = courseData.modules.find(m => m.id === selectedItem.moduleId);
+            if (mod) {
+                mod.items = mod.items.filter(i => i.id !== selectedItem.data.id);
+                renderModules();
+                closeProperties();
+            }
         }
     }
 
-    // Save Properties
-    function saveProperties() {
-        if (!selectedComponent) return;
+    // --- Persistence ---
+    async function saveCourse() {
+        const payload = {
+            modules: courseData.modules,
+            course_title: "My Designed Course"
+        };
 
-        selectedComponent.querySelector('.component-title').textContent = document.getElementById('propTitle').value;
-        selectedComponent.querySelector('.component-description').textContent = document.getElementById('propDescription').value;
+        try {
+            const response = await fetch('/save-course-design', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
 
-        closeProperties();
+            if (response.ok) {
+                const result = await response.json();
+                savedCourseId = result.course_id;
+                alert('Course structure saved successfully! ID: ' + savedCourseId);
+                console.log('Saved:', result);
+
+                btnGenerate.disabled = false;
+                btnGenerate.style.opacity = 1;
+            } else {
+                const err = await response.text();
+                alert('Failed to save course: ' + err);
+            }
+        } catch (error) {
+            console.error('Error saving course:', error);
+            alert('Error saving course. See console for details.');
+        }
     }
 
-    // Initialize existing components
-    document.querySelectorAll('.canvas-component').forEach(comp => {
-        makeDraggable(comp);
-        setupConnectionPoints(comp);
-        comp.addEventListener('click', () => selectComponent(comp.dataset.id));
-    });
+    // --- Progress Modal Logic ---
+    function openProgressModal() {
+        progressModal.classList.remove('hidden');
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+        statusText.textContent = 'Starting...';
+        logContainer.innerHTML = '';
+        btnCloseProgress.classList.add('hidden');
+    }
 
-    console.log('Visual Course Builder initialized - Drag components, connect them with arrows (with order numbers), and edit properties!');
-    console.log('Click on arrows to delete connections. Order numbers show the sequence.');
+    function closeProgressModal() {
+        progressModal.classList.add('hidden');
+    }
+
+    function addLog(msg) {
+        const div = document.createElement('div');
+        div.textContent = `> ${msg}`;
+        div.className = 'mb-1';
+        logContainer.appendChild(div);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    async function generateContent() {
+        if (!savedCourseId) {
+            alert('Please save the course first.');
+            return;
+        }
+
+        openProgressModal();
+
+        try {
+            const response = await fetch(`/generate-course-content/${savedCourseId}`, {
+                method: 'POST'
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.substring(6));
+
+                            if (data.message) {
+                                addLog(data.message);
+                                statusText.textContent = data.message;
+                            }
+
+                            if (data.progress !== undefined) {
+                                progressBar.style.width = `${data.progress}%`;
+                                progressText.textContent = `${data.progress}%`;
+                            }
+
+                            if (data.done) {
+                                btnCloseProgress.classList.remove('hidden');
+                                statusText.textContent = 'Completed';
+                                // Redirect to course view after a short delay
+                                setTimeout(() => {
+                                    window.location.href = '/course/' + savedCourseId;
+                                }, 1500);
+                            }
+
+                            if (data.error) {
+                                addLog('Error: ' + data.error);
+                                statusText.textContent = 'Error';
+                            }
+                        } catch (e) {
+                            console.error('Error parsing SSE data', e);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error generating content:', error);
+            addLog('Network Error: ' + error.message);
+            statusText.textContent = 'Failed';
+            btnCloseProgress.classList.remove('hidden');
+        }
+    }
+
+    function exportCourse() {
+        const blob = new Blob([JSON.stringify(courseData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'course_structure.json';
+        a.click();
+    }
+
+    // Init
+    init();
+
 </script>
 {% endblock %}
