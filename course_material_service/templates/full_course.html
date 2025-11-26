@@ -13,7 +13,9 @@
           <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">{{ course_title }}</h1>
           <p class="mt-2 text-white/90">Full course: Videos, Readings, Quizzes with Coursera-like navigation.</p>
         </div>
-        <a href="/exports" class="inline-block bg-white text-gray-900 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition">Saved Courses</a>
+        <a href="/exports"
+          class="inline-block bg-white text-gray-900 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition">Saved
+          Courses</a>
       </div>
     </div>
   </div>
@@ -21,20 +23,31 @@
   <div class="grid grid-cols-12 gap-6">
     <!-- Sidebar: modules as pages -->
     <aside class="col-span-12 md:col-span-4 lg:col-span-3">
-      <div class="sticky top-6 bg-white rounded-2xl shadow-xl p-5">
-        <h2 class="text-lg font-semibold text-gray-800 mb-3">Modules</h2>
+      <div class="sticky top-6 bg-white rounded-2xl shadow-xl p-5 overflow-y-auto max-h-[calc(100vh-4rem)]">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Course Modules</h2>
         {% if modules_output %}
-        <nav class="space-y-1" aria-label="Module navigation">
+        <nav class="space-y-6" aria-label="Module navigation">
           {% for module in modules_output %}
-          {% set info = module.info %}
-          <button class="module-tab w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition" data-module="{{ info.number }}">
-            <span class="inline-flex h-6 w-6 items-center justify-center text-xs font-semibold rounded-full bg-indigo-600 text-white">{{ info.number }}</span>
-            <span class="truncate">{{ info.title }}</span>
-          </button>
+          <div class="module-group">
+            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">{{ module.title }}</h3>
+            <div class="space-y-1">
+              {% for lesson in module.lessons %}
+              {% set info = lesson.info %}
+              <button
+                class="module-tab w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors group"
+                data-module="{{ info.number }}">
+                <span
+                  class="flex-shrink-0 inline-flex h-6 w-6 items-center justify-center text-xs font-semibold rounded-full bg-gray-100 text-gray-500 group-hover:bg-indigo-200 group-hover:text-indigo-800 transition-colors">{{
+                  info.number }}</span>
+                <span class="truncate text-sm font-medium">{{ info.title }}</span>
+              </button>
+              {% endfor %}
+            </div>
+          </div>
           {% endfor %}
         </nav>
         {% else %}
-        <p class="text-gray-500">No modules yet.</p>
+        <p class="text-gray-500 text-sm">No modules yet.</p>
         {% endif %}
       </div>
     </aside>
@@ -42,192 +55,231 @@
     <!-- Main content: one page per module with subheadings -->
     <section class="col-span-12 md:col-span-8 lg:col-span-9">
       {% if modules_output %}
-        {% for module in modules_output %}
-          {% set info = module.info %}
-          {% set vpack = module.assets.get('video_script', {}) %}
-          {% set video = vpack.get('content') %}
-          {% set video_url = vpack.get('video_url') %}
-          {% set captions_url = vpack.get('captions_url') %}
-          {% set chapters_url = vpack.get('chapters_url') %}
-          {% set reading = module.assets.get('reading_material', {}).get('content') %}
-          {% set quiz = module.assets.get('quiz_questions', {}).get('content') %}
+      {% for module in modules_output %}
+      {% for lesson in module.lessons %}
+      {% set info = lesson.info %}
+      {% set vpack = lesson.assets.get('video_script', {}) %}
+      {% set video = vpack.get('content') %}
+      {% set video_url = vpack.get('video_url') %}
+      {% set captions_url = vpack.get('captions_url') %}
+      {% set chapters_url = vpack.get('chapters_url') %}
+      {% set reading = lesson.assets.get('reading_material', {}).get('content') %}
+      {% set quiz = lesson.assets.get('quiz_questions', {}).get('content') %}
 
-          <div id="page-module-{{ info.number }}" class="module-page rounded-2xl bg-white shadow-xl p-0 mb-8 border border-gray-100 overflow-hidden hidden">
-            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <span class="inline-flex h-8 w-8 items-center justify-center text-sm font-semibold rounded-full bg-indigo-600 text-white">{{ info.number }}</span>
-                <h2 class="text-xl font-semibold text-gray-900">{{ info.title }}</h2>
-              </div>
-              <div class="text-sm text-gray-600 space-x-3">
-                <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}" data-subpage="video">Video</button>
-                <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}" data-subpage="reading">Reading</button>
-                <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}" data-subpage="quiz">Quiz</button>
-              </div>
-            </div>
-            <div class="px-6 py-5">
-              {% if info.summary %}
-              <p class="text-gray-700 mb-4">{{ info.summary }}</p>
-              {% endif %}
-
-              <!-- Video section -->
-              <div id="subpage-video-{{ info.number }}" class="subpage-section mt-2" data-subpage="video" data-module="{{ info.number }}">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Video</h3>
-                {% if video_url %}
-                <div class="mb-4">
-                  <video class="w-full rounded-lg shadow" controls preload="metadata">
-                    <source src="{{ video_url }}" type="video/mp4" />
-                    {% if captions_url %}
-                    <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
-                    {% endif %}
-                    {% if chapters_url %}
-                    <track kind="chapters" src="{{ chapters_url }}" srclang="en" label="Chapters" />
-                    {% endif %}
-                  </video>
-                  <p class="text-gray-500 text-sm mt-1">Narration voice: {{ voice }}</p>
-                </div>
-                {% endif %}
-                {% if video %}
-                  {% if video.hook %}<p class="text-gray-800"><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
-                  {% if video.outline %}
-                  <h4 class="font-semibold mt-4">Outline</h4>
-                  <ul class="list-disc pl-6 text-gray-700">
-                    {% for item in video.outline %}
-                    <li>{{ item.timestamp }} — {{ item.topic }}</li>
-                    {% endfor %}
-                  </ul>
-                  {% endif %}
-                  {% if video.narration %}
-                  <h4 class="font-semibold mt-4">Narration</h4>
-                  <ul class="list-disc pl-6 text-gray-700">
-                    {% for block in video.narration %}
-                    <li class="mb-2">
-                      <strong>{{ block.section }}</strong>: {{ block.summary }}<br />
-                      <span class="text-gray-700">{{ block.script }}</span>
-                    </li>
-                    {% endfor %}
-                  </ul>
-                  {% endif %}
-                  {% if video.recap %}<p class="mt-3"><strong>Recap:</strong> {{ video.recap }}</p>{% endif %}
-                  {% if video.call_to_action %}<p><strong>Call to action:</strong> {{ video.call_to_action }}</p>{% endif %}
-                {% else %}
-                  <p class="text-gray-600">No video content for this module.</p>
-                {% endif %}
-              </div>
-
-              <!-- Reading section -->
-              <div id="subpage-reading-{{ info.number }}" class="subpage-section mt-8 hidden" data-subpage="reading" data-module="{{ info.number }}">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Reading</h3>
-                {% if reading %}
-                  {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
-                  {% if reading.sections %}
-                  <h4 class="font-semibold mt-2">Sections</h4>
-                  <ul class="list-disc pl-6 text-gray-700">
-                    {% for section in reading.sections %}
-                    <li class="mb-2">
-                      <strong>{{ section.heading }}</strong>
-                      {% if section.key_points %}
-                      <ul>
-                        {% for point in section.key_points %}
-                        <li>{{ point }}</li>
-                        {% endfor %}
-                      </ul>
-                      {% endif %}
-                      <p>{{ section.content }}</p>
-                      {% if section.outcome_alignment %}
-                      <p class="muted">Outcomes: {{ section.outcome_alignment | join(", ") }}</p>
-                      {% endif %}
-                    </li>
-                    {% endfor %}
-                  </ul>
-                  {% endif %}
-                  {% if reading.examples %}
-                  <h4 class="font-semibold mt-2">Examples</h4>
-                  <ul class="list-disc pl-6 text-gray-700">
-                    {% for example in reading.examples %}
-                    <li>
-                      <strong>{{ example.title }}</strong> — {{ example.description }}
-                      {% if example.outcome_alignment %}
-                      <span class="muted">(Outcomes: {{ example.outcome_alignment | join(", ") }})</span>
-                      {% endif %}
-                    </li>
-                    {% endfor %}
-                  </ul>
-                  {% endif %}
-                  {% if reading.glossary %}
-                  <h4 class="font-semibold mt-2">Glossary</h4>
-                  <ul class="list-disc pl-6 text-gray-700">
-                    {% for term in reading.glossary %}
-                    <li><strong>{{ term.term }}</strong>: {{ term.definition }}</li>
-                    {% endfor %}
-                  </ul>
-                  {% endif %}
-                  {% if reading.reflections %}
-                  <h4 class="font-semibold mt-2">Reflection prompts</h4>
-                  <ul class="list-disc pl-6 text-gray-700">
-                    {% for prompt in reading.reflections %}
-                    <li>{{ prompt }}</li>
-                    {% endfor %}
-                  </ul>
-                  {% endif %}
-                {% else %}
-                  <p class="text-gray-600">No reading content for this module.</p>
-                {% endif %}
-              </div>
-
-              <!-- Quiz section -->
-              <div id="subpage-quiz-{{ info.number }}" class="subpage-section mt-8 hidden" data-subpage="quiz" data-module="{{ info.number }}">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Quiz</h3>
-                {% if quiz and quiz.questions %}
-                <!-- Exam-style start screen -->
-                <div class="exam-intro rounded-xl border border-gray-200 bg-gray-50 p-5 mb-4" data-module="{{ info.number }}">
-                  <p class="text-gray-700 mb-2">This module has {{ quiz.questions|length }} questions. You can review rationales after submission.</p>
-                  <button type="button" class="start-quiz-button bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded" data-module="{{ info.number }}">Start Quiz</button>
-                </div>
-                <!-- Exam body (hidden until start) -->
-                <form class="quiz-form exam-body hidden" id="quiz-form-{{ info.number }}">
-                  <ol class="list-decimal pl-6">
-                    {% for question in quiz.questions %}
-                    {% set qidx = loop.index0 %}
-                    <li class="question" data-answer="{{ question.answer }}" data-stem="{{ question.stem|e }}">
-                      <div>
-                        <strong>{{ question.stem }}</strong>
-                        <span class="badge" aria-live="polite"></span>
-                      </div>
-                      <ul class="choice-list">
-                        {% for choice in question.choices %}
-                        <li>
-                          <label>
-                            <input type="radio" name="q{{ qidx }}-m{{ info.number }}" value="{{ choice.label }}" />
-                            {{ choice.label }}. {{ choice.text }}
-                          </label>
-                        </li>
-                        {% endfor %}
-                      </ul>
-                      {% if question.learning_outcome %}
-                      <p class="muted">Outcome: {{ question.learning_outcome }}</p>
-                      {% endif %}
-                      {% if question.rationale %}
-                      <p class="muted rationale" style="display:none;">Rationale: {{ question.rationale }}</p>
-                      {% endif %}
-                    </li>
-                    {% endfor %}
-                  </ol>
-                  <div class="quiz-actions mt-3">
-                    <button type="button" class="submit-quiz bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded" data-module="{{ info.number }}">Submit answers</button>
-                  </div>
-                  <div class="quiz-result text-sm text-gray-700 mt-2" id="quiz-result-{{ info.number }}" aria-live="polite"></div>
-                </form>
-                {% elif quiz and quiz.remediation %}
-                <p class="text-gray-600">No questions provided. {{ quiz.remediation }}</p>
-                {% else %}
-                <p class="text-gray-600">No quiz content for this module.</p>
-                {% endif %}
-              </div>
-            </div>
+      <div id="page-module-{{ info.number }}"
+        class="module-page rounded-2xl bg-white shadow-xl p-0 mb-8 border border-gray-100 overflow-hidden hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span
+              class="inline-flex h-8 w-8 items-center justify-center text-sm font-semibold rounded-full bg-indigo-600 text-white">{{
+              info.number }}</span>
+            <h2 class="text-xl font-semibold text-gray-900">{{ info.title }}</h2>
           </div>
-        {% endfor %}
+          <div class="text-sm text-gray-600 space-x-3">
+            <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
+              data-subpage="video">Video</button>
+            <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
+              data-subpage="reading">Reading</button>
+            <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
+              data-subpage="quiz">Quiz</button>
+          </div>
+        </div>
+        <div class="px-6 py-5">
+          {% if info.summary %}
+          <p class="text-gray-700 mb-4">{{ info.summary }}</p>
+          {% endif %}
+
+          <!-- Video section -->
+          <div id="subpage-video-{{ info.number }}" class="subpage-section mt-2" data-subpage="video"
+            data-module="{{ info.number }}">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Video</h3>
+            {% if video_url %}
+            <div class="mb-4">
+              <video class="w-full rounded-lg shadow" controls preload="metadata">
+                <source src="{{ video_url }}" type="video/mp4" />
+                {% if captions_url %}
+                <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
+                {% endif %}
+                {% if chapters_url %}
+                <track kind="chapters" src="{{ chapters_url }}" srclang="en" label="Chapters" />
+                {% endif %}
+              </video>
+              <p class="text-gray-500 text-sm mt-1">Narration voice: {{ voice }}</p>
+            </div>
+            {% endif %}
+            {% if video %}
+            {% if video.hook %}<p class="text-gray-800"><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
+            {% if video.outline %}
+            <h4 class="font-semibold mt-4">Outline</h4>
+            <ul class="list-disc pl-6 text-gray-700">
+              {% for item in video.outline %}
+              <li>{{ item.timestamp }} — {{ item.topic }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if video.narration %}
+            <h4 class="font-semibold mt-4">Narration</h4>
+            <ul class="list-disc pl-6 text-gray-700">
+              {% for block in video.narration %}
+              <li class="mb-2">
+                <strong>{{ block.section }}</strong>: {{ block.summary }}<br />
+                <span class="text-gray-700">{{ block.script }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if video.recap %}<p class="mt-3"><strong>Recap:</strong> {{ video.recap }}</p>{% endif %}
+            {% if video.call_to_action %}<p><strong>Call to action:</strong> {{ video.call_to_action }}</p>{% endif %}
+            {% else %}
+            <p class="text-gray-600">No video content for this module.</p>
+            {% endif %}
+          </div>
+
+          <!-- Reading section -->
+          <div id="subpage-reading-{{ info.number }}" class="subpage-section mt-8 hidden" data-subpage="reading"
+            data-module="{{ info.number }}">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Reading</h3>
+            {% if reading %}
+            {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
+            {% if reading.sections %}
+            <h4 class="font-semibold mt-2">Sections</h4>
+            <ul class="list-disc pl-6 text-gray-700">
+              {% for section in reading.sections %}
+              <li class="mb-2">
+                <strong>{{ section.heading }}</strong>
+                {% if section.key_points %}
+                <ul>
+                  {% for point in section.key_points %}
+                  <li>{{ point }}</li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+                <p>{{ section.content }}</p>
+                {% if section.outcome_alignment %}
+                <p class="muted">Outcomes: {{ section.outcome_alignment | join(", ") }}</p>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if reading.examples %}
+            <h4 class="font-semibold mt-2">Examples</h4>
+            <ul class="list-disc pl-6 text-gray-700">
+              {% for example in reading.examples %}
+              <li>
+                <strong>{{ example.title }}</strong> — {{ example.description }}
+                {% if example.outcome_alignment %}
+                <span class="muted">(Outcomes: {{ example.outcome_alignment | join(", ") }})</span>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if reading.glossary %}
+            <h4 class="font-semibold mt-2">Glossary</h4>
+            <ul class="list-disc pl-6 text-gray-700">
+              {% for term in reading.glossary %}
+              <li><strong>{{ term.term }}</strong>: {{ term.definition }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if reading.reflections %}
+            <h4 class="font-semibold mt-2">Reflection prompts</h4>
+            <ul class="list-disc pl-6 text-gray-700">
+              {% for prompt in reading.reflections %}
+              <li>{{ prompt }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% else %}
+            <p class="text-gray-600">No reading content for this module.</p>
+            {% endif %}
+          </div>
+
+          <!-- Quiz section -->
+          <div id="subpage-quiz-{{ info.number }}" class="subpage-section mt-8 hidden" data-subpage="quiz"
+            data-module="{{ info.number }}">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Quiz</h3>
+            {% if quiz and quiz.questions %}
+            <!-- Exam-style start screen -->
+            <div class="exam-intro rounded-xl border border-gray-200 bg-gray-50 p-5 mb-4"
+              data-module="{{ info.number }}">
+              <p class="text-gray-700 mb-2">This module has {{ quiz.questions|length }} questions. You can review
+                rationales after submission.</p>
+              <button type="button"
+                class="start-quiz-button bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded"
+                data-module="{{ info.number }}">Start Quiz</button>
+            </div>
+            <!-- Exam body (hidden until start) -->
+            <form class="quiz-form exam-body hidden" id="quiz-form-{{ info.number }}">
+              <div class="space-y-8">
+                {% for question in quiz.questions %}
+                {% set qidx = loop.index0 %}
+                <div class="question bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all"
+                  data-answer="{{ question.answer }}" data-stem="{{ question.stem|e }}">
+                  <div class="flex justify-between items-start mb-4">
+                    <h4 class="text-lg font-medium text-gray-900">{{ question.stem }}</h4>
+                    <span class="badge px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide hidden"
+                      aria-live="polite"></span>
+                  </div>
+
+                  <div class="choice-list space-y-3">
+                    {% for choice in question.choices %}
+                    <label class="choice-item block relative cursor-pointer group">
+                      <input type="radio" name="q{{ qidx }}-m{{ info.number }}" value="{{ choice.label }}"
+                        class="peer sr-only" />
+                      <div
+                        class="p-4 rounded-lg border-2 border-gray-200 hover:border-indigo-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 transition-all flex items-center">
+                        <span
+                          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold mr-3 peer-checked:bg-indigo-600 peer-checked:text-white transition-colors">{{
+                          choice.label }}</span>
+                        <span class="text-gray-700 group-hover:text-gray-900">{{ choice.text }}</span>
+                      </div>
+                    </label>
+                    {% endfor %}
+                  </div>
+
+                  {% if question.learning_outcome %}
+                  <p class="mt-4 text-xs text-gray-400 uppercase tracking-wide font-semibold">Outcome: {{
+                    question.learning_outcome }}</p>
+                  {% endif %}
+
+                  <div
+                    class="rationale mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm hidden border border-blue-100">
+                    <strong>Explanation:</strong> {{ question.rationale or "No specific rationale provided." }}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+
+              <div
+                class="quiz-actions mt-8 flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div class="quiz-result text-sm font-medium text-gray-700" id="quiz-result-{{ info.number }}"
+                  aria-live="polite">
+                  <span>Complete the quiz to see your score.</span>
+                </div>
+                <div class="flex gap-3">
+                  <button type="button"
+                    class="reset-quiz px-4 py-2 text-gray-600 hover:text-gray-900 font-medium hidden"
+                    data-module="{{ info.number }}">Try Again</button>
+                  <button type="button"
+                    class="submit-quiz bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105"
+                    data-module="{{ info.number }}">Submit Answers</button>
+                </div>
+              </div>
+            </form>
+            {% elif quiz and quiz.remediation %}
+            <p class="text-gray-600">No questions provided. {{ quiz.remediation }}</p>
+            {% else %}
+            <p class="text-gray-600">No quiz content for this module.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% endfor %}
       {% else %}
-        <p class="text-gray-600">No modules generated.</p>
+      <p class="text-gray-600">No modules generated.</p>
       {% endif %}
     </section>
   </div>
@@ -241,44 +293,85 @@
       const questions = Array.from(form.querySelectorAll('.question'));
       let correct = 0;
       let wrong = 0;
-      const wrongItems = [];
+
       questions.forEach((q, idx) => {
-        q.classList.remove('correct', 'incorrect');
+        // Reset state
+        q.classList.remove('border-green-500', 'border-red-500', 'ring-2', 'ring-green-100', 'ring-red-100');
         const badge = q.querySelector('.badge');
-        if (badge) { badge.textContent = ''; badge.classList.remove('correct','incorrect'); }
+        if (badge) {
+          badge.classList.add('hidden');
+          badge.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-yellow-100', 'text-yellow-800');
+        }
+
         const radios = q.querySelectorAll('input[type="radio"]');
         let selected = '';
         radios.forEach(r => { if (r.checked) selected = r.value; });
+
         const expected = (q.getAttribute('data-answer') || '').trim();
         const rationale = q.querySelector('.rationale');
+
         if (!selected) {
           wrong += 1;
-          q.classList.add('incorrect');
-          if (badge) { badge.textContent = 'Unanswered'; badge.classList.add('incorrect'); }
-          if (rationale) rationale.style.display = '';
-          wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+          q.classList.add('border-yellow-500', 'ring-2', 'ring-yellow-100');
+          if (badge) {
+            badge.textContent = 'Unanswered';
+            badge.classList.remove('hidden');
+            badge.classList.add('bg-yellow-100', 'text-yellow-800');
+          }
+          if (rationale) rationale.classList.remove('hidden');
         } else if (selected.toUpperCase() === expected.toUpperCase()) {
           correct += 1;
-          q.classList.add('correct');
-          if (badge) { badge.textContent = 'Correct'; badge.classList.add('correct'); }
-          if (rationale) rationale.style.display = 'none';
+          q.classList.add('border-green-500', 'ring-2', 'ring-green-100');
+          if (badge) {
+            badge.textContent = 'Correct';
+            badge.classList.remove('hidden');
+            badge.classList.add('bg-green-100', 'text-green-800');
+          }
+          if (rationale) rationale.classList.add('hidden');
         } else {
           wrong += 1;
-          q.classList.add('incorrect');
-          if (badge) { badge.textContent = 'Incorrect'; badge.classList.add('incorrect'); }
-          if (rationale) rationale.style.display = '';
-          wrongItems.push(q.getAttribute('data-stem') || ('Question ' + (idx+1)));
+          q.classList.add('border-red-500', 'ring-2', 'ring-red-100');
+          if (badge) {
+            badge.textContent = 'Incorrect';
+            badge.classList.remove('hidden');
+            badge.classList.add('bg-red-100', 'text-red-800');
+          }
+          if (rationale) rationale.classList.remove('hidden');
         }
       });
+
       const total = questions.length || 1;
       const percent = Math.round((correct / total) * 100);
       const res = form.querySelector('.quiz-result');
+
       if (res) {
-        res.innerHTML = '' +
-          '<div class="stats">Score: ' + correct + '/' + total + ' (' + percent + '%)</div>' +
-          '<div>Wrong: ' + wrong + '</div>' +
-          (wrongItems.length ? '<div class="wrong-list"><strong>Review:</strong> ' + wrongItems.map(x => x).join('; ') + '</div>' : '');
+        let msgClass = percent >= 70 ? 'text-green-600' : 'text-gray-700';
+        res.innerHTML = `<span class="${msgClass} font-bold text-lg">Score: ${correct}/${total} (${percent}%)</span>`;
       }
+
+      // Toggle buttons
+      form.querySelector('.submit-quiz').classList.add('hidden');
+      form.querySelector('.reset-quiz').classList.remove('hidden');
+    }
+
+    function resetQuiz(form) {
+      const questions = Array.from(form.querySelectorAll('.question'));
+      questions.forEach(q => {
+        q.classList.remove('border-green-500', 'border-red-500', 'border-yellow-500', 'ring-2', 'ring-green-100', 'ring-red-100', 'ring-yellow-100');
+        const badge = q.querySelector('.badge');
+        if (badge) badge.classList.add('hidden');
+        const rationale = q.querySelector('.rationale');
+        if (rationale) rationale.classList.add('hidden');
+
+        const radios = q.querySelectorAll('input[type="radio"]');
+        radios.forEach(r => r.checked = false);
+      });
+
+      const res = form.querySelector('.quiz-result');
+      if (res) res.innerHTML = '<span>Complete the quiz to see your score.</span>';
+
+      form.querySelector('.submit-quiz').classList.remove('hidden');
+      form.querySelector('.reset-quiz').classList.add('hidden');
     }
 
     document.addEventListener('click', function (e) {
@@ -291,11 +384,22 @@
         if (form) form.classList.remove('hidden');
         return;
       }
-      const btn = e.target.closest('.submit-quiz');
-      if (!btn) return;
-      const mod = btn.getAttribute('data-module');
-      const form = document.getElementById('quiz-form-' + mod);
-      if (form) evaluateQuiz(form);
+
+      const submitBtn = e.target.closest('.submit-quiz');
+      if (submitBtn) {
+        const mod = submitBtn.getAttribute('data-module');
+        const form = document.getElementById('quiz-form-' + mod);
+        if (form) evaluateQuiz(form);
+        return;
+      }
+
+      const resetBtn = e.target.closest('.reset-quiz');
+      if (resetBtn) {
+        const mod = resetBtn.getAttribute('data-module');
+        const form = document.getElementById('quiz-form-' + mod);
+        if (form) resetQuiz(form);
+        return;
+      }
     });
 
     // Module page switching
@@ -312,7 +416,7 @@
       });
       // Default subpage selection to video when switching modules
       setActiveSubpage(mod, currentSubpage[mod] || 'video');
-      try { history.replaceState(null, '', '#module-' + mod + ':' + (currentSubpage[mod] || 'video')); } catch (e) {}
+      try { history.replaceState(null, '', '#module-' + mod + ':' + (currentSubpage[mod] || 'video')); } catch (e) { }
     }
     // Subpage switching per module (video/reading/quiz)
     const subTabs = document.querySelectorAll('.subpage-tab');
@@ -330,7 +434,7 @@
       try {
         const hash = 'module-' + mod + ':' + name;
         history.replaceState(null, '', '#' + hash);
-      } catch (e) {}
+      } catch (e) { }
     }
     subTabs.forEach(btn => btn.addEventListener('click', () => {
       const mod = btn.getAttribute('data-module');
@@ -343,7 +447,7 @@
     const firstTab = moduleTabs[0];
     let startMod = firstTab ? firstTab.getAttribute('data-module') : null;
     let startSub = 'video';
-    const hash = (location.hash || '').replace('#','');
+    const hash = (location.hash || '').replace('#', '');
     if (hash && hash.startsWith('module-')) {
       const parts = hash.substring('module-'.length).split(':');
       if (parts[0]) startMod = parts[0];

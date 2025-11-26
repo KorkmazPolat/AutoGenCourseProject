@@ -254,15 +254,21 @@ async def get_course_view(
 
     modules_output = []
     global_lesson_index = 1
-
+    
     for module in modules:
         result_lessons = await db.execute(
             select(models.Lesson).where(models.Lesson.module_id == module.id).order_by(models.Lesson.order_index)
         )
         lessons = result_lessons.scalars().all()
+        
+        module_data = {
+            "id": module.id,
+            "title": module.title,
+            "summary": module.summary,
+            "lessons": []
+        }
 
         for lesson in lessons:
-            # Treat each lesson as a "unit" in the UI for now to fit the template
             result_assets = await db.execute(
                 select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id)
             )
@@ -310,8 +316,6 @@ async def get_course_view(
                     filename = os.path.basename(video_asset.file_path)
                     video_url = f"/static/videos/{filename}"
                     
-                    # Check for sidecars (captions/chapters)
-                    # We assume they are in the same directory as the video file
                     base_path = os.path.splitext(video_asset.file_path)[0]
                     if os.path.exists(base_path + ".vtt"):
                         captions_url = f"/static/videos/{os.path.splitext(filename)[0]}.vtt"
@@ -330,7 +334,6 @@ async def get_course_view(
                 }
 
             # 2. Reading (Lesson Content)
-            # We use the lesson.content (markdown) as the reading material
             reading_material = {
                 "content": {
                     "summary": lesson.title,
@@ -366,7 +369,6 @@ async def get_course_view(
                             "text": opt
                         })
                     
-                    # Determine correct label
                     correct_idx = q.get("correct_index", 0)
                     correct_label = labels[correct_idx] if correct_idx < len(labels) else "A"
 
@@ -385,11 +387,11 @@ async def get_course_view(
                     }
                 }
 
-            modules_output.append({
+            module_data["lessons"].append({
                 "info": {
                     "number": global_lesson_index,
-                    "title": f"{module.title}: {lesson.title}",
-                    "summary": f"Module: {module.title}"
+                    "title": lesson.title,
+                    "summary": f"Lesson {global_lesson_index}"
                 },
                 "assets": {
                     "video_script": video_script,
@@ -398,6 +400,8 @@ async def get_course_view(
                 }
             })
             global_lesson_index += 1
+        
+        modules_output.append(module_data)
 
     return templates.TemplateResponse(
         "full_course.html",

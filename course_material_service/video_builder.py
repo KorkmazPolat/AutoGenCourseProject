@@ -121,8 +121,6 @@ def _create_slide_image(
         panel_outline = (38, 46, 64)
         footer_fill = (20, 26, 40)
         footer_text = (200, 210, 225)
-    image = Image.new("RGB", size, color=background_color)
-    draw = ImageDraw.Draw(image)
 
     # Accent color palette rotated by page index for visual variety
     palette: List[Tuple[int, int, int]] = [
@@ -141,6 +139,27 @@ def _create_slide_image(
     W, H = size
     margin_x, margin_y = 72, 68
     content_width = W - (2 * margin_x)
+
+    # Create gradient background
+    base_img = Image.new("RGB", size, color=background_color)
+    draw = ImageDraw.Draw(base_img)
+    
+    # Generate gradient
+    if theme == "dark":
+        top_color = (20, 24, 35)
+        bottom_color = (10, 12, 18)
+    else:
+        top_color = (255, 255, 255)
+        bottom_color = (240, 245, 255)
+
+    for y in range(H):
+        r = int(top_color[0] + (bottom_color[0] - top_color[0]) * y / H)
+        g = int(top_color[1] + (bottom_color[1] - top_color[1]) * y / H)
+        b = int(top_color[2] + (bottom_color[2] - top_color[2]) * y / H)
+        draw.line([(0, y), (W, y)], fill=(r, g, b))
+    
+    image = base_img
+    draw = ImageDraw.Draw(image)
 
     # Top accent bar
     draw.rectangle([(0, 0), (W, 8)], fill=accent)
