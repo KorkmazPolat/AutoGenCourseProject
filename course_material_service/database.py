@@ -1,9 +1,14 @@
 import os
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+load_dotenv()
+
 # Default to SQLite, but allow override via env var
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./course_materials.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
 
 # Ensure we use the async driver for Postgres
 if DATABASE_URL.startswith("postgresql://"):

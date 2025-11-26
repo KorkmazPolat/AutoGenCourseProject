@@ -363,7 +363,7 @@ app.mount("/static", StaticFiles(directory=str(Path(__file__).resolve().parent /
 app.mount("/exports-files", StaticFiles(directory=str(EXPORTS_DIR)), name="exports_files")
 app.include_router(agent_course_router)
 
-from .database import init_db
+from .database import init_db, get_db
 from .database import init_db
 from . import models # Register models
 from .auth import verify_password, get_password_hash
@@ -371,9 +371,9 @@ from .services import save_course_to_db
 
 @app.on_event("startup")
 async def on_startup():
-    await init_db()
-
-
+    # Ensure static directories exist
+    os.makedirs("course_material_service/static/videos", exist_ok=True)
+    os.makedirs("course_material_service/static/images", exist_ok=True)
 
 
 def _coerce_optional_int(value: Optional[str]) -> Optional[int]:
@@ -420,7 +420,7 @@ async def handle_register(
     full_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-    db: AsyncSession = Depends(models.get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """Handles user registration."""
     # Check if user exists
@@ -520,7 +520,7 @@ def render_root(request: Request):
     return RedirectResponse(url="/login", status_code=303)
 
 @app.post("/publish-course/{course_id}", tags=["web"])
-async def publish_course(course_id: int, db: AsyncSession = Depends(models.get_db), user_id: int = Depends(get_session_user)):
+async def publish_course(course_id: int, db: AsyncSession = Depends(get_db), user_id: int = Depends(get_session_user)):
     result = await db.execute(select(models.Course).where(models.Course.id == course_id))
     course = result.scalars().first()
     if not course:
@@ -535,7 +535,7 @@ async def publish_course(course_id: int, db: AsyncSession = Depends(models.get_d
     return {"status": "success", "is_published": course.is_published}
 
 @app.get("/dashboard", response_class=HTMLResponse, tags=["web"])
-async def render_dashboard(request: Request, user_id: int = Depends(get_session_user), db: AsyncSession = Depends(models.get_db)):
+async def render_dashboard(request: Request, user_id: int = Depends(get_session_user), db: AsyncSession = Depends(get_db)):
     """Serves the main application page (course generator form) and lists existing courses."""
     # Fetch courses for the logged-in user
     result = await db.execute(select(models.Course).where(models.Course.user_id == user_id).order_by(models.Course.created_at.desc()))
@@ -556,7 +556,7 @@ async def handle_login(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
-    db: AsyncSession = Depends(models.get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """Handles the login form submission."""
     result = await db.execute(select(models.User).where(models.User.email == email))
@@ -1332,7 +1332,7 @@ async def agentic_finalize_course(
     theme: Optional[str] = Form(None),
     logo_path: Optional[str] = Form(None),
     skip_video: bool = Form(False),
-    db: AsyncSession = Depends(models.get_db),
+    db: AsyncSession = Depends(get_db),
     user_id: int = Depends(get_session_user),
 ) -> HTMLResponse:
     """Finalize an agentic course by rendering videos from generated scripts.
