@@ -58,13 +58,15 @@
       {% for module in modules_output %}
       {% for lesson in module.lessons %}
       {% set info = lesson.info %}
-      {% set vpack = lesson.assets.get('video_script', {}) %}
+      {% set vpack = lesson.assets.get('video_script') or {} %}
       {% set video = vpack.get('content') %}
       {% set video_url = vpack.get('video_url') %}
       {% set captions_url = vpack.get('captions_url') %}
       {% set chapters_url = vpack.get('chapters_url') %}
-      {% set reading = lesson.assets.get('reading_material', {}).get('content') %}
-      {% set quiz = lesson.assets.get('quiz_questions', {}).get('content') %}
+      {% set reading_asset = lesson.assets.get('reading_material') or {} %}
+      {% set reading = reading_asset.get('content') %}
+      {% set quiz_asset = lesson.assets.get('quiz_questions') or {} %}
+      {% set quiz = quiz_asset.get('content') %}
 
       <div id="page-module-{{ info.number }}"
         class="module-page rounded-2xl bg-white shadow-xl p-0 mb-8 border border-gray-100 overflow-hidden hidden">
@@ -75,13 +77,19 @@
               info.number }}</span>
             <h2 class="text-xl font-semibold text-gray-900">{{ info.title }}</h2>
           </div>
-          <div class="text-sm text-gray-600 space-x-3">
+          <div class="text-sm text-gray-600 space-x-3 flex">
+            {% if video_url or video %}
             <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
               data-subpage="video">Video</button>
+            {% endif %}
+            {% if reading and reading.text %}
             <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
               data-subpage="reading">Reading</button>
+            {% endif %}
+            {% if quiz and quiz.questions %}
             <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
               data-subpage="quiz">Quiz</button>
+            {% endif %}
           </div>
         </div>
         <div class="px-6 py-5">
@@ -90,7 +98,7 @@
           {% endif %}
 
           <!-- Video section -->
-          <div id="subpage-video-{{ info.number }}" class="subpage-section mt-2" data-subpage="video"
+          <div id="subpage-video-{{ info.number }}" class="subpage-section mt-2 hidden" data-subpage="video"
             data-module="{{ info.number }}">
             <h3 class="text-lg font-semibold text-gray-900 mb-2">Video</h3>
             {% if video_url %}
@@ -140,6 +148,11 @@
             data-module="{{ info.number }}">
             <h3 class="text-lg font-semibold text-gray-900 mb-2">Reading</h3>
             {% if reading %}
+            {% if reading.text %}
+            <div class="prose max-w-none text-gray-700">
+              {{ reading.text | markdown | safe }}
+            </div>
+            {% else %}
             {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}
             {% if reading.sections %}
             <h4 class="font-semibold mt-2">Sections</h4>
@@ -190,6 +203,7 @@
               <li>{{ prompt }}</li>
               {% endfor %}
             </ul>
+            {% endif %}
             {% endif %}
             {% else %}
             <p class="text-gray-600">No reading content for this module.</p>
@@ -408,16 +422,31 @@
     function setActiveModule(mod) {
       modulePages.forEach(el => el.classList.add('hidden'));
       const page = document.getElementById('page-module-' + mod);
-      if (page) page.classList.remove('hidden');
+      if (page) {
+        page.classList.remove('hidden');
+
+        // Determine the first available tab for this module
+        const availableTabs = Array.from(page.querySelectorAll('.subpage-tab'));
+        let defaultSub = 'video';
+        if (availableTabs.length > 0) {
+          defaultSub = availableTabs[0].getAttribute('data-subpage');
+        }
+
+        // Use previously selected subpage if valid, else default
+        const targetSub = (currentSubpage[mod] && page.querySelector(`.subpage-tab[data-subpage="${currentSubpage[mod]}"]`))
+          ? currentSubpage[mod]
+          : defaultSub;
+
+        setActiveSubpage(mod, targetSub);
+      }
+
       moduleTabs.forEach(btn => {
         const active = btn.getAttribute('data-module') === String(mod);
         btn.classList.toggle('bg-gray-100', active);
         btn.classList.toggle('text-gray-900', active);
       });
-      // Default subpage selection to video when switching modules
-      setActiveSubpage(mod, currentSubpage[mod] || 'video');
-      try { history.replaceState(null, '', '#module-' + mod + ':' + (currentSubpage[mod] || 'video')); } catch (e) { }
     }
+
     // Subpage switching per module (video/reading/quiz)
     const subTabs = document.querySelectorAll('.subpage-tab');
     const currentSubpage = {};
@@ -430,6 +459,11 @@
         const active = btn.getAttribute('data-subpage') === name;
         btn.classList.toggle('font-semibold', active);
         btn.classList.toggle('text-gray-900', active);
+        btn.classList.toggle('text-gray-500', !active);
+        btn.classList.toggle('bg-gray-100', active);
+        btn.classList.toggle('rounded-md', true);
+        btn.classList.toggle('px-3', true);
+        btn.classList.toggle('py-1', true);
       });
       try {
         const hash = 'module-' + mod + ':' + name;
@@ -439,14 +473,14 @@
     subTabs.forEach(btn => btn.addEventListener('click', () => {
       const mod = btn.getAttribute('data-module');
       const name = btn.getAttribute('data-subpage');
-      setActiveModule(mod);
       setActiveSubpage(mod, name);
     }));
     moduleTabs.forEach(btn => btn.addEventListener('click', () => setActiveModule(btn.getAttribute('data-module'))));
+
     // Initialize from URL hash or default to first module
     const firstTab = moduleTabs[0];
     let startMod = firstTab ? firstTab.getAttribute('data-module') : null;
-    let startSub = 'video';
+    let startSub = null;
     const hash = (location.hash || '').replace('#', '');
     if (hash && hash.startsWith('module-')) {
       const parts = hash.substring('module-'.length).split(':');
@@ -455,7 +489,13 @@
     }
     if (startMod) {
       setActiveModule(startMod);
-      setActiveSubpage(startMod, startSub);
+      if (startSub) {
+        // If a specific subpage was requested, try to switch to it
+        const page = document.getElementById('page-module-' + startMod);
+        if (page && page.querySelector(`.subpage-tab[data-subpage="${startSub}"]`)) {
+          setActiveSubpage(startMod, startSub);
+        }
+      }
     }
   })();
 </script>

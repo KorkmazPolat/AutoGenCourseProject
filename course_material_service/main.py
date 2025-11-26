@@ -126,12 +126,16 @@ class MaterialGenerationRequest(GenerationRequest):
     )
 
 
+# Markdown support enabled
+import markdown
+
 DEFAULT_MODEL = "gpt-4o-mini"
 VIDEO_PROMPT_ID = "video_script"
 VIDEO_OUTPUT_DIR = Path(__file__).resolve().parent / "generated_videos"
 EXPORTS_DIR = Path(__file__).resolve().parent / "exports"
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+templates.env.filters['markdown'] = lambda text: markdown.markdown(text, extensions=['extra', 'codehilite'])
 
 logger = logging.getLogger(__name__)
 
@@ -535,19 +539,99 @@ async def publish_course(course_id: int, db: AsyncSession = Depends(get_db), use
     return {"status": "success", "is_published": course.is_published}
 
 @app.get("/dashboard", response_class=HTMLResponse, tags=["web"])
-async def render_dashboard(request: Request, user_id: int = Depends(get_session_user), db: AsyncSession = Depends(get_db)):
-    """Serves the main application page (course generator form) and lists existing courses."""
-    # Fetch courses for the logged-in user
-    result = await db.execute(select(models.Course).where(models.Course.user_id == user_id).order_by(models.Course.created_at.desc()))
-    courses = result.scalars().all()
-
+async def render_dashboard(request: Request, user_id: int = Depends(get_session_user)):
+    """Serves the main application page (course generator form)."""
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "values": {},
+            "current_year": datetime.utcnow().year
+        }
+    )
+
+@app.get("/library", response_class=HTMLResponse, tags=["web"])
+async def render_library(request: Request, user_id: int = Depends(get_session_user), db: AsyncSession = Depends(get_db)):
+    """Lists existing courses for the user."""
+    result = await db.execute(select(models.Course).where(models.Course.user_id == user_id).order_by(models.Course.created_at.desc()))
+    courses = result.scalars().all()
+
+    return templates.TemplateResponse(
+        "library.html",
+        {
+            "request": request,
             "courses": courses,
             "current_year": datetime.utcnow().year
+        }
+    )
+
+@app.get("/course-builder/{course_id}", response_class=HTMLResponse, tags=["web"])
+async def render_course_builder_with_data(
+    request: Request, 
+    course_id: int, 
+    user_id: int = Depends(get_session_user), 
+    db: AsyncSession = Depends(get_db)
+):
+    """Loads the course builder with specific course data."""
+    # Fetch Course
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    if course.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Fetch Modules
+    result_mods = await db.execute(
+        select(models.CourseModule).where(models.CourseModule.course_id == course_id).order_by(models.CourseModule.order_index)
+    )
+    modules = result_mods.scalars().all()
+
+    course_data = {"modules": []}
+    
+    for module in modules:
+        mod_data = {
+            "id": str(module.id), # Use DB ID
+            "title": module.title,
+            "items": []
+        }
+        
+        # Fetch Lessons
+        result_lessons = await db.execute(
+            select(models.Lesson).where(models.Lesson.module_id == module.id).order_by(models.Lesson.order_index)
+        )
+        lessons = result_lessons.scalars().all()
+        
+        for lesson in lessons:
+            # Determine type based on assets
+            result_assets = await db.execute(
+                select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id)
+            )
+            assets = result_assets.scalars().all()
+            
+            item_type = "reading" # Default
+            if any(a.asset_type == "video" for a in assets):
+                item_type = "video"
+            elif any(a.asset_type == "quiz" for a in assets):
+                item_type = "quiz"
+            
+            mod_data["items"].append({
+                "id": str(lesson.id),
+                "type": item_type,
+                "title": lesson.title,
+                "desc": lesson.content[:100] + "..." if lesson.content else "No description"
+            })
+            
+        course_data["modules"].append(mod_data)
+
+    return templates.TemplateResponse(
+        "course_builder.html",
+        {
+            "request": request,
+            "course_data": json.dumps(course_data), # Pass as JSON string
+            "course_id": course.id,
+            "course_title": course.title
         }
     )
 
@@ -1137,6 +1221,161 @@ def system_architecture(request: Request):
 def course_builder(request: Request):
     """Visual drag-and-drop course builder interface."""
     return templates.TemplateResponse("course_builder.html", {"request": request})
+
+
+@app.get("/course-builder/{course_id}", response_class=HTMLResponse, tags=["web"])
+async def course_builder_edit(
+    request: Request,
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_session_user)
+):
+    # Fetch Course
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    if course.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Fetch Modules and Lessons
+    result_mods = await db.execute(
+        select(models.CourseModule).where(models.CourseModule.course_id == course_id).order_by(models.CourseModule.order_index)
+    )
+    modules = result_mods.scalars().all()
+    
+    modules_data = []
+    for mod in modules:
+        result_lessons = await db.execute(
+            select(models.Lesson).where(models.Lesson.module_id == mod.id).order_by(models.Lesson.order_index)
+        )
+        lessons = result_lessons.scalars().all()
+        
+        items = []
+        for lesson in lessons:
+            # Determine type based on assets
+            result_assets = await db.execute(select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id))
+            assets = result_assets.scalars().all()
+            
+            # Default type
+            item_type = 'reading'
+            if any(a.asset_type == 'video' for a in assets):
+                item_type = 'video'
+            elif any(a.asset_type == 'quiz' for a in assets):
+                item_type = 'quiz'
+            
+            items.append({
+                "id": lesson.id, # Use integer ID
+                "type": item_type,
+                "title": lesson.title,
+                "desc": lesson.content[:100] if lesson.content else ""
+            })
+            
+        modules_data.append({
+            "id": mod.id,
+            "title": mod.title,
+            "items": items
+        })
+
+    course_data = {
+        "id": course.id,
+        "title": course.title,
+        "modules": modules_data
+    }
+
+    return templates.TemplateResponse("course_builder.html", {
+        "request": request,
+        "course_data": json.dumps(course_data)
+    })
+
+
+@app.get("/content-editor/{lesson_id}", response_class=HTMLResponse, tags=["web"])
+async def content_editor(
+    request: Request,
+    lesson_id: int,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_session_user)
+):
+    # Fetch Lesson to verify existence and get course_id for back button
+    result = await db.execute(select(models.Lesson).where(models.Lesson.id == lesson_id))
+    lesson = result.scalars().first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    
+    # Verify ownership via Course
+    course_result = await db.execute(select(models.Course).join(models.CourseModule).where(models.CourseModule.id == lesson.module_id))
+    course = course_result.scalars().first()
+    if not course or course.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Fetch Modules and Lessons for Sidebar
+    result_mods = await db.execute(
+        select(models.CourseModule).where(models.CourseModule.course_id == course.id).order_by(models.CourseModule.order_index)
+    )
+    modules = result_mods.scalars().all()
+    
+    modules_data = []
+    for mod in modules:
+        result_lessons = await db.execute(
+            select(models.Lesson).where(models.Lesson.module_id == mod.id).order_by(models.Lesson.order_index)
+        )
+        lessons = result_lessons.scalars().all()
+        
+        items = []
+        for l in lessons:
+            items.append({
+                "id": l.id,
+                "title": l.title
+            })
+            
+        modules_data.append({
+            "id": mod.id,
+            "title": mod.title,
+            "lessons": items
+        })
+
+    return templates.TemplateResponse("content_editor.html", {
+        "request": request,
+        "lesson_id": lesson_id,
+        "course_id": course.id,
+        "course_title": course.title,
+        "modules": modules_data
+    })
+
+
+@app.get("/edit-course-content/{course_id}", tags=["web"])
+async def edit_course_content(
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_session_user)
+):
+    # Fetch Course
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    if course.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    # Find first lesson
+    # We need to join modules to find the first lesson of the first module
+    result_lesson = await db.execute(
+        select(models.Lesson)
+        .join(models.CourseModule)
+        .where(models.CourseModule.course_id == course_id)
+        .order_by(models.CourseModule.order_index, models.Lesson.order_index)
+        .limit(1)
+    )
+    first_lesson = result_lesson.scalars().first()
+    
+    if first_lesson:
+        return RedirectResponse(url=f"/content-editor/{first_lesson.id}")
+    else:
+        # If no lessons, go to builder
+        return RedirectResponse(url=f"/course-builder/{course_id}")
 
 
 @app.get("/videos/{filename}", tags=["web"])

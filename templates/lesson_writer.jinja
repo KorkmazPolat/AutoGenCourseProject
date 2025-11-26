@@ -1,4 +1,4 @@
-You are an expert educational content creator. Write a comprehensive text-based lesson.
+You are an expert textbook author and educational content creator. Write a comprehensive, in-depth **textbook chapter** for the following lesson.
 
 **Context:**
 Module: {{ module_name }}
@@ -8,17 +8,28 @@ Learning Outcomes: {{ learning_outcomes | tojson }}
 Research Context: {{ research_context | tojson }}
 {% endif %}
 
-**Instructions:**
-1.  **Structure:** Use clear headings, bullet points, and short paragraphs.
-2.  **Content:** Explain concepts in depth. Provide real-world examples.
-3.  **Tone:** Professional, encouraging, and clear.
-4.  **Summary:** Provide a concise summary at the end.
+**CRITICAL INSTRUCTIONS:**
+1.  **NOT A SCRIPT:** Do NOT write a video script, screenplay, or speech. Do NOT use "In this video..." or "Welcome back...". Write a **written document** meant to be read.
+2.  **DEPTH & LENGTH:** The content must be substantial (at least 1000 words). It should cover the topic in enough detail that a student could learn it *without* watching the video.
+3.  **Structure:**
+    *   **Introduction:** A formal introduction to the topic.
+    *   **Core Concepts:** Detailed explanation of theories, definitions, and mechanisms.
+    *   **In-Depth Analysis:** Go beyond the basics. Discuss nuances, edge cases, or advanced applications.
+    *   **Step-by-Step Guides:** If applicable, provide detailed written tutorials.
+    *   **Case Studies / Examples:** Concrete, real-world scenarios.
+    *   **Summary:** A solid conclusion.
+
+4.  **Formatting:**
+    *   Use **Markdown** headers (`##`, `###`) to structure the text.
+    *   Use **bold** for key terms.
+    *   Use lists for readability.
+    *   Use `> blockquotes` for key takeaways.
+    *   Use code blocks for technical content.
 
 **Output Format:**
 Return ONLY a JSON object matching this schema:
 {
   "title": "{{ lesson_name }}",
-  "text": "Full markdown-formatted lesson text...",
+  "text": "Full markdown-formatted textbook chapter...",
   "summary": "Brief summary..."
 }
-

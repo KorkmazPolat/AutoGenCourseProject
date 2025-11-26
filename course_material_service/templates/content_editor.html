@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Content Editor - ALPHA{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto h-full flex flex-col">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800" id="editorTitle">Edit Content</h1>
+            <p class="text-sm text-gray-500" id="editorSubtitle">Loading...</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="/course-builder/{{ course_id }}"
+                class="px-4 py-2 text-gray-700 font-medium hover:bg-gray-200 rounded-lg transition-colors">
+                Back to Builder
+            </a>
+            <button onclick="saveContentChanges()"
+                class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Save Changes
+            </button>
+        </div>
+    </div>
+
+    <div class="flex flex-1 gap-6 overflow-hidden">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white rounded-2xl shadow-xl flex flex-col border border-gray-200 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Course Lessons</h3>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2 space-y-4">
+                {% for module in modules %}
+                <div>
+                    <div class="px-3 py-2 text-xs font-bold text-gray-500 uppercase">{{ module.title }}</div>
+                    <div class="space-y-1">
+                        {% for lesson in module.lessons %}
+                        <a href="/content-editor/{{ lesson.id }}"
+                            class="block px-3 py-2 rounded-lg text-sm font-medium transition-colors {{ 'bg-indigo-50 text-indigo-700' if lesson.id == lesson_id else 'text-gray-600 hover:bg-gray-50' }}">
+                            {{ lesson.title }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Editor Container -->
+        <div class="flex-1 bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden border border-gray-200">
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-200 bg-gray-50 px-6">
+                <button
+                    class="px-6 py-4 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600 focus:outline-none transition-colors"
+                    id="tab-main" onclick="switchEditorTab('main')">
+                    Main Content
+                </button>
+                <button
+                    class="px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
+                    id="tab-quiz" onclick="switchEditorTab('quiz')">
+                    Quiz
+                </button>
+                <button
+                    class="px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
+                    id="tab-script" onclick="switchEditorTab('script')">
+                    Video Script
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-8 bg-white">
+                <!-- Main Content Editor -->
+                <div id="editor-main" class="editor-tab-content h-full flex flex-col">
+                    <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Lesson Text
+                        (Markdown)</label>
+                    <textarea id="lessonContentText"
+                        class="flex-1 w-full p-4 border border-gray-300 rounded-xl font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none bg-gray-50"
+                        placeholder="# Lesson Title\n\nWrite your content here..."></textarea>
+                </div>
+
+                <!-- Quiz Editor -->
+                <div id="editor-quiz" class="editor-tab-content hidden">
+                    <div class="max-w-3xl mx-auto">
+                        <div id="quizQuestionsList" class="space-y-6">
+                            <!-- Questions injected here -->
+                        </div>
+                        <button onclick="addQuizQuestion()"
+                            class="mt-8 w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-500 hover:text-indigo-600 transition-colors font-medium flex items-center justify-center group">
+                            <svg class="w-6 h-6 mr-2 group-hover:scale-110 transition-transform" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add New Question
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Script Editor -->
+                <div id="editor-script" class="editor-tab-content hidden h-full flex flex-col">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700 font-medium">
+                                Warning: You are editing the raw JSON script. Ensure valid syntax to avoid errors in
+                                video
+                                generation.
+                            </p>
+                        </div>
+                    </div>
+                    <textarea id="scriptContentJson"
+                        class="flex-1 w-full p-4 border border-gray-300 rounded-xl font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none bg-gray-50"></textarea>
+                </div>
+            </div>
+
+            <!-- Footer / AI Assist -->
+            <div class="px-8 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <input type="text" placeholder="Ask AI to rewrite..."
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-80 shadow-sm"
+                            disabled title="Coming soon">
+                        <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-400">
+                    Changes are not live until saved.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    const lessonId = {{ lesson_id }};
+    let currentAssets = [];
+    let currentQuizQuestions = [];
+
+    async function initEditor() {
+        try {
+            const res = await fetch(`/lesson/${lessonId}/details`);
+            if (!res.ok) throw new Error("Failed to fetch details");
+            const data = await res.json();
+
+            // Set Titles
+            document.getElementById('editorTitle').textContent = `Edit: ${data.lesson.title}`;
+            document.getElementById('editorSubtitle').textContent = `Duration: ${data.lesson.duration_minutes} mins`;
+
+            // Populate Main Content
+            document.getElementById('lessonContentText').value = data.lesson.content || '';
+
+            currentAssets = data.assets;
+
+            // Populate Quiz
+            const quizAsset = currentAssets.find(a => a.type === 'quiz');
+            if (quizAsset && quizAsset.content && quizAsset.content.questions) {
+                renderQuizQuestions(quizAsset.content.questions);
+            } else {
+                renderQuizQuestions([]);
+            }
+
+            // Populate Script
+            const scriptAsset = currentAssets.find(a => a.type === 'script' || a.type === 'video_script' || a.type === 'video');
+            if (scriptAsset && scriptAsset.content) {
+                document.getElementById('scriptContentJson').value = JSON.stringify(scriptAsset.content, null, 2);
+            } else {
+                document.getElementById('scriptContentJson').value = '{}';
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("Error loading content: " + e.message);
+        }
+    }
+
+    function switchEditorTab(tabName) {
+        // Hide all
+        document.querySelectorAll('.editor-tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('[id^="tab-"]').forEach(el => {
+            el.classList.remove('border-indigo-600', 'text-indigo-600');
+            el.classList.add('text-gray-500', 'hover:text-gray-700');
+        });
+
+        // Show selected
+        document.getElementById(`editor-${tabName}`).classList.remove('hidden');
+        const btn = document.getElementById(`tab-${tabName}`);
+        btn.classList.remove('text-gray-500', 'hover:text-gray-700');
+        btn.classList.add('border-indigo-600', 'text-indigo-600');
+    }
+
+    // Quiz Logic
+    function renderQuizQuestions(questions) {
+        currentQuizQuestions = questions;
+        const container = document.getElementById('quizQuestionsList');
+        container.innerHTML = '';
+
+        questions.forEach((q, idx) => {
+            const div = document.createElement('div');
+            div.className = 'bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative transition-shadow hover:shadow-md';
+            div.innerHTML = `
+                <div class="absolute top-4 right-4">
+                    <button onclick="removeQuizQuestion(${idx})" class="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">Question ${idx + 1}</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" value="${q.stem || q.question || ''}" onchange="updateQuizQuestion(${idx}, 'stem', this.value)" placeholder="Enter question text...">
+                </div>
+                <div class="space-y-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">Options</label>
+                    ${(q.choices || []).map((c, cIdx) => `
+                        <div class="flex items-center gap-3 group">
+                            <div class="flex items-center justify-center">
+                                <input type="radio" name="correct-${idx}" ${c.label === q.answer ? 'checked' : ''} onchange="updateQuizCorrect(${idx}, '${c.label}')" class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500 cursor-pointer">
+                            </div>
+                            <span class="text-sm font-mono font-bold text-gray-400 w-6 text-center">${c.label}</span>
+                            <input type="text" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" value="${c.text}" onchange="updateQuizOption(${idx}, ${cIdx}, this.value)" placeholder="Option text">
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function addQuizQuestion() {
+        currentQuizQuestions.push({
+            stem: "",
+            choices: [
+                { label: "A", text: "" },
+                { label: "B", text: "" },
+                { label: "C", text: "" },
+                { label: "D", text: "" }
+            ],
+            answer: "A"
+        });
+        renderQuizQuestions(currentQuizQuestions);
+    }
+
+    function removeQuizQuestion(idx) {
+        currentQuizQuestions.splice(idx, 1);
+        renderQuizQuestions(currentQuizQuestions);
+    }
+
+    window.updateQuizQuestion = function (idx, field, value) {
+        if (field === 'stem') currentQuizQuestions[idx].stem = value;
+    }
+
+    window.updateQuizOption = function (qIdx, oIdx, value) {
+        currentQuizQuestions[qIdx].choices[oIdx].text = value;
+    }
+
+    window.updateQuizCorrect = function (qIdx, label) {
+        currentQuizQuestions[qIdx].answer = label;
+    }
+
+    async function saveContentChanges() {
+        const lessonContent = document.getElementById('lessonContentText').value;
+        const scriptJson = document.getElementById('scriptContentJson').value;
+
+        let scriptData = null;
+        try {
+            if (scriptJson.trim()) scriptData = JSON.parse(scriptJson);
+        } catch (e) {
+            alert("Invalid JSON in Script Editor");
+            return;
+        }
+
+        const assetsUpdate = [];
+
+        // Quiz Asset
+        const quizAsset = currentAssets.find(a => a.type === 'quiz');
+        if (quizAsset) {
+            assetsUpdate.push({
+                id: quizAsset.id,
+                content: { ...quizAsset.content, questions: currentQuizQuestions }
+            });
+        }
+
+        // Script Asset
+        const scriptAsset = currentAssets.find(a => a.type === 'script' || a.type === 'video_script' || a.type === 'video');
+        if (scriptAsset && scriptData) {
+            assetsUpdate.push({
+                id: scriptAsset.id,
+                content: scriptData
+            });
+        }
+
+        const payload = {
+            lesson_content: lessonContent,
+            assets: assetsUpdate
+        };
+
+        try {
+            const res = await fetch(`/lesson/${lessonId}/update-content`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("Content updated successfully!");
+            } else {
+                alert("Failed to update content");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error saving: " + e.message);
+        }
+    }
+
+    initEditor();
+</script>
+{% endblock %}
