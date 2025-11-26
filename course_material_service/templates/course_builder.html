@@ -598,8 +598,19 @@
         modules: [
             {
                 id: 'mod-1',
-                title: 'Introduction',
-                items: []
+                title: 'Module 1: Python Basics',
+                items: [
+                    { id: 'item-1-1', type: 'video', title: 'Data Types & Variables', desc: 'Strings, Integers, and Floats' },
+                    { id: 'item-1-2', type: 'quiz', title: 'Basics Quiz', desc: 'Test your knowledge' }
+                ]
+            },
+            {
+                id: 'mod-2',
+                title: 'Module 2: Control Flow',
+                items: [
+                    { id: 'item-2-1', type: 'video', title: 'Conditionals & Loops', desc: 'If/Else and For Loops' },
+                    { id: 'item-2-2', type: 'reading', title: 'Functions Guide', desc: 'Reusable code blocks' }
+                ]
             }
         ]
     };
@@ -970,40 +981,43 @@
                 const { value, done } = await reader.read();
                 if (done) break;
 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n\n');
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
 
                 for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.substring(6));
+                    const trimmed = line.trim();
+                    if (!trimmed || !trimmed.startsWith('data: ')) continue;
 
-                            if (data.message) {
-                                addLog(data.message);
-                                statusText.textContent = data.message;
-                            }
+                    try {
+                        const data = JSON.parse(trimmed.substring(6));
 
-                            if (data.progress !== undefined) {
-                                progressBar.style.width = `${data.progress}%`;
-                                progressText.textContent = `${data.progress}%`;
-                            }
-
-                            if (data.done) {
-                                btnCloseProgress.classList.remove('hidden');
-                                statusText.textContent = 'Completed';
-                                // Redirect to course view after a short delay
-                                setTimeout(() => {
-                                    window.location.href = '/course/' + savedCourseId;
-                                }, 1500);
-                            }
-
-                            if (data.error) {
-                                addLog('Error: ' + data.error);
-                                statusText.textContent = 'Error';
-                            }
-                        } catch (e) {
-                            console.error('Error parsing SSE data', e);
+                        if (data.message) {
+                            addLog(data.message);
+                            statusText.textContent = data.message;
                         }
+
+                        if (data.progress !== undefined) {
+                            progressBar.style.width = `${data.progress}%`;
+                            progressText.textContent = `${data.progress}%`;
+                        }
+
+                        if (data.done) {
+                            btnCloseProgress.classList.remove('hidden');
+                            statusText.textContent = 'Completed';
+                            // Redirect to course view after a short delay
+                            setTimeout(() => {
+                                window.location.href = '/course/' + savedCourseId;
+                            }, 1500);
+                            return; // Exit function
+                        }
+
+                        if (data.error) {
+                            addLog('Error: ' + data.error);
+                            statusText.textContent = 'Error';
+                            btnCloseProgress.classList.remove('hidden');
+                        }
+                    } catch (e) {
+                        console.error('Error parsing SSE data', e);
                     }
                 }
             }
