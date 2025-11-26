@@ -1,3 +1,5 @@
+# Environment Variables
+.env
 course_material_service/.env
 
 # macOS
@@ -8,26 +10,34 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual Environments
 env/
 venv/
 .venv/
-*.sqlite3
-
-# Project local virtualenvs and generated artifacts
 course_material_service/.venv/
+
+# Database
+*.sqlite3
+*.db
+*.db-journal
+
+# Logs
+*.log
+
+# Project Artifacts
 course_material_service/generated_videos/
 course_material_service/uploads/
+course_material_service/exports/
+course_material_service/static/videos/*
+!course_material_service/static/videos/.gitkeep
 
 # VS Code
 .vscode/
 
-.DS_Store
-
-venv/
-course_material_service/.venv/
-course_material_service/generated_videos/
-course_material_service/exports/
-.DS_Store 
-
-course_material_service/static/videos/*
+# Temporary files
+tmp/
+temp/
 

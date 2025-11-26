@@ -769,7 +769,7 @@
         <h2 class="diagram-title">🗄️ Database Schema (UML Class Diagram)</h2>
         <p class="diagram-subtitle">UML representation of the system's data models and relationships</p>
         <div class="bg-white rounded-lg p-4 overflow-x-auto">
-            <svg width="1100" height="900" viewBox="0 0 1100 900" xmlns="http://www.w3.org/2000/svg">
+            <svg width="1200" height="1000" viewBox="0 0 1200 1000" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <!-- UML Composition Diamond (Filled) -->
                     <marker id="uml-composition" markerWidth="16" markerHeight="12" refX="16" refY="6" orient="auto">
@@ -789,7 +789,7 @@
                     }
 
                     .uml-header {
-                        fill: #f3f4f6;
+                        fill: #e5e7eb;
                         stroke: #1f2937;
                         stroke-width: 1;
                     }
@@ -804,24 +804,22 @@
                         font-family: sans-serif;
                         font-size: 14px;
                         font-weight: bold;
-                        fill: #000;
+                        fill: #111827;
                         text-anchor: middle;
                     }
 
                     .uml-line {
-                        stroke: #1f2937;
+                        stroke: #374151;
                         stroke-width: 1.5;
-                        fill: none;
                     }
                 </style>
 
                 <!-- User Class -->
                 <g transform="translate(50, 50)">
-                    <rect x="0" y="0" width="220" height="160" class="uml-class" />
-                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
-                    <text x="110" y="20" class="uml-title">User</text>
-                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
-
+                    <rect class="uml-class" width="200" height="180" rx="4" />
+                    <rect class="uml-header" width="200" height="30" rx="4" />
+                    <text x="100" y="20" class="uml-title">User</text>
+                    <line x1="0" y1="30" x2="200" y2="30" stroke="#1f2937" stroke-width="1" />
                     <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
                     <text x="10" y="70" class="uml-text">+ email: String</text>
                     <text x="10" y="90" class="uml-text">+ hashed_password: String</text>
@@ -830,151 +828,364 @@
                     <text x="10" y="150" class="uml-text">+ created_at: DateTime</text>
                 </g>
 
-                <!-- Enrollment Class -->
+                <!-- Course Class -->
                 <g transform="translate(400, 50)">
-                    <rect x="0" y="0" width="220" height="120" class="uml-class" />
-                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
-                    <text x="110" y="20" class="uml-title">Enrollment</text>
+                    <rect class="uml-class" width="220" height="200" rx="4" />
+                    <rect class="uml-header" width="220" height="30" rx="4" />
+                    <text x="110" y="20" class="uml-title">Course</text>
                     <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ user_id: Integer [FK]</text>
+                    <text x="10" y="90" class="uml-text">+ title: String</text>
+                    <text x="10" y="110" class="uml-text">+ description: Text</text>
+                    <text x="10" y="130" class="uml-text">+ learning_outcomes: JSON</text>
+                    <text x="10" y="150" class="uml-text">+ thumbnail_url: String</text>
+                    <text x="10" y="170" class="uml-text">+ is_published: Boolean</text>
+                    <text x="10" y="190" class="uml-text">+ created_at: DateTime</text>
+                </g>
 
+                <!-- Enrollment Class -->
+                <g transform="translate(50, 350)">
+                    <rect class="uml-class" width="200" height="120" rx="4" />
+                    <rect class="uml-header" width="200" height="30" rx="4" />
+                    <text x="100" y="20" class="uml-title">Enrollment</text>
+                    <line x1="0" y1="30" x2="200" y2="30" stroke="#1f2937" stroke-width="1" />
                     <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
                     <text x="10" y="70" class="uml-text">+ user_id: Integer [FK]</text>
                     <text x="10" y="90" class="uml-text">+ course_id: Integer [FK]</text>
                     <text x="10" y="110" class="uml-text">+ progress_percent: Float</text>
                 </g>
 
-                <!-- Course Class -->
-                <g transform="translate(750, 50)">
-                    <rect x="0" y="0" width="240" height="180" class="uml-class" />
-                    <rect x="0" y="0" width="240" height="30" class="uml-header" />
-                    <text x="120" y="20" class="uml-title">Course</text>
-                    <line x1="0" y1="30" x2="240" y2="30" stroke="#1f2937" stroke-width="1" />
-
-                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
-                    <text x="10" y="70" class="uml-text">+ title: String</text>
-                    <text x="10" y="90" class="uml-text">+ description: Text</text>
-                    <text x="10" y="110" class="uml-text">+ learning_outcomes: JSON</text>
-                    <text x="10" y="130" class="uml-text">+ thumbnail_url: String</text>
-                    <text x="10" y="150" class="uml-text">+ is_published: Boolean</text>
-                    <text x="10" y="170" class="uml-text">+ created_at: DateTime</text>
-                </g>
-
                 <!-- CourseModule Class -->
-                <g transform="translate(750, 300)">
-                    <rect x="0" y="0" width="240" height="120" class="uml-class" />
-                    <rect x="0" y="0" width="240" height="30" class="uml-header" />
-                    <text x="120" y="20" class="uml-title">CourseModule</text>
-                    <line x1="0" y1="30" x2="240" y2="30" stroke="#1f2937" stroke-width="1" />
-
+                <g transform="translate(400, 350)">
+                    <rect class="uml-class" width="220" height="120" rx="4" />
+                    <rect class="uml-header" width="220" height="30" rx="4" />
+                    <text x="110" y="20" class="uml-title">CourseModule</text>
+                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
                     <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
                     <text x="10" y="70" class="uml-text">+ course_id: Integer [FK]</text>
                     <text x="10" y="90" class="uml-text">+ title: String</text>
-                    <text x="10" y="110" class="uml-text">+ order_index: Integer</text>
+                    <text x="10" y="110" class="uml-text">+ summary: Text</text>
+                    <text x="10" y="130" class="uml-text">+ order_index: Integer</text>
                 </g>
 
                 <!-- Lesson Class -->
-                <g transform="translate(750, 500)">
-                    <rect x="0" y="0" width="240" height="140" class="uml-class" />
-                    <rect x="0" y="0" width="240" height="30" class="uml-header" />
-                    <text x="120" y="20" class="uml-title">Lesson</text>
-                    <line x1="0" y1="30" x2="240" y2="30" stroke="#1f2937" stroke-width="1" />
-
+                <g transform="translate(750, 350)">
+                    <rect class="uml-class" width="220" height="140" rx="4" />
+                    <rect class="uml-header" width="220" height="30" rx="4" />
+                    <text x="110" y="20" class="uml-title">Lesson</text>
+                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
                     <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
                     <text x="10" y="70" class="uml-text">+ module_id: Integer [FK]</text>
                     <text x="10" y="90" class="uml-text">+ title: String</text>
                     <text x="10" y="110" class="uml-text">+ content: Text</text>
-                    <text x="10" y="130" class="uml-text">+ duration_minutes: Integer</text>
+                    <text x="10" y="130" class="uml-text">+ order_index: Integer</text>
+                    <text x="10" y="150" class="uml-text">+ duration_minutes: Integer</text>
                 </g>
 
                 <!-- LessonAsset Class -->
-                <g transform="translate(400, 500)">
-                    <rect x="0" y="0" width="220" height="120" class="uml-class" />
-                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
+                <g transform="translate(750, 600)">
+                    <rect class="uml-class" width="220" height="120" rx="4" />
+                    <rect class="uml-header" width="220" height="30" rx="4" />
                     <text x="110" y="20" class="uml-title">LessonAsset</text>
                     <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
-
                     <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
                     <text x="10" y="70" class="uml-text">+ lesson_id: Integer [FK]</text>
                     <text x="10" y="90" class="uml-text">+ asset_type: String</text>
-                    <text x="10" y="110" class="uml-text">+ file_path: String</text>
+                    <text x="10" y="110" class="uml-text">+ content: JSON</text>
+                    <text x="10" y="130" class="uml-text">+ file_path: String</text>
+                </g>
+
+                <!-- LessonCompletion Class -->
+                <g transform="translate(50, 600)">
+                    <rect class="uml-class" width="220" height="100" rx="4" />
+                    <rect class="uml-header" width="220" height="30" rx="4" />
+                    <text x="110" y="20" class="uml-title">LessonCompletion</text>
+                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
+                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
+                    <text x="10" y="70" class="uml-text">+ user_id: Integer [FK]</text>
+                    <text x="10" y="90" class="uml-text">+ lesson_id: Integer [FK]</text>
+                    <text x="10" y="110" class="uml-text">+ completed_at: DateTime</text>
                 </g>
 
                 <!-- QuizAttempt Class -->
-                <g transform="translate(50, 500)">
-                    <rect x="0" y="0" width="220" height="140" class="uml-class" />
-                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
+                <g transform="translate(400, 600)">
+                    <rect class="uml-class" width="220" height="120" rx="4" />
+                    <rect class="uml-header" width="220" height="30" rx="4" />
                     <text x="110" y="20" class="uml-title">QuizAttempt</text>
                     <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
-
                     <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
                     <text x="10" y="70" class="uml-text">+ user_id: Integer [FK]</text>
                     <text x="10" y="90" class="uml-text">+ asset_id: Integer [FK]</text>
                     <text x="10" y="110" class="uml-text">+ score: Float</text>
-                    <text x="10" y="130" class="uml-text">+ attempted_at: DateTime</text>
-                </g>
 
-                <!-- LessonCompletion Class -->
-                <g transform="translate(400, 300)">
-                    <rect x="0" y="0" width="220" height="100" class="uml-class" />
-                    <rect x="0" y="0" width="220" height="30" class="uml-header" />
-                    <text x="110" y="20" class="uml-title">LessonCompletion</text>
-                    <line x1="0" y1="30" x2="220" y2="30" stroke="#1f2937" stroke-width="1" />
-
-                    <text x="10" y="50" class="uml-text">+ id: Integer [PK]</text>
-                    <text x="10" y="70" class="uml-text">+ user_id: Integer [FK]</text>
-                    <text x="10" y="90" class="uml-text">+ lesson_id: Integer [FK]</text>
-                </g>
-
-                <!-- Relationships -->
-
-                <!-- User - Enrollment (1..*) -->
-                <path d="M 270 110 L 400 110" class="uml-line" />
-                <text x="280" y="100" class="uml-text">1</text>
-                <text x="380" y="100" class="uml-text">*</text>
-
-                <!-- Course - Enrollment (1..*) -->
-                <path d="M 750 110 L 620 110" class="uml-line" />
-                <text x="730" y="100" class="uml-text">1</text>
-                <text x="630" y="100" class="uml-text">*</text>
-
-                <!-- Course - Module (Composition) -->
-                <path d="M 870 230 L 870 300" class="uml-line" marker-start="url(#uml-composition)" />
-                <text x="880" y="250" class="uml-text">1</text>
-                <text x="880" y="290" class="uml-text">*</text>
-
-                <!-- Module - Lesson (Composition) -->
-                <path d="M 870 420 L 870 500" class="uml-line" marker-start="url(#uml-composition)" />
-                <text x="880" y="440" class="uml-text">1</text>
-                <text x="880" y="490" class="uml-text">*</text>
-
-                <!-- Lesson - Asset (Composition) -->
-                <path d="M 750 560 L 620 560" class="uml-line" marker-start="url(#uml-composition)" />
-                <text x="730" y="550" class="uml-text">1</text>
-                <text x="630" y="550" class="uml-text">*</text>
-
-                <!-- User - QuizAttempt (1..*) -->
-                <path d="M 110 210 L 110 500" class="uml-line" />
-                <text x="120" y="230" class="uml-text">1</text>
-                <text x="120" y="490" class="uml-text">*</text>
-
-                <!-- Asset - QuizAttempt (1..*) -->
-                <path d="M 400 560 L 270 560" class="uml-line" />
-                <text x="380" y="550" class="uml-text">1</text>
-                <text x="280" y="550" class="uml-text">*</text>
-
-                <!-- User - Completion (1..*) -->
-                <path d="M 270 130 L 320 130 L 320 350 L 400 350" class="uml-line" fill="none" />
-                <text x="280" y="120" class="uml-text">1</text>
-                <text x="380" y="340" class="uml-text">*</text>
-
-                <!-- Lesson - Completion (1..*) -->
-                <path d="M 750 520 L 680 520 L 680 350 L 620 350" class="uml-line" fill="none" />
-                <text x="730" y="510" class="uml-text">1</text>
-                <text x="630" y="340" class="uml-text">*</text>
+                    <!-- Lesson - Completion (1..*) -->
+                    <path d="M 750 520 L 680 520 L 680 350 L 620 350" class="uml-line" fill="none" />
+                    <text x="730" y="510" class="uml-text">1</text>
+                    <text x="630" y="340" class="uml-text">*</text>
 
             </svg>
         </div>
     </div>
 
+    <!-- SYSTEM FUNCTION TREE DIAGRAM -->
+    <div class="diagram-container">
+        <h2 class="diagram-title">🌳 System Function Tree</h2>
+        <p class="diagram-subtitle">Hierarchical breakdown of system components, functions, and agent workflows</p>
+        <div class="bg-white rounded-lg p-4 overflow-x-auto">
+            <svg width="1600" height="1200" viewBox="0 0 1600 1200" xmlns="http://www.w3.org/2000/svg">
+                <style>
+                    .tree-node {
+                        fill: #ffffff;
+                        stroke: #4b5563;
+                        stroke-width: 2;
+                        rx: 8;
+                    }
+
+                    .tree-text {
+                        font-family: sans-serif;
+                        font-size: 12px;
+                        fill: #1f2937;
+                        text-anchor: middle;
+                        font-weight: bold;
+                    }
+
+                    .tree-subtext {
+                        font-family: sans-serif;
+                        font-size: 10px;
+                        fill: #6b7280;
+                        text-anchor: middle;
+                    }
+
+                    .tree-line {
+                        stroke: #9ca3af;
+                        stroke-width: 1.5;
+                        fill: none;
+                    }
+
+                    .node-group:hover .tree-node {
+                        stroke: #4f46e5;
+                        stroke-width: 3;
+                        fill: #eef2ff;
+                        cursor: pointer;
+                    }
+
+                    .root-node {
+                        fill: #4f46e5;
+                        stroke: #312e81;
+                    }
+
+                    .root-text {
+                        fill: #ffffff;
+                        font-size: 14px;
+                    }
+
+                    .level-1 {
+                        stroke: #059669;
+                    }
+
+                    .level-2 {
+                        stroke: #d97706;
+                    }
+
+                    .level-3 {
+                        stroke: #2563eb;
+                    }
+                </style>
+
+                <!-- Root: Main Application -->
+                <g transform="translate(800, 50)" class="node-group">
+                    <rect x="-100" y="0" width="200" height="50" class="tree-node root-node" />
+                    <text x="0" y="30" class="tree-text root-text">Course Material Service</text>
+                </g>
+
+                <!-- Level 1: Core Components -->
+                <line x1="800" y1="100" x2="800" y2="150" class="tree-line" />
+                <line x1="200" y1="150" x2="1400" y2="150" class="tree-line" />
+
+                <!-- 1. API Interface -->
+                <line x1="200" y1="150" x2="200" y2="200" class="tree-line" />
+                <g transform="translate(200, 200)" class="node-group">
+                    <rect x="-80" y="0" width="160" height="40" class="tree-node level-1" />
+                    <text x="0" y="25" class="tree-text">API Interface (FastAPI)</text>
+                </g>
+
+                <!-- 2. Agent Orchestrator -->
+                <line x1="600" y1="150" x2="600" y2="200" class="tree-line" />
+                <g transform="translate(600, 200)" class="node-group">
+                    <rect x="-80" y="0" width="160" height="40" class="tree-node level-1" />
+                    <text x="0" y="25" class="tree-text">Agent Manager</text>
+                </g>
+
+                <!-- 3. Media Engine -->
+                <line x1="1000" y1="150" x2="1000" y2="200" class="tree-line" />
+                <g transform="translate(1000, 200)" class="node-group">
+                    <rect x="-80" y="0" width="160" height="40" class="tree-node level-1" />
+                    <text x="0" y="25" class="tree-text">Media Engine</text>
+                </g>
+
+                <!-- 4. Data Layer -->
+                <line x1="1400" y1="150" x2="1400" y2="200" class="tree-line" />
+                <g transform="translate(1400, 200)" class="node-group">
+                    <rect x="-80" y="0" width="160" height="40" class="tree-node level-1" />
+                    <text x="0" y="25" class="tree-text">Data Layer</text>
+                </g>
+
+                <!-- Level 2: Sub-components -->
+
+                <!-- API Routes -->
+                <line x1="200" y1="240" x2="200" y2="280" class="tree-line" />
+                <line x1="100" y1="280" x2="300" y2="280" class="tree-line" />
+
+                <line x1="100" y1="280" x2="100" y2="320" class="tree-line" />
+                <g transform="translate(100, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">/generate-course</text>
+                </g>
+                <line x1="300" y1="280" x2="300" y2="320" class="tree-line" />
+                <g transform="translate(300, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">/stream-progress</text>
+                </g>
+
+                <!-- Agent Workflows -->
+                <line x1="600" y1="240" x2="600" y2="280" class="tree-line" />
+                <line x1="450" y1="280" x2="750" y2="280" class="tree-line" />
+
+                <line x1="450" y1="280" x2="450" y2="320" class="tree-line" />
+                <g transform="translate(450, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">Planning Phase</text>
+                </g>
+
+                <line x1="600" y1="280" x2="600" y2="320" class="tree-line" />
+                <g transform="translate(600, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">Content Phase</text>
+                </g>
+
+                <line x1="750" y1="280" x2="750" y2="320" class="tree-line" />
+                <g transform="translate(750, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">Asset Phase</text>
+                </g>
+
+                <!-- Media Functions -->
+                <line x1="1000" y1="240" x2="1000" y2="280" class="tree-line" />
+                <line x1="900" y1="280" x2="1100" y2="280" class="tree-line" />
+
+                <line x1="900" y1="280" x2="900" y2="320" class="tree-line" />
+                <g transform="translate(900, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">Video Builder</text>
+                </g>
+
+                <line x1="1100" y1="280" x2="1100" y2="320" class="tree-line" />
+                <g transform="translate(1100, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">TTS Engine</text>
+                </g>
+
+                <!-- Level 3: Detailed Functions -->
+
+                <!-- Planning Agents -->
+                <line x1="450" y1="355" x2="450" y2="380" class="tree-line" />
+                <line x1="400" y1="380" x2="500" y2="380" class="tree-line" />
+
+                <line x1="400" y1="380" x2="400" y2="410" class="tree-line" />
+                <g transform="translate(400, 410)" class="node-group">
+                    <rect x="-50" y="0" width="100" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">Research Agent</text>
+                </g>
+
+                <line x1="500" y1="380" x2="500" y2="410" class="tree-line" />
+                <g transform="translate(500, 410)" class="node-group">
+                    <rect x="-50" y="0" width="100" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">Planner Agent</text>
+                </g>
+
+                <!-- Content Agents -->
+                <line x1="600" y1="355" x2="600" y2="380" class="tree-line" />
+                <line x1="600" y1="380" x2="600" y2="410" class="tree-line" />
+                <g transform="translate(600, 410)" class="node-group">
+                    <rect x="-50" y="0" width="100" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">Lesson Writer</text>
+                </g>
+
+                <!-- Asset Agents -->
+                <line x1="750" y1="355" x2="750" y2="380" class="tree-line" />
+                <line x1="700" y1="380" x2="800" y2="380" class="tree-line" />
+
+                <line x1="700" y1="380" x2="700" y2="410" class="tree-line" />
+                <g transform="translate(700, 410)" class="node-group">
+                    <rect x="-50" y="0" width="100" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">Script Agent</text>
+                </g>
+
+                <line x1="800" y1="380" x2="800" y2="410" class="tree-line" />
+                <g transform="translate(800, 410)" class="node-group">
+                    <rect x="-50" y="0" width="100" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">Quiz Agent</text>
+                </g>
+
+                <!-- Video Builder Functions -->
+                <line x1="900" y1="355" x2="900" y2="380" class="tree-line" />
+                <line x1="860" y1="380" x2="940" y2="380" class="tree-line" />
+
+                <line x1="860" y1="380" x2="860" y2="410" class="tree-line" />
+                <g transform="translate(860, 410)" class="node-group">
+                    <rect x="-50" y="0" width="100" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">create_slides()</text>
+                </g>
+
+                <line x1="940" y1="380" x2="940" y2="410" class="tree-line" />
+                <g transform="translate(940, 410)" class="node-group">
+                    <rect x="-50" y="0" width="100" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">render_video()</text>
+                </g>
+
+                <!-- TTS Functions -->
+                <line x1="1100" y1="355" x2="1100" y2="380" class="tree-line" />
+                <line x1="1100" y1="380" x2="1100" y2="410" class="tree-line" />
+                <g transform="translate(1100, 410)" class="node-group">
+                    <rect x="-50" y="0" width="100" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">OpenAI TTS</text>
+                </g>
+
+                <!-- Data Models -->
+                <line x1="1400" y1="240" x2="1400" y2="280" class="tree-line" />
+                <line x1="1300" y1="280" x2="1500" y2="280" class="tree-line" />
+
+                <line x1="1300" y1="280" x2="1300" y2="320" class="tree-line" />
+                <g transform="translate(1300, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">SQLAlchemy</text>
+                </g>
+
+                <line x1="1500" y1="280" x2="1500" y2="320" class="tree-line" />
+                <g transform="translate(1500, 320)" class="node-group">
+                    <rect x="-60" y="0" width="120" height="35" class="tree-node level-2" />
+                    <text x="0" y="22" class="tree-text">AsyncPG</text>
+                </g>
+
+                <!-- Detailed Models -->
+                <line x1="1300" y1="355" x2="1300" y2="380" class="tree-line" />
+                <line x1="1250" y1="380" x2="1350" y2="380" class="tree-line" />
+
+                <line x1="1250" y1="380" x2="1250" y2="410" class="tree-line" />
+                <g transform="translate(1250, 410)" class="node-group">
+                    <rect x="-40" y="0" width="80" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">Course</text>
+                </g>
+
+                <line x1="1350" y1="380" x2="1350" y2="410" class="tree-line" />
+                <g transform="translate(1350, 410)" class="node-group">
+                    <rect x="-40" y="0" width="80" height="30" class="tree-node level-3" />
+                    <text x="0" y="20" class="tree-text">Lesson</text>
+                </g>
+
+            </svg>
+        </div>
+    </div>
 </div>
 {% endblock %}
