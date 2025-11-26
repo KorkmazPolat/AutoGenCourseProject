@@ -58,7 +58,9 @@ class CoursePlannerAgent(BaseAgent):
         prompt = template.render(
             learning_outcomes=planner_input.learning_outcomes,
             num_modules=planner_input.num_modules,
-            num_lessons=planner_input.num_lessons
+            num_lessons=planner_input.num_lessons,
+            feedback=planner_input.feedback,
+            previous_plan=planner_input.previous_plan
         )
         llm_result = self.call_llm(prompt)
         raw_payload = self.validate_json(llm_result)

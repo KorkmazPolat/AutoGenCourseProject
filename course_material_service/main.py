@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 import yaml
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, File, FastAPI, Form, HTTPException, Request, UploadFile, Depends
 from fastapi.concurrency import run_in_threadpool
@@ -362,7 +364,10 @@ app.mount("/exports-files", StaticFiles(directory=str(EXPORTS_DIR)), name="expor
 app.include_router(agent_course_router)
 
 from .database import init_db
+from .database import init_db
 from . import models # Register models
+from .auth import verify_password, get_password_hash
+from .services import save_course_to_db
 
 @app.on_event("startup")
 async def on_startup():
@@ -395,16 +400,65 @@ def list_prompts() -> List[Dict[str, str]]:
         for prompt_id, definition in PROMPT_DEFINITIONS.items()
     ]
 
-async def get_session_user(request: Request):
-    """Dependency: Checks if a user is in the session. Redirects to login if not."""
-    user = request.session.get("user")
-    if not user:
-        raise HTTPException(status_code=307, detail="Not authorized", headers={"Location": "/login"})
-    return user
+@app.get("/register", response_class=HTMLResponse, tags=["web"])
+def render_register_form(request: Request):
+    """Serves the registration page."""
+    if "user_id" in request.session:
+        return RedirectResponse(url="/dashboard", status_code=303)
+    return templates.TemplateResponse(
+        "register.html", 
+        {
+            "request": request,
+            "values": {},
+            "current_year": datetime.utcnow().year
+        }
+    )
 
+@app.post("/register", response_class=HTMLResponse, tags=["web"])
+async def handle_register(
+    request: Request,
+    full_name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: AsyncSession = Depends(models.get_db)
+):
+    """Handles user registration."""
+    # Check if user exists
+    result = await db.execute(select(models.User).where(models.User.email == email))
+    existing_user = result.scalars().first()
+    
+    if existing_user:
+        return templates.TemplateResponse(
+            "register.html",
+            {
+                "request": request,
+                "error": "Email already registered.",
+                "values": {"full_name": full_name, "email": email},
+                "current_year": datetime.utcnow().year
+            },
+            status_code=400
+        )
+    
+    # Create new user
+    hashed_password = get_password_hash(password)
+    new_user = models.User(
+        email=email,
+        hashed_password=hashed_password,
+        full_name=full_name
+    )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+    
+    # Log them in automatically
+    request.session["user_id"] = new_user.id
+    request.session["user_email"] = new_user.email
+    
+    return RedirectResponse(url="/dashboard", status_code=303)
 
+from .dependencies import get_session_user
 @app.get("/agent-pipeline", response_class=HTMLResponse, tags=["web"])
-def agent_pipeline_page(request: Request, user: str = Depends(get_session_user)):
+def agent_pipeline_page(request: Request, user_id: int = Depends(get_session_user)):
     """Visualize the agentic AutoGenCourseProject pipeline as an interactive tree."""
     return templates.TemplateResponse(
         "agent_pipeline.html",
@@ -413,9 +467,8 @@ def agent_pipeline_page(request: Request, user: str = Depends(get_session_user))
         },
     )
 
-
 @app.get("/use-cases", response_class=HTMLResponse, tags=["web"])
-def render_use_cases(request: Request, user: str = Depends(get_session_user)):
+def render_use_cases(request: Request, user_id: int = Depends(get_session_user)):
     """Render the use case diagrams page."""
     return templates.TemplateResponse(
         "use_cases.html",
@@ -426,7 +479,7 @@ def render_use_cases(request: Request, user: str = Depends(get_session_user)):
     )
 
 @app.get("/exports", response_class=HTMLResponse, tags=["web"])
-def list_saved_exports(request: Request, user: str = Depends(get_session_user)):
+def list_saved_exports(request: Request, user_id: int = Depends(get_session_user)):
     """List saved course export folders with links to their index pages."""
     exports: List[Dict[str, str]] = []
     if EXPORTS_DIR.exists():
@@ -450,7 +503,7 @@ def list_saved_exports(request: Request, user: str = Depends(get_session_user)):
 @app.get("/login", response_class=HTMLResponse, tags=["web"])
 def render_login_form(request: Request):
     """Serves the professional login page."""
-    if "user" in request.session:
+    if "user_id" in request.session:
         return RedirectResponse(url="/dashboard", status_code=303)
     return templates.TemplateResponse(
         "login.html", 
@@ -461,39 +514,55 @@ def render_login_form(request: Request):
         }
     )
 
-
 @app.get("/", response_class=HTMLResponse, tags=["web"])
 def render_root(request: Request):
     """Redirects root (/) to the login page."""
     return RedirectResponse(url="/login", status_code=303)
 
+@app.post("/publish-course/{course_id}", tags=["web"])
+async def publish_course(course_id: int, db: AsyncSession = Depends(models.get_db), user_id: int = Depends(get_session_user)):
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    # Ensure user owns the course
+    if course.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this course")
+    
+    course.is_published = not course.is_published
+    await db.commit()
+    return {"status": "success", "is_published": course.is_published}
 
 @app.get("/dashboard", response_class=HTMLResponse, tags=["web"])
-def render_dashboard(request: Request, user: str = Depends(get_session_user)):
-    """Serves the main application page (course generator form)."""
+async def render_dashboard(request: Request, user_id: int = Depends(get_session_user), db: AsyncSession = Depends(models.get_db)):
+    """Serves the main application page (course generator form) and lists existing courses."""
+    # Fetch courses for the logged-in user
+    result = await db.execute(select(models.Course).where(models.Course.user_id == user_id).order_by(models.Course.created_at.desc()))
+    courses = result.scalars().all()
+
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "values": {},
+            "courses": courses,
             "current_year": datetime.utcnow().year
         }
     )
-
 
 @app.post("/login", response_class=HTMLResponse, tags=["web"])
 async def handle_login(
     request: Request,
     email: str = Form(...),
-    password: str = Form(...)
+    password: str = Form(...),
+    db: AsyncSession = Depends(models.get_db)
 ):
     """Handles the login form submission."""
+    result = await db.execute(select(models.User).where(models.User.email == email))
+    user = result.scalars().first()
     
-    if email.lower() == "admin@alpha.com" and password == "AlphaDev!2025":
-        request.session["user"] = email.lower()
-        return RedirectResponse(url="/dashboard", status_code=303)
-    else:
-        
+    if not user or not verify_password(password, user.hashed_password):
         return templates.TemplateResponse(
             "login.html",
             {
@@ -504,6 +573,10 @@ async def handle_login(
             },
             status_code=401
         )
+    
+    request.session["user_id"] = user.id
+    request.session["user_email"] = user.email
+    return RedirectResponse(url="/dashboard", status_code=303)
     
 @app.get("/logout", response_class=HTMLResponse, tags=["web"])
 async def handle_logout(request: Request):
@@ -1213,6 +1286,7 @@ def create_full_course_agentic(
     skip_video: bool = Form(False),
     num_modules: Optional[int] = Form(None),
     num_lessons: Optional[int] = Form(None),
+    user_id: int = Depends(get_session_user),
 ) -> HTMLResponse:
     """Build a complete course using the agentic AgentManager pipeline."""
     outcomes = _parse_learning_outcomes(learning_outcomes)
@@ -1245,7 +1319,7 @@ def create_full_course_agentic(
 
 
 @app.post("/agentic-finalize-course", response_class=HTMLResponse, tags=["web"])
-def agentic_finalize_course(
+async def agentic_finalize_course(
     request: Request,
     course_title: str = Form(...),
     learning_outcomes: Optional[str] = Form(None),
@@ -1258,6 +1332,8 @@ def agentic_finalize_course(
     theme: Optional[str] = Form(None),
     logo_path: Optional[str] = Form(None),
     skip_video: bool = Form(False),
+    db: AsyncSession = Depends(models.get_db),
+    user_id: int = Depends(get_session_user),
 ) -> HTMLResponse:
     """Finalize an agentic course by rendering videos from generated scripts.
 
@@ -1302,7 +1378,11 @@ def agentic_finalize_course(
     # driven by the agentic plan.
 
     manager = AgentManager()
-    result = manager.run(outcomes, skip_video=skip_video)
+    # Run in threadpool to avoid blocking
+    result = await run_in_threadpool(manager.run, outcomes, skip_video=skip_video)
+    
+    # Save to DB
+    await save_course_to_db(db, result, outcomes, user_id)
 
     course_plan = result.get("course_plan", {}) or {}
     modules = course_plan.get("modules") or []

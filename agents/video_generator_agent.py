@@ -25,8 +25,7 @@ class VideoGeneratorAgent(BaseAgent):
         # Call the video builder
         # Note: We need an OpenAI client for TTS. BaseAgent has one.
         if not self._llm_client:
-             # Fallback or error if no client
-             pass
+             return {"error": "Video generation requires an OpenAI client (LLM config)."}
 
         try:
             from course_material_service.video_builder import generate_video_from_script

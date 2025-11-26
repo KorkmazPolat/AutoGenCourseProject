@@ -1,7 +1,15 @@
+import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "sqlite+aiosqlite:///./course_materials.db"
+# Default to SQLite, but allow override via env var
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./course_materials.db")
+
+# Ensure we use the async driver for Postgres
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
 
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 

@@ -14,6 +14,76 @@
         <p class="text-gray-600 text-lg mt-2">Enter your course details and watch it come to life!</p>
     </div>
 
+    <!-- My Library Section -->
+    <div class="mb-12">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
+                </path>
+            </svg>
+            My Library
+        </h2>
+
+        {% if courses %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for course in courses %}
+            <div
+                class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col h-full">
+                <div class="flex justify-between items-start mb-4">
+                    <div
+                        class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
+                        Course
+                    </div>
+                    {% if course.is_published %}
+                    <span
+                        class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span> Published
+                    </span>
+                    {% else %}
+                    <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">Draft</span>
+                    {% endif %}
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ course.title }}</h3>
+                <p class="text-sm text-gray-500 mb-4 line-clamp-3 flex-grow">{{ course.description or 'No description
+                    available.' }}</p>
+
+                <div class="flex flex-col gap-2 mt-auto">
+                    <a href="/course/{{ course.id }}"
+                        class="w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm">
+                        View Course
+                    </a>
+
+                    <div class="flex gap-2">
+                        <button onclick="togglePublish({{ course.id }}, this)"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors">
+                            {{ 'Unpublish' if course.is_published else 'Publish' }}
+                        </button>
+                        <button onclick="copyLink({{ course.id }})"
+                            class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors"
+                            title="Copy Link">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+            <p class="text-gray-500">You haven't created any courses yet.</p>
+            <p class="text-sm text-gray-400 mt-1">Use the form below to generate your first course!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="border-t border-gray-200 my-8"></div>
+
     <form id="course-form" method="post" action="/create-course-plan" class="space-y-6">
 
         <div>
@@ -145,4 +215,33 @@
 {% block scripts %}
 {{ super() }}
 <script src="{{ url_for('static', path='main.js') }}" defer></script>
+<script>
+    async function togglePublish(courseId, btn) {
+        try {
+            const response = await fetch(`/publish-course/${courseId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                // Reload to update UI state properly
+                window.location.reload();
+            } else {
+                alert('Failed to update course status');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred');
+        }
+    }
+
+    function copyLink(courseId) {
+        const url = `${window.location.origin}/course/${courseId}`;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+</script>
 {% endblock %}

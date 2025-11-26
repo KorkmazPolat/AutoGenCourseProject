@@ -9,6 +9,8 @@ class CoursePlannerInput(BaseModel):
     learning_outcomes: List[str]
     num_modules: int | None = None
     num_lessons: int | None = None
+    feedback: str | None = None
+    previous_plan: dict | None = None
 
 
 class LessonWriterInput(BaseModel):

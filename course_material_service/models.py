@@ -14,6 +14,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     enrollments = relationship("Enrollment", back_populates="user", cascade="all, delete-orphan")
+    created_courses = relationship("Course", back_populates="creator", cascade="all, delete-orphan")
     lesson_completions = relationship("LessonCompletion", back_populates="user", cascade="all, delete-orphan")
     quiz_attempts = relationship("QuizAttempt", back_populates="user", cascade="all, delete-orphan")
 
@@ -29,7 +30,9 @@ class Course(Base):
     is_published = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Nullable for migration safety, but should be populated
 
+    creator = relationship("User", back_populates="created_courses")
     modules = relationship("CourseModule", back_populates="course", cascade="all, delete-orphan")
     enrollments = relationship("Enrollment", back_populates="course", cascade="all, delete-orphan")
 

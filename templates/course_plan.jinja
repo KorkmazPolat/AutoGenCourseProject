@@ -9,6 +9,16 @@ Strictly create exactly {{ num_modules }} modules.
 Strictly create exactly {{ num_lessons }} lessons per module.
 {% endif %}
 
+{% if feedback %}
+The previous plan was rejected with the following feedback:
+{{ feedback }}
+
+Here is the previous plan that was rejected:
+{{ previous_plan | tojson }}
+
+Please improve the plan based on the feedback.
+{% endif %}
+
 Output JSON ONLY that conforms to the CoursePlan schema:
 {
   "title": "Course Title",

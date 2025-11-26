@@ -47,19 +47,35 @@ class AgentManager:
             }
         )
         
-        # 3. Plan Review
-        logger.info("Agent is reviewing the course plan...")
-        plan_review = self.review_agent.generate({
-            "content_type": "course_plan",
-            "content": course_plan_json,
-            "context": research_result
-        })
-        
-        if not plan_review.get("approved"):
-            logger.warning("Plan was critiqued: %s. (Auto-proceeding for now, but in future we loop)", plan_review.get("feedback"))
-            # TODO: Implement replanning loop here
-        else:
-            logger.info("Plan approved with score %s", plan_review.get("score"))
+        # 3. Plan Review & Refinement
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            logger.info("Agent is reviewing the course plan (Attempt %d/%d)...", attempt + 1, max_retries + 1)
+            plan_review = self.review_agent.generate({
+                "content_type": "course_plan",
+                "content": course_plan_json,
+                "context": research_result
+            })
+            
+            if plan_review.get("approved"):
+                logger.info("Plan approved with score %s", plan_review.get("score"))
+                break
+            
+            if attempt < max_retries:
+                logger.warning("Plan rejected: %s. Refining...", plan_review.get("feedback"))
+                # Regenerate with feedback
+                course_plan_json = self.course_planner.generate(
+                    {
+                        "learning_outcomes": learning_outcomes,
+                        "research_context": research_result,
+                        "num_modules": num_modules,
+                        "num_lessons": num_lessons,
+                        "feedback": plan_review.get("feedback"),
+                        "previous_plan": course_plan_json
+                    }
+                )
+            else:
+                logger.warning("Plan rejected after max retries. Proceeding with best effort.")
 
         plan_validation = self.validator.generate(course_plan_json)
         course_plan = CoursePlan.parse_obj(plan_validation["validated_content"])
