@@ -174,7 +174,7 @@
         display: flex;
         flex-direction: column;
         gap: 32px;
-        padding-bottom: 100px;
+        padding-bottom: 150px;
     }
 
     /* Module Box */
@@ -587,6 +587,68 @@
             </div>
         </div>
     </div>
+    <!-- Chat Assistant Widget -->
+    <div id="chatWidget" class="fixed bottom-8 right-8 z-40 flex flex-col items-end font-sans">
+        <!-- Chat Window -->
+        <div id="chatWindow"
+            class="bg-white rounded-2xl shadow-2xl w-[450px] h-[600px] mb-4 flex flex-col overflow-hidden transition-all duration-300 transform scale-0 origin-bottom-right border border-gray-200"
+            style="display: none;">
+            <div class="bg-indigo-600 p-4 flex justify-between items-center shadow-md">
+                <h3 class="text-white font-bold flex items-center gap-3 text-lg">
+                    <span class="bg-white text-indigo-600 p-1.5 rounded-full">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                    </span>
+                    AI Course Designer
+                </h3>
+                <button onclick="toggleChat()" class="text-white hover:text-gray-200 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div id="chatMessages" class="flex-1 p-5 overflow-y-auto bg-gray-50 space-y-4">
+                <!-- Messages -->
+                <div class="flex justify-start">
+                    <div
+                        class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 text-gray-700 shadow-sm max-w-[85%]">
+                        <p class="font-medium text-indigo-600 mb-1 text-xs uppercase tracking-wider">Assistant</p>
+                        Hi! I'm your AI design partner. Tell me what you want to teach, and I'll build the modules for
+                        you.
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-t border-gray-100">
+                <div class="flex gap-2">
+                    <input type="text" id="chatInput"
+                        class="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                        placeholder="e.g., 'Add a module on Advanced CSS'" onkeypress="handleChatKey(event)">
+                    <button onclick="sendChatMessage()"
+                        class="bg-indigo-600 text-white rounded-xl px-4 py-2 hover:bg-indigo-700 transition-colors shadow-sm">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggle Button -->
+        <button onclick="toggleChat()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-xl transition-all hover:scale-110 flex items-center justify-center group">
+            <svg class="w-8 h-8 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+                </path>
+            </svg>
+        </button>
+    </div>
 </div>
 {% endblock %}
 
@@ -632,6 +694,11 @@
     const logContainer = document.getElementById('logContainer');
     const btnCloseProgress = document.getElementById('btnCloseProgress');
 
+    // Chat Elements
+    const chatWindow = document.getElementById('chatWindow');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+
     // --- Initialization ---
     function init() {
         renderModules();
@@ -639,13 +706,101 @@
         btnGenerate.style.opacity = 0.5;
     }
 
+    // --- Chat Logic ---
+    function toggleChat() {
+        if (chatWindow.style.display === 'none') {
+            chatWindow.style.display = 'flex';
+            setTimeout(() => {
+                chatWindow.classList.remove('scale-0');
+                chatWindow.classList.add('scale-100');
+            }, 10);
+            chatInput.focus();
+        } else {
+            chatWindow.classList.remove('scale-100');
+            chatWindow.classList.add('scale-0');
+            setTimeout(() => {
+                chatWindow.style.display = 'none';
+            }, 300);
+        }
+    }
+
+    function handleChatKey(e) {
+        if (e.key === 'Enter') sendChatMessage();
+    }
+
+    async function sendChatMessage() {
+        const msg = chatInput.value.trim();
+        if (!msg) return;
+
+        // Add User Message
+        addChatMessage(msg, 'user');
+        chatInput.value = '';
+
+        // Show Loading
+        const loadingId = addChatMessage('Thinking...', 'system', true);
+
+        try {
+            const response = await fetch('/assist-course-design', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: msg,
+                    current_plan: courseData
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to get AI response');
+
+            const updatedPlan = await response.json();
+
+            // Update State
+            courseData = updatedPlan;
+            renderModules();
+
+            // Remove Loading
+            document.getElementById(loadingId).remove();
+
+            // Add AI Response
+            addChatMessage('I have updated the course plan based on your request.', 'system');
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById(loadingId).innerText = 'Error: ' + error.message;
+        }
+    }
+
+    function addChatMessage(text, sender, isLoading = false) {
+        const id = 'msg-' + Date.now();
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = sender === 'user'
+            ? 'bg-indigo-600 text-white rounded-lg rounded-tr-none p-3 text-sm shadow-sm max-w-[85%]'
+            : 'bg-white border border-gray-200 rounded-lg rounded-tl-none p-3 text-sm text-gray-700 shadow-sm max-w-[85%]';
+
+        if (isLoading) {
+            bubble.innerHTML = '<span class="animate-pulse">...</span>';
+        } else {
+            bubble.innerText = text;
+        }
+
+        div.appendChild(bubble);
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return id;
+    }
+
     // --- Rendering ---
     function renderModules() {
         modulesList.innerHTML = '';
-        courseData.modules.forEach(mod => {
-            const modEl = createModuleElement(mod);
-            modulesList.appendChild(modEl);
-        });
+        if (courseData.modules) {
+            courseData.modules.forEach(mod => {
+                const modEl = createModuleElement(mod);
+                modulesList.appendChild(modEl);
+            });
+        }
     }
 
     function createModuleElement(mod) {
@@ -669,15 +824,17 @@
             <div class="module-content" 
                  ondragover="handleDragOver(event)" 
                  ondrop="handleDrop(event, '${mod.id}')">
-                ${mod.items.length === 0 ? '<div class="empty-state-msg">Drag items here</div>' : ''}
+                ${(!mod.items || mod.items.length === 0) ? '<div class="empty-state-msg">Drag items here</div>' : ''}
                 <div class="items-container"></div>
             </div>
         `;
 
         const itemsContainer = el.querySelector('.items-container');
-        mod.items.forEach(item => {
-            itemsContainer.appendChild(createItemElement(item, mod.id));
-        });
+        if (mod.items) {
+            mod.items.forEach(item => {
+                itemsContainer.appendChild(createItemElement(item, mod.id));
+            });
+        }
 
         return el;
     }
@@ -791,6 +948,7 @@
 
             const mod = courseData.modules.find(m => m.id === targetModuleId);
             if (mod) {
+                if (!mod.items) mod.items = [];
                 mod.items.push(newItem);
                 renderModules();
                 selectItem(newItem.id, targetModuleId);
@@ -798,6 +956,7 @@
         } else {
             // Reordering or Moving Item
             const itemId = e.dataTransfer.getData('itemId');
+
             const sourceModuleId = e.dataTransfer.getData('sourceModuleId');
 
             if (itemId && sourceModuleId) {

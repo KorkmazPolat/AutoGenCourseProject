@@ -412,3 +412,85 @@ async def get_course_view(
             "voice": "alloy"
         }
     )
+class CourseAssistRequest(BaseModel):
+    message: str
+    current_plan: Dict[str, Any]
+
+@router.post("/assist-course-design")
+async def assist_course_design(request: CourseAssistRequest):
+    """
+    AI Assistant to modify the course plan based on user natural language request.
+    """
+    from openai import OpenAI
+    
+    api_key = os.getenv("AUTOGEN_API_KEY") or os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        
+    client = OpenAI(api_key=api_key)
+    
+    system_prompt = """You are an expert instructional designer assistant. 
+    Your task is to modify the provided Course Data JSON based on the user's request.
+    
+    The JSON structure is:
+    {
+      "modules": [
+        {
+          "id": "mod-123",
+          "title": "Module Title",
+          "items": [
+            { 
+              "id": "item-456", 
+              "type": "video" | "quiz" | "reading", 
+              "title": "Lesson Title", 
+              "desc": "Description" 
+            }
+          ]
+        }
+      ]
+    }
+    
+    Rules:
+    1. Return ONLY the valid JSON of the updated course data.
+    2. Do not include markdown formatting or explanations.
+    3. Maintain existing IDs for existing items.
+    4. If adding new modules or items, generate a unique string ID (e.g., "mod-new-1", "item-new-1").
+    5. Default new item type to "video" unless specified otherwise.
+    6. Default new item description to a brief summary of the title.
+    7. Respect the user's intent (add, remove, rename, reorder).
+    """
+    
+    user_prompt = f"""
+    Current Course Plan:
+    {json.dumps(request.current_plan, indent=2)}
+    
+    User Request: "{request.message}"
+    
+    Return the updated JSON:
+    """
+    
+    try:
+        completion = await run_in_threadpool(
+            client.chat.completions.create,
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        
+        content = completion.choices[0].message.content
+        updated_plan = json.loads(content)
+        
+        # Normalize if needed (ensure 'modules' key exists)
+        if "modules" not in updated_plan:
+             # Try to find it if nested or malformed, otherwise return original with error note?
+             # For now assume GPT-4o-mini follows instructions well with json_object mode.
+             pass
+             
+        return updated_plan
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
