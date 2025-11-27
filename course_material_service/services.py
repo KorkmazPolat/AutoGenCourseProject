@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from . import models
+from course_material_service import models
 
 async def save_course_to_db(db: AsyncSession, result: Dict[str, Any], learning_outcomes: List[str], user_id: int):
     # Extract data

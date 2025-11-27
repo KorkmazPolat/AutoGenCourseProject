@@ -23,10 +23,13 @@ from starlette.middleware.sessions import SessionMiddleware
 from jinja2 import Template
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
+import sys
+# Add parent directory to path to allow importing from routes and manager
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from .rag_ingest import IngestError, ingest_pdf_into_qdrant
-from .rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
-from .video_builder import VideoGenerationError, generate_video_from_script
+from course_material_service.rag_ingest import IngestError, ingest_pdf_into_qdrant
+from course_material_service.rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
+from course_material_service.video_builder import VideoGenerationError, generate_video_from_script
 from routes.generate_course import router as agent_course_router
 from manager.agent_manager import AgentManager
 import shutil
@@ -367,11 +370,13 @@ app.mount("/static", StaticFiles(directory=str(Path(__file__).resolve().parent /
 app.mount("/exports-files", StaticFiles(directory=str(EXPORTS_DIR)), name="exports_files")
 app.include_router(agent_course_router)
 
-from .database import init_db, get_db
-from .database import init_db
-from . import models # Register models
-from .auth import verify_password, get_password_hash
-from .services import save_course_to_db
+from course_material_service.admin import router as admin_router
+app.include_router(admin_router)
+
+from course_material_service.database import init_db, get_db
+from course_material_service import models # Register models
+from course_material_service.auth import verify_password, get_password_hash
+from course_material_service.services import save_course_to_db
 
 @app.on_event("startup")
 async def on_startup():
@@ -460,7 +465,7 @@ async def handle_register(
     
     return RedirectResponse(url="/dashboard", status_code=303)
 
-from .dependencies import get_session_user
+from course_material_service.dependencies import get_session_user
 @app.get("/agent-pipeline", response_class=HTMLResponse, tags=["web"])
 def agent_pipeline_page(request: Request, user_id: int = Depends(get_session_user)):
     """Visualize the agentic AutoGenCourseProject pipeline as an interactive tree."""

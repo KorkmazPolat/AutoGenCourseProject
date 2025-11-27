@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from qdrant_client import QdrantClient
 
-from .rag_ingest import build_qdrant_client
+from course_material_service.rag_ingest import build_qdrant_client
 
 
 # Load package-local .env; allow overriding any pre-set values for consistency
