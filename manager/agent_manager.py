@@ -11,6 +11,7 @@ from agents.video_generator_agent import VideoGeneratorAgent
 from agents.video_script_agent import VideoScriptAgent
 from agents.research_agent import ResearchAgent
 from agents.review_agent import ReviewAgent
+from manager.telemetry import FeedbackMonitor, PerformanceMonitor, WorkloadManager
 from schemas.course_plan import CoursePlan
 
 logger = logging.getLogger(__name__)
@@ -26,38 +27,67 @@ class AgentManager:
         self.quiz_agent = QuizAgent()
         self.video_generator = VideoGeneratorAgent()
         self.validator = ValidationAgent()
+        self.feedback_monitor: FeedbackMonitor | None = None
+        self.performance_monitor: PerformanceMonitor | None = None
+        self.workload_manager: WorkloadManager | None = None
+
+    def _initialize_monitors(self) -> None:
+        self.feedback_monitor = FeedbackMonitor()
+        self.performance_monitor = PerformanceMonitor()
+        self.workload_manager = WorkloadManager()
+
+    def _record_feedback(self, stage: str, success: bool, **metadata: Any) -> None:
+        if self.feedback_monitor is not None:
+            self.feedback_monitor.record(stage, success, metadata)
 
     def run(self, learning_outcomes: List[str], skip_video: bool = False, num_modules: int | None = None, num_lessons: int | None = None) -> Dict[str, Any]:
+        self._initialize_monitors()
+        assert self.performance_monitor is not None
+        assert self.workload_manager is not None
+
         logger.info("Starting REAL agentic course generation pipeline.")
 
         # 1. Research Phase
         logger.info("Agent is researching the topic...")
-        research_result = self.research_agent.generate({"learning_outcomes": learning_outcomes})
+        with self.performance_monitor.track("research.generate"):
+            research_result = self.research_agent.generate({"learning_outcomes": learning_outcomes})
         logger.info("Research complete. Key concepts: %s", research_result.get("key_concepts"))
+        self._record_feedback("research.generate", bool(research_result.get("key_concepts")), key_concepts=research_result.get("key_concepts", []))
 
         # 2. Planning Phase
         logger.info("Agent is planning the course...")
         # Inject research context into the planner input
-        course_plan_json = self.course_planner.generate(
-            {
-                "learning_outcomes": learning_outcomes,
-                "research_context": research_result,
-                "num_modules": num_modules,
-                "num_lessons": num_lessons
-            }
-        )
+        with self.performance_monitor.track("course_planner.generate"):
+            course_plan_json = self.course_planner.generate(
+                {
+                    "learning_outcomes": learning_outcomes,
+                    "research_context": research_result,
+                    "num_modules": num_modules,
+                    "num_lessons": num_lessons
+                }
+            )
+        self._record_feedback("course_planner.generate", bool(course_plan_json), num_modules=num_modules, num_lessons=num_lessons)
         
         # 3. Plan Review & Refinement
         max_retries = 2
         for attempt in range(max_retries + 1):
             logger.info("Agent is reviewing the course plan (Attempt %d/%d)...", attempt + 1, max_retries + 1)
-            plan_review = self.review_agent.generate({
-                "content_type": "course_plan",
-                "content": course_plan_json,
-                "context": research_result
-            })
+            with self.performance_monitor.track("review_agent.course_plan"):
+                plan_review = self.review_agent.generate({
+                    "content_type": "course_plan",
+                    "content": course_plan_json,
+                    "context": research_result
+                })
+            approved = bool(plan_review.get("approved"))
+            self._record_feedback(
+                "review_agent.course_plan",
+                approved,
+                attempt=attempt + 1,
+                score=plan_review.get("score"),
+                feedback=plan_review.get("feedback"),
+            )
             
-            if plan_review.get("approved"):
+            if approved:
                 logger.info("Plan approved with score %s", plan_review.get("score"))
                 break
             
@@ -77,8 +107,10 @@ class AgentManager:
             else:
                 logger.warning("Plan rejected after max retries. Proceeding with best effort.")
 
-        plan_validation = self.validator.generate(course_plan_json)
+        with self.performance_monitor.track("validator.course_plan"):
+            plan_validation = self.validator.generate(course_plan_json)
         course_plan = CoursePlan.parse_obj(plan_validation["validated_content"])
+        self._record_feedback("validator.course_plan", True, modules=len(course_plan.modules))
 
         lessons: List[Dict[str, Any]] = []
         scripts: List[Dict[str, Any]] = []
@@ -91,24 +123,36 @@ class AgentManager:
                 logger.info("Generating lesson '%s'", lesson_name)
                 
                 # 4. Iterative Lesson Generation
-                lesson_json = self.lesson_writer.generate(
-                    {
-                        "module_name": module.title,
-                        "lesson_name": lesson_name,
-                        "learning_outcomes": learning_outcomes,
-                        "research_context": research_result
-                    }
-                )
+                with self.performance_monitor.track("lesson_writer.generate"):
+                    lesson_json = self.lesson_writer.generate(
+                        {
+                            "module_name": module.title,
+                            "lesson_name": lesson_name,
+                            "learning_outcomes": learning_outcomes,
+                            "research_context": research_result
+                        }
+                    )
+                self._record_feedback("lesson_writer.generate", True, module=module.title, lesson=lesson_name)
                 
                 # Lesson Review Loop (Max 1 retry for efficiency)
                 for attempt in range(2):
-                    lesson_review = self.review_agent.generate({
-                        "content_type": "lesson",
-                        "content": lesson_json,
-                        "context": research_result
-                    })
+                    with self.performance_monitor.track("review_agent.lesson"):
+                        lesson_review = self.review_agent.generate({
+                            "content_type": "lesson",
+                            "content": lesson_json,
+                            "context": research_result
+                        })
+                    lesson_approved = bool(lesson_review.get("approved"))
+                    self._record_feedback(
+                        "review_agent.lesson",
+                        lesson_approved,
+                        module=module.title,
+                        lesson=lesson_name,
+                        attempt=attempt + 1,
+                        score=lesson_review.get("score"),
+                    )
                     
-                    if lesson_review.get("approved"):
+                    if lesson_approved:
                         logger.info("Lesson '%s' approved.", lesson_name)
                         break
                     
@@ -120,30 +164,54 @@ class AgentManager:
                     # Let's just log it for this iteration.
                     break
 
-                lesson_validation = self.validator.generate(lesson_json)
+                with self.performance_monitor.track("validator.lesson"):
+                    lesson_validation = self.validator.generate(lesson_json)
                 validated_lesson = lesson_validation["validated_content"]
                 lessons.append(validated_lesson)
 
                 # Parallel generation of assets
                 logger.info("Generating video script for lesson '%s'", lesson_name)
-                script_json = self.video_script_agent.generate(validated_lesson)
-                script_validation = self.validator.generate(script_json)
+                with self.performance_monitor.track("video_script_agent.generate"):
+                    script_json = self.video_script_agent.generate(validated_lesson)
+                with self.performance_monitor.track("validator.script"):
+                    script_validation = self.validator.generate(script_json)
                 validated_script = script_validation["validated_content"]
                 scripts.append(validated_script)
 
                 logger.info("Generating quiz for lesson '%s'", lesson_name)
-                quiz_json = self.quiz_agent.generate(validated_lesson)
-                quiz_validation = self.validator.generate(quiz_json)
+                with self.performance_monitor.track("quiz_agent.generate"):
+                    quiz_json = self.quiz_agent.generate(validated_lesson)
+                with self.performance_monitor.track("validator.quiz"):
+                    quiz_validation = self.validator.generate(quiz_json)
                 validated_quiz = quiz_validation["validated_content"]
 
                 if not skip_video:
-                    logger.info("Generating video for lesson '%s'", lesson_name)
-                    video_info = self.video_generator.generate(validated_script)
-                    videos.append(video_info)
+                    logger.info("Queueing video generation for lesson '%s'", lesson_name)
+                    assert self.workload_manager is not None
+                    self.workload_manager.submit_video_task(
+                        lesson_name=lesson_name,
+                        script_payload=validated_script,
+                        generator=self.video_generator
+                    )
+                    self._record_feedback("video_generation.queue", True, lesson=lesson_name)
                 else:
                     logger.info("Skipping video generation for lesson '%s'", lesson_name)
 
                 quizzes.append(validated_quiz)
+
+        if not skip_video:
+            videos, video_task_metrics = self.workload_manager.collect_video_results()
+            for task in video_task_metrics:
+                self._record_feedback(
+                    "video_generation.process",
+                    task.get("success", False),
+                    lesson=task.get("lesson_name"),
+                    duration=task.get("duration"),
+                    error=task.get("error"),
+                )
+        else:
+            if self.workload_manager is not None:
+                self.workload_manager.close()
 
         final_validation = self.validator.generate(
             {
@@ -155,6 +223,13 @@ class AgentManager:
         )
 
         logger.info("Course generation pipeline finished.")
+        telemetry_payload: Dict[str, Any] = {
+            "feedback": self.feedback_monitor.summary() if self.feedback_monitor else {},
+            "performance": self.performance_monitor.summary() if self.performance_monitor else {},
+        }
+        if not skip_video and self.workload_manager is not None:
+            telemetry_payload["workload"] = self.workload_manager.summary()
+
         return {
             "course_plan": course_plan.to_json(),
             "lessons": lessons,
@@ -163,6 +238,7 @@ class AgentManager:
             "quizzes": quizzes,
             "final_validation": final_validation,
             "research": research_result, # Return research for UI
+            "telemetry": telemetry_payload,
         }
     def generate_lesson_bundle(self, module_title: str, lesson_title: str, lesson_desc: str, skip_video: bool = False) -> Dict[str, Any]:
         """
