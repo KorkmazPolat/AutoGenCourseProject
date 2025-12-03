@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict
+import json
 
 from agents.base_agent import BaseAgent
 from schemas.video_script import VideoScript
@@ -35,15 +36,69 @@ class VideoGeneratorAgent(BaseAgent):
             # video_builder expects: { "presentation": [...], "narration": [...] }
             # We will synthesize a simple presentation from the scenes.
             
+            # Use LLM to design the visual presentation based on the script
+            # This ensures variety and professional content structure
+            design_prompt = f"""
+            You are a professional presentation designer.
+            Create a JSON structure for a video presentation based on the following narration script.
+            
+            Lesson Title: {script.lesson}
+            
+            Script Sections:
+            {json.dumps([s.text for s in script.scenes], indent=2)}
+            
+            For EACH script section, design a corresponding slide.
+            Return a JSON object with a "slides" key containing a list of slide objects.
+            
+            Each slide object must have:
+            - "heading": A short, punchy headline (max 5 words).
+            - "layout": One of ["bullets", "quote", "callout", "checklist", "example"].
+            - "content_blocks": A list of blocks to render.
+                - For "bullets": {{ "type": "bullets", "items": ["point 1", "point 2"] }}
+                - For "quote": {{ "type": "quote", "text": "The quote text" }}
+                - For "callout": {{ "type": "callout", "text": "Important tip or note" }}
+                - For "checklist": {{ "type": "checklist", "items": ["step 1", "step 2"] }}
+                - For "example": {{ "type": "example", "title": "Example Title", "text": "The example content" }}
+            
+            Rules:
+            1. Vary the layouts! Do not just use bullets every time.
+            2. Summarize the script into key points. Do NOT copy the full script onto the slide.
+            3. Keep text concise and readable.
+            """
+            
+            try:
+                design_completion = self._llm_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "system", "content": design_prompt}],
+                    response_format={"type": "json_object"}
+                )
+                design_data = json.loads(design_completion.choices[0].message.content)
+                designed_slides = design_data.get("slides", [])
+            except Exception as e:
+                print(f"Slide design failed, falling back to simple mode: {e}")
+                designed_slides = []
+
             presentation = []
             narration = []
             
             for i, scene in enumerate(script.scenes, 1):
-                presentation.append({
-                    "page": i,
-                    "heading": script.lesson,
-                    "content": scene.text[:100] + "..." # Show snippet on slide
-                })
+                # Get designed slide or fallback
+                if i <= len(designed_slides):
+                    slide_design = designed_slides[i-1]
+                    presentation.append({
+                        "page": i,
+                        "heading": slide_design.get("heading", script.lesson),
+                        "content": "", # Legacy field
+                        "content_blocks": slide_design.get("content_blocks", [])
+                    })
+                else:
+                    # Fallback
+                    presentation.append({
+                        "page": i,
+                        "heading": script.lesson,
+                        "content": scene.text[:100] + "..."
+                    })
+                
                 narration.append({
                     "script": scene.text
                 })

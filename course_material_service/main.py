@@ -574,6 +574,27 @@ async def render_library(request: Request, user_id: int = Depends(get_session_us
         }
     )
 
+@app.get("/course-builder", response_class=HTMLResponse, tags=["web"])
+async def create_draft_course_and_redirect(
+    request: Request,
+    user_id: int = Depends(get_session_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Creates a new draft course and redirects to the builder."""
+    # Create a new empty course
+    new_course = models.Course(
+        title="New Video Course",
+        description="Draft course created via builder.",
+        learning_outcomes=[],
+        user_id=user_id,
+        is_published=False
+    )
+    db.add(new_course)
+    await db.commit()
+    await db.refresh(new_course)
+    
+    return RedirectResponse(url=f"/course-builder/{new_course.id}", status_code=303)
+
 @app.get("/course-builder/{course_id}", response_class=HTMLResponse, tags=["web"])
 async def render_course_builder_with_data(
     request: Request, 

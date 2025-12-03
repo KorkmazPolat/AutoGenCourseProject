@@ -60,7 +60,7 @@ class BaseAgent(ABC):
     def generate(self, input_json: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError
 
-    def call_llm(self, prompt: str) -> Dict[str, Any] | str:
+    def call_llm(self, prompt: str, **kwargs: Any) -> Dict[str, Any] | str:
         if self.llm_config.provider != "openai":
             raise NotImplementedError(f"LLM provider '{self.llm_config.provider}' is not supported.")
 
@@ -75,6 +75,7 @@ class BaseAgent(ABC):
             model=self.llm_config.model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0,
+            **kwargs
         )
         content = completion.choices[0].message.content or ""
         return content

@@ -82,7 +82,7 @@ class VideoScriptAgent(BaseAgent):
         lesson = LessonContent(title=title, text=text, summary=summary)
         template = self.load_template("video_script.jinja")
         prompt = template.render(lesson=lesson.dict())
-        llm_result = self.call_llm(prompt)
+        llm_result = self.call_llm(prompt, response_format={"type": "json_object"})
         raw_payload = self.validate_json(llm_result)
         normalized_payload = self._normalize_llm_script(raw_payload, lesson.title)
         script = VideoScript.parse_obj(normalized_payload)

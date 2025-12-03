@@ -596,22 +596,27 @@ def generate_video_from_script(
 
             audio_clip = AudioFileClip(str(audio_path))
             duration = float(audio_clip.duration)
-            image_clip = ImageClip(str(slide_path)).with_duration(duration)
+            # Create base image clip
+            base_clip = ImageClip(str(slide_path)).with_duration(duration)
             
-            # Apply audio fades
-            # Check if audio_fadein is a class (v2 style with_effects) or function (v1 style fx)
-            # We'll assume function first or try to use with_effects if it's a class
+            # Apply "Ken Burns" effect (Slow Zoom)
+            # We zoom from 1.0 to 1.05 over the duration of the clip
             try:
-                # If they are functions:
-                audio_clip = audio_fadein(audio_clip, 0.15)
-                audio_clip = audio_fadeout(audio_clip, 0.2)
-            except TypeError:
-                # If they are classes (Effects), use with_effects
-                # Note: v2 might use with_effects([Effect(...)])
-                # We will try to use the .fx method if available, or with_effects
-                pass
+                # Define zoom function: t is time, returns scale factor
+                def zoom_effect(t):
+                    return 1.0 + 0.04 * (t / duration)  # 4% zoom over duration
 
-            image_clip = image_clip.with_audio(audio_clip)
+                # Apply resize transformation
+                zoomed_clip = base_clip.resize(zoom_effect)
+                
+                # Center crop to original size to maintain aspect ratio and frame
+                w, h = base_clip.size
+                final_slide_clip = zoomed_clip.with_position("center").crop(x_center=w/2, y_center=h/2, width=w, height=h)
+            except Exception:
+                # Fallback if complex effects fail
+                final_slide_clip = base_clip
+
+            image_clip = final_slide_clip.with_audio(audio_clip)
 
             clips.append(image_clip)
             slide_durations.append(duration)
