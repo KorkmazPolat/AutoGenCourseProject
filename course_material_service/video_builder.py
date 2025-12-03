@@ -103,331 +103,212 @@ def _create_slide_image(
     theme: str = "dark",
     logo_path: Optional[Path] = None,
 ) -> Path:
-    """Render a single slide image with improved visual design and bullets."""
-    # Theme palette
-    if theme == "light":
-        background_color = background_color or (245, 248, 252)
-        heading_color = heading_color or (24, 32, 48)
-        content_color = content_color or (40, 50, 70)
-        panel_fill = (255, 255, 255)
-        panel_outline = (218, 225, 235)
-        footer_fill = (235, 240, 246)
-        footer_text = (80, 92, 110)
-    else:
-        background_color = background_color or (16, 22, 35)
-        heading_color = heading_color or (255, 255, 255)
-        content_color = content_color or (220, 230, 245)
-        panel_fill = (26, 33, 48)
-        panel_outline = (38, 46, 64)
-        footer_fill = (20, 26, 40)
-        footer_text = (200, 210, 225)
-
-    # Accent color palette rotated by page index for visual variety
-    palette: List[Tuple[int, int, int]] = [
-        (99, 102, 241),   # indigo-500
-        (16, 185, 129),   # emerald-500
-        (59, 130, 246),   # blue-500
-        (234, 179, 8),    # amber-500
-        (236, 72, 153),   # pink-500
-    ]
-    accent = palette[(slide.page - 1) % len(palette)] if slide.page else palette[0]
-
-    heading_font = _resolve_font(56, bold=True)
-    content_font = _resolve_font(34)
-    footer_font = _resolve_font(24)
-
+    """Render a single slide image with a premium, modern design."""
+    
+    # --- Design System ---
     W, H = size
-    margin_x, margin_y = 72, 68
-    content_width = W - (2 * margin_x)
+    
+    # Color Palettes
+    if theme == "light":
+        bg_start = (255, 255, 255)
+        bg_end = (241, 245, 249) # Slate 100
+        text_primary = (15, 23, 42) # Slate 900
+        text_secondary = (51, 65, 85) # Slate 700
+        accent_colors = [
+            ((79, 70, 229), (168, 85, 247)), # Indigo to Purple
+            ((37, 99, 235), (56, 189, 248)), # Blue to Cyan
+            ((219, 39, 119), (244, 114, 182)), # Pink to Rose
+            ((5, 150, 105), (52, 211, 153)), # Emerald to Teal
+            ((234, 88, 12), (251, 146, 60)), # Orange to Amber
+        ]
+        card_bg = (255, 255, 255, 240)
+        card_border = (226, 232, 240, 255)
+    else:
+        bg_start = (15, 23, 42) # Slate 900
+        bg_end = (2, 6, 23) # Slate 950
+        text_primary = (248, 250, 252) # Slate 50
+        text_secondary = (203, 213, 225) # Slate 300
+        accent_colors = [
+            ((99, 102, 241), (168, 85, 247)), # Indigo to Purple
+            ((59, 130, 246), (34, 211, 238)), # Blue to Cyan
+            ((236, 72, 153), (244, 63, 94)), # Pink to Rose
+            ((16, 185, 129), (52, 211, 153)), # Emerald to Teal
+            ((245, 158, 11), (251, 191, 36)), # Amber to Yellow
+        ]
+        card_bg = (30, 41, 59, 200) # Slate 800 transparent
+        card_border = (51, 65, 85, 255) # Slate 700
 
-    # Create gradient background with subtle grid pattern
-    base_img = Image.new("RGB", size, color=background_color)
+    # Pick accent based on page number
+    accent_idx = (slide.page - 1) % len(accent_colors) if slide.page else 0
+    accent_start, accent_end = accent_colors[accent_idx]
+
+    # Fonts
+    # Try to get a better font if possible
+    title_font = _resolve_font(64, bold=True)
+    body_font = _resolve_font(38)
+    small_font = _resolve_font(24)
+    
+    # --- Background Generation ---
+    base_img = Image.new("RGB", size, color=bg_start)
     draw = ImageDraw.Draw(base_img)
     
-    # Generate gradient
-    if theme == "dark":
-        top_color = (15, 23, 42) # Slate 900
-        bottom_color = (30, 41, 59) # Slate 800
-    else:
-        top_color = (255, 255, 255)
-        bottom_color = (241, 245, 249) # Slate 100
-
+    # Linear Gradient Background
     for y in range(H):
-        r = int(top_color[0] + (bottom_color[0] - top_color[0]) * y / H)
-        g = int(top_color[1] + (bottom_color[1] - top_color[1]) * y / H)
-        b = int(top_color[2] + (bottom_color[2] - top_color[2]) * y / H)
+        r = int(bg_start[0] + (bg_end[0] - bg_start[0]) * y / H)
+        g = int(bg_start[1] + (bg_end[1] - bg_start[1]) * y / H)
+        b = int(bg_start[2] + (bg_end[2] - bg_start[2]) * y / H)
         draw.line([(0, y), (W, y)], fill=(r, g, b))
-        
-    # Draw subtle grid
-    grid_color = (255, 255, 255, 10) if theme == "dark" else (0, 0, 0, 10)
-    grid_size = 40
-    overlay = Image.new("RGBA", size, (0, 0, 0, 0))
-    ov_draw = ImageDraw.Draw(overlay)
-    for x in range(0, W, grid_size):
-        ov_draw.line([(x, 0), (x, H)], fill=grid_color, width=1)
-    for y in range(0, H, grid_size):
-        ov_draw.line([(0, y), (W, y)], fill=grid_color, width=1)
-    base_img.paste(overlay, (0, 0), overlay)
+
+    # Add dynamic background shapes (Orbs)
+    # Create a separate layer for shapes to handle transparency
+    shape_layer = Image.new("RGBA", size, (0, 0, 0, 0))
+    shape_draw = ImageDraw.Draw(shape_layer)
     
+    # Top-right orb
+    orb_size = 600
+    orb_x = W - 200
+    orb_y = -200
+    shape_draw.ellipse(
+        [(orb_x, orb_y), (orb_x + orb_size, orb_y + orb_size)],
+        fill=(accent_start[0], accent_start[1], accent_start[2], 30)
+    )
+    
+    # Bottom-left orb
+    orb_size_2 = 500
+    orb_x_2 = -100
+    orb_y_2 = H - 300
+    shape_draw.ellipse(
+        [(orb_x_2, orb_y_2), (orb_x_2 + orb_size_2, orb_y_2 + orb_size_2)],
+        fill=(accent_end[0], accent_end[1], accent_end[2], 20)
+    )
+    
+    # Compose shapes
+    base_img.paste(shape_layer, (0, 0), shape_layer)
+    
+    # --- Layout & Content ---
     image = base_img
     draw = ImageDraw.Draw(image)
-
-    # Top accent bar - thicker and glowing
-    draw.rectangle([(0, 0), (W, 12)], fill=accent)
     
-    # Heading with modern typography
-    heading_lines = _wrap_text(draw, slide.heading, heading_font, content_width)
-    current_y = margin_y
-    for line in heading_lines:
-        # Subtle drop shadow for text
-        draw.text((margin_x + 2, current_y + 2), line, font=heading_font, fill=(0, 0, 0, 128))
-        draw.text((margin_x, current_y), line, font=heading_font, fill=heading_color)
-        _, _, _, line_height = draw.textbbox((margin_x, current_y), line or " ", font=heading_font)
-        current_y += line_height + 12
-
-    current_y += 24
-
-    # Body panel with glassmorphism effect
-    panel_top = current_y - 8
-    panel_left = margin_x - 12
-    panel_right = W - margin_x + 12
-    panel_bottom = H - margin_y + 8
-    if panel_bottom <= panel_top:
-        panel_top = max(margin_y, panel_bottom - 20)
+    margin_x = 80
+    margin_y = 60
+    
+    # Header
+    # Draw a small accent line above title
+    draw.line([(margin_x, margin_y), (margin_x + 100, margin_y)], fill=accent_start, width=6)
+    
+    title_y = margin_y + 20
+    title_lines = _wrap_text(draw, slide.heading, title_font, W - 2 * margin_x)
+    for line in title_lines:
+        draw.text((margin_x, title_y), line, font=title_font, fill=text_primary)
+        _, _, _, lh = draw.textbbox((0, 0), line, font=title_font)
+        title_y += lh + 10
         
-    # Draw panel shadow
-    shadow_offset = 8
-    draw.rounded_rectangle(
-        [(panel_left+shadow_offset, panel_top+shadow_offset), (panel_right+shadow_offset, panel_bottom+shadow_offset)], 
-        radius=20, 
-        fill=(0, 0, 0)
-    )
-    # Blur shadow manually or just use semi-transparent rect for speed
+    content_start_y = title_y + 40
     
-    # Draw main panel
-    draw.rounded_rectangle(
-        [(panel_left, panel_top), (panel_right, panel_bottom)],
-        radius=20,
-        fill=panel_fill,
-        outline=panel_outline,
-        width=2,
-    )
-
-    def draw_bullets(items: List[str], indent: int = 28) -> None:
+    # Content Area
+    # We'll use a "card" look for the content to make it pop
+    content_width = W - 2 * margin_x
+    content_height = H - content_start_y - 80 # Leave room for footer
+    
+    # Helper to draw styled text
+    current_y = content_start_y
+    
+    def draw_bullet(text: str):
         nonlocal current_y
-        bullet_gap = 12
-        for ln in items[:8]:
-            words = ln.split()
-            if len(words) > 14:
-                ln = " ".join(words[:14]) + "…"
-            dot_x = margin_x
-            dot_y = current_y + 12
-            draw.ellipse([(dot_x, dot_y), (dot_x + 10, dot_y + 10)], fill=accent)
-            text_x = margin_x + indent
-            wrapped = _wrap_text(draw, ln, content_font, content_width - indent)
-            for wline in wrapped:
-                draw.text((text_x, current_y), wline, font=content_font, fill=content_color)
-                _, _, _, line_height = draw.textbbox((text_x, current_y), wline or " ", font=content_font)
-                current_y += line_height + 4
-            current_y += bullet_gap
+        bullet_size = 12
+        bullet_y = current_y + 18
+        
+        # Draw custom bullet (diamond shape)
+        draw.polygon([
+            (margin_x, bullet_y),
+            (margin_x + bullet_size, bullet_y + bullet_size),
+            (margin_x + 2 * bullet_size, bullet_y),
+            (margin_x + bullet_size, bullet_y - bullet_size)
+        ], fill=accent_end)
+        
+        text_x = margin_x + 40
+        wrapped = _wrap_text(draw, text, body_font, content_width - 40)
+        for line in wrapped:
+            draw.text((text_x, current_y), line, font=body_font, fill=text_secondary)
+            _, _, _, lh = draw.textbbox((0, 0), line, font=body_font)
+            current_y += lh + 8
+        current_y += 20 # Paragraph spacing
 
-    def draw_checklist(items: List[str]) -> None:
+    def draw_callout(text: str, type: str = "info"):
         nonlocal current_y
-        box_size = 18
-        gap = 12
-        for ln in items[:8]:
-            text_x = margin_x + 28 + box_size + 8
-            # box
-            bx0 = margin_x + 28
-            by0 = current_y + 6
-            bx1 = bx0 + box_size
-            by1 = by0 + box_size
-            draw.rectangle([(bx0, by0), (bx1, by1)], outline=accent, width=2, fill=None)
-            wrapped = _wrap_text(draw, ln, content_font, content_width - (text_x - margin_x))
-            for wline in wrapped:
-                draw.text((text_x, current_y), wline, font=content_font, fill=content_color)
-                _, _, _, line_height = draw.textbbox((text_x, current_y), wline or " ", font=content_font)
-                current_y += line_height + 4
-            current_y += gap
+        # Draw a colored pill background
+        wrapped = _wrap_text(draw, text, body_font, content_width - 60)
+        _, _, _, lh = draw.textbbox((0, 0), "A", font=body_font)
+        box_h = len(wrapped) * (lh + 8) + 40
+        
+        # Background
+        draw.rounded_rectangle(
+            [(margin_x, current_y), (W - margin_x, current_y + box_h)],
+            radius=15,
+            fill=(accent_start[0], accent_start[1], accent_start[2], 40),
+            outline=accent_start,
+            width=2
+        )
+        
+        text_y = current_y + 20
+        for line in wrapped:
+            draw.text((margin_x + 30, text_y), line, font=body_font, fill=text_primary)
+            text_y += lh + 8
+        current_y += box_h + 30
 
-    def draw_callout(text: str) -> None:
+    def draw_quote(text: str):
         nonlocal current_y
-        pad_x, pad_y = 18, 14
-        text_lines = _wrap_text(draw, text, content_font, content_width - 2 * pad_x)
-        # Measure height
-        _, _, _, line_h = draw.textbbox((0, 0), "A", font=content_font)
-        total_h = pad_y * 2 + len(text_lines) * (line_h + 4)
-        y0 = current_y
-        y1 = y0 + total_h
-        # background slightly tinted by accent
-        fill = (max(0, panel_fill[0] + (accent[0]-panel_fill[0])//6),
-                max(0, panel_fill[1] + (accent[1]-panel_fill[1])//6),
-                max(0, panel_fill[2] + (accent[2]-panel_fill[2])//6))
-        try:
-            draw.rounded_rectangle([(margin_x, y0), (W - margin_x, y1)], radius=12, fill=fill, outline=panel_outline)
-        except Exception:
-            draw.rectangle([(margin_x, y0), (W - margin_x, y1)], fill=fill, outline=panel_outline)
-        # left accent bar
-        draw.rectangle([(margin_x, y0), (margin_x + 6, y1)], fill=accent)
-        tx = margin_x + pad_x
-        ty = y0 + pad_y
-        for line in text_lines:
-            draw.text((tx, ty), line, font=content_font, fill=content_color)
-            _, _, _, lh = draw.textbbox((tx, ty), line or " ", font=content_font)
-            ty += lh + 4
-        current_y = y1 + 12
+        # Large quote mark
+        quote_font = _resolve_font(120, bold=True)
+        draw.text((margin_x - 20, current_y - 20), "“", font=quote_font, fill=(accent_start[0], accent_start[1], accent_start[2], 100))
+        
+        wrapped = _wrap_text(draw, text, _resolve_font(42, bold=True), content_width - 80)
+        text_x = margin_x + 60
+        for line in wrapped:
+            draw.text((text_x, current_y), line, font=_resolve_font(42, bold=True), fill=text_primary)
+            _, _, _, lh = draw.textbbox((0, 0), line, font=_resolve_font(42, bold=True))
+            current_y += lh + 10
+        current_y += 30
 
-    def draw_quote(text: str) -> None:
-        nonlocal current_y
-        pad_x, pad_y = 18, 10
-        y0 = current_y
-        # left bar
-        draw.rectangle([(margin_x, y0 + 6), (margin_x + 6, y0 + 140)], fill=panel_outline)
-        tx = margin_x + pad_x + 6
-        text_lines = _wrap_text(draw, text, content_font, content_width - (tx - margin_x) - pad_x)
-        for line in text_lines:
-            draw.text((tx, current_y), line, font=content_font, fill=(190, 200, 215))
-            _, _, _, lh = draw.textbbox((tx, current_y), line or " ", font=content_font)
-            current_y += lh + 4
-        current_y += 10
-
-    def draw_example(title: Optional[str], text: str) -> None:
-        nonlocal current_y
-        pad_x, pad_y = 16, 12
-        tx = margin_x + pad_x
-        # header
-        if title:
-            draw.text((tx, current_y), title, font=_resolve_font(28, bold=True), fill=heading_color)
-            _, _, _, lh = draw.textbbox((tx, current_y), title or " ", font=_resolve_font(28, bold=True))
-            current_y += lh + 6
-        # body box
-        lines = _wrap_text(draw, text, content_font, content_width - 2 * pad_x)
-        _, _, _, line_h = draw.textbbox((0, 0), "A", font=content_font)
-        total_h = pad_y * 2 + len(lines) * (line_h + 4)
-        y0 = current_y
-        y1 = y0 + total_h
-        try:
-            draw.rounded_rectangle([(margin_x, y0), (W - margin_x, y1)], radius=12, fill=panel_fill, outline=panel_outline)
-        except Exception:
-            draw.rectangle([(margin_x, y0), (W - margin_x, y1)], fill=panel_fill, outline=panel_outline)
-        ty = y0 + pad_y
-        for line in lines:
-            draw.text((tx, ty), line, font=content_font, fill=content_color)
-            _, _, _, lh = draw.textbbox((tx, ty), line or " ", font=content_font)
-            ty += lh + 4
-        current_y = y1 + 12
-
-    # Render content blocks if present; else fall back to bullets from content
+    # Render Blocks
     blocks = slide.content_blocks or []
     if blocks:
         for block in blocks:
             btype = (block.get("type") or "").lower()
-            if btype == "bullets" and isinstance(block.get("items"), list):
-                draw_bullets([str(x) for x in block.get("items")])
-            elif btype == "checklist" and isinstance(block.get("items"), list):
-                draw_checklist([str(x) for x in block.get("items")])
-            elif btype == "callout" and isinstance(block.get("text"), str):
-                draw_callout(block.get("text", ""))
-            elif btype == "quote" and isinstance(block.get("text"), str):
-                draw_quote(block.get("text", ""))
+            if btype in ["bullets", "checklist"]:
+                for item in block.get("items", []):
+                    draw_bullet(str(item))
+            elif btype == "callout":
+                draw_callout(str(block.get("text", "")))
+            elif btype == "quote":
+                draw_quote(str(block.get("text", "")))
             elif btype == "example":
-                txt = block.get("text") or ""
-                title = block.get("title")
-                if isinstance(txt, str):
-                    draw_example(title if isinstance(title, str) else None, txt)
+                draw_callout(f"Example: {block.get('text', '')}")
     else:
-        # Bulleted body content from legacy "content" string, with a small heuristic
-        # to synthesize richer blocks (checklist/callout) when possible.
+        # Fallback parsing
         raw = (slide.content or "").strip()
-        raw_lines = [ln.strip("-• \t").strip() for ln in raw.splitlines() if ln.strip()]
-        if not raw_lines and raw:
-            parts = [p.strip() for p in raw.replace("\u2022", " ").split(";") if p.strip()]
-            if len(parts) > 1:
-                raw_lines = parts
+        lines = [ln.strip("-• \t") for ln in raw.splitlines() if ln.strip()]
+        if not lines:
+            lines = _wrap_text(draw, raw, body_font, content_width)
+        
+        for line in lines:
+            if line.lower().startswith("tip:") or line.lower().startswith("note:"):
+                draw_callout(line)
             else:
-                sentences = [s.strip() for s in raw.replace("\n", " ").split(".") if s.strip()]
-                raw_lines = sentences
-        if not raw_lines:
-            raw_lines = _wrap_text(draw, slide.content, content_font, content_width)
+                draw_bullet(line)
 
-        # Heuristics
-        tips = [ln for ln in raw_lines if ln.lower().startswith(("tip:", "note:", "caution:"))]
-        remaining = [ln for ln in raw_lines if ln not in tips]
-        is_checklisty = any(keyword in (slide.heading or "").lower() for keyword in ("step", "how to", "checklist")) or any(
-            ln[:2].isdigit() for ln in raw_lines if ln
-        )
-
-        blocks_to_draw: List[Dict[str, Any]] = []
-        if remaining:
-            blocks_to_draw.append({"type": "bullets", "items": remaining[:5]})
-        if is_checklisty and remaining:
-            blocks_to_draw.append({"type": "checklist", "items": remaining[:4]})
-        if tips:
-            blocks_to_draw.append({"type": "callout", "text": tips[0]})
-
-        if not blocks_to_draw:
-            draw_bullets(raw_lines)
-        else:
-            for blk in blocks_to_draw:
-                if blk["type"] == "bullets":
-                    draw_bullets([str(x) for x in blk.get("items", [])])
-                elif blk["type"] == "checklist":
-                    draw_checklist([str(x) for x in blk.get("items", [])])
-                elif blk["type"] == "callout":
-                    draw_callout(str(blk.get("text", "")))
-
-    # Visual hint badges (top-right of panel)
-    hints = (slide.visual_hints or [])[:3]
-    if hints:
-        badge_y = panel_top + 16
-        x = panel_right
-        for hint in reversed(hints):
-            text = hint[:24] + ("…" if len(hint) > 24 else "")
-            badge_font = _resolve_font(20, bold=True)
-            tw_l, _, tw_r, th = draw.textbbox((0, 0), text, font=badge_font)
-            tw = tw_r - tw_l
-            pad_x, pad_y = 12, 6
-            bw = tw + pad_x * 2
-            x -= (bw + 8)
-            by0, by1 = badge_y, badge_y + th + pad_y * 2
-            try:
-                draw.rounded_rectangle([(x, by0), (x + bw, by1)], radius=12, fill=(panel_outline[0], panel_outline[1], panel_outline[2]))
-            except Exception:
-                draw.rectangle([(x, by0), (x + bw, by1)], fill=panel_outline)
-            draw.text((x + pad_x, badge_y + pad_y), text, font=badge_font, fill=(30, 36, 50) if theme == "light" else (235, 242, 255))
-
-    # Footer bar with course title and page number
-    footer_h = 40
-    footer_y0 = H - footer_h
-    draw.rectangle([(0, footer_y0), (W, H)], fill=footer_fill)
+    # --- Footer ---
+    footer_y = H - 50
+    # Page Number
+    if page_total:
+        page_str = f"{slide.page} / {page_total}"
+        draw.text((W - margin_x, footer_y), page_str, font=small_font, fill=text_secondary, anchor="rs")
+    
+    # Course Title
     if course_title:
-        label = course_title.strip()
-        # Truncate visually if too long
-        max_chars = 60
-        if len(label) > max_chars:
-            label = label[:max_chars-1] + "…"
-        draw.text((margin_x, footer_y0 + 10), label, font=footer_font, fill=footer_text)
-    if slide.page and page_total:
-        page_text = f"{slide.page}/{page_total}"
-        tw_left, _, tw_right, _ = draw.textbbox((0, 0), page_text, font=footer_font)
-        tw = tw_right - tw_left
-        draw.text((W - margin_x - tw, footer_y0 + 10), page_text, font=footer_font, fill=(160, 172, 192))
+        draw.text((margin_x, footer_y), course_title.upper(), font=small_font, fill=text_secondary, anchor="ls")
 
-    # Optional logo watermark (bottom-right above footer)
-    if logo_path and Path(logo_path).exists():
-        try:
-            logo = Image.open(logo_path).convert("RGBA")
-            # scale by width
-            target_w = 120
-            w, h = logo.size
-            scale = target_w / float(w)
-            logo = logo.resize((int(w * scale), int(h * scale)))
-            lw, lh = logo.size
-            pos = (W - lw - margin_x, footer_y0 - lh - 12)
-            image.paste(logo, pos, logo)
-        except Exception:
-            pass
-
+    # Save
     image.save(output_path, format="PNG")
     return output_path
 
@@ -550,6 +431,7 @@ def generate_video_from_script(
     presentation = video_payload.get("presentation", [])
     narration = video_payload.get("narration", [])
     pairs = _pair_presentation_and_narration(presentation, narration)
+    print(f"DEBUG: Starting video generation for {len(pairs)} slides.")
 
     output_path = output_path.with_suffix(".mp4")
     output_path.parent.mkdir(parents=True, exist_ok=True)

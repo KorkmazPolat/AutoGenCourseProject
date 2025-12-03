@@ -121,16 +121,16 @@ video_script:
         Content quality requirements:
         - Use the target duration to determine depth: include at least {{ target_segment_count }} outline segments and produce narration totaling no fewer than {{ target_word_count }} words (≈130 spoken words per minute).
         - Each narration "script" entry must be 5+ sentences and include: concrete examples, brief caselets, numbers where appropriate, and smooth transitions. Use rhetorical questions and summaries to reinforce key points.
-        - For each presentation page, keep the heading snappy (3–6 words) and write 3–6 concise bullet lines for "content". Each bullet ≤ 12 words, written for on-screen readability (no full sentences, no jargon, active phrasing).
-        - Include an optional "visual_hints" array (max 3) with short keywords for visuals/icons (e.g., "timeline", "bar chart", "warning").
-        - Additionally include a "content_blocks" array to structure on‑screen elements. Prefer:
-          - bullets: short items aligned to the section’s goal
-          - checklist: 3–5 actionable steps
-          - callout: 1–2 sentence tip or caution with a verb
-          - quote: a memorable, attribution‑free line reinforcing the point
-          - example: a brief real‑world case with numbers
+        - For each presentation page, keep the heading snappy (2–5 words).
+        - "content" MUST be extremely concise: 3–5 bullet points, MAXIMUM 8 words per bullet. No full sentences. Use strong verbs.
+        - "content_blocks" are preferred over plain text. Use them to create visual variety:
+          - "bullets": Standard list (max 8 words/item).
+          - "checklist": Action items (max 8 words/item).
+          - "callout": ONE short, punchy sentence (max 15 words) for emphasis.
+          - "quote": A short, impactful phrase (max 20 words).
+          - "example": A 1-sentence mini-case.
         - Ensure content is directly relevant to the learning outcomes and key topics for the module; avoid generic filler.
-        - Avoid filler; emphasize clarity, structure, and learner outcomes.
+        - VISUALS: The "visual_hints" should describe a specific, simple icon or diagram concept (e.g., "gear icon", "increasing trend chart").
     - role: user
       template: |
         Course Title: {{ course_title }}
