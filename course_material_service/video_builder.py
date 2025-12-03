@@ -274,6 +274,8 @@ def _create_slide_image(
     blocks = slide.content_blocks or []
     if blocks:
         for block in blocks:
+            if not isinstance(block, dict):
+                continue
             btype = (block.get("type") or "").lower()
             if btype in ["bullets", "checklist"]:
                 for item in block.get("items", []):

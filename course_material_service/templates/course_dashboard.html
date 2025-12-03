@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ course.title }}</h1>
+            <p class="mt-2 text-sm text-gray-600">Instructor Dashboard</p>
+        </div>
+        <a href="/course/{{ course.id }}" class="text-indigo-600 hover:text-indigo-900 font-medium">View Course Content
+            &rarr;</a>
+    </div>
+
+    <!-- Invite Section -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Invite Students</h2>
+        <form id="invite-form" class="flex gap-4 items-end">
+            <div class="flex-grow">
+                <label for="email" class="block text-sm font-medium text-gray-700">Student Email</label>
+                <input type="email" name="email" id="email" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                    placeholder="student@example.com">
+            </div>
+            <button type="submit"
+                class="bg-indigo-600 border border-transparent rounded-md shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Send Invitation
+            </button>
+        </form>
+        <div id="invite-message" class="mt-2 text-sm hidden"></div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Student Progress</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Enrolled</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Progress</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz
+                            Avg.</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Quizzes Taken</th>
+                    </tr>
+                </thead>
+                <tbody id="stats-body" class="bg-white divide-y divide-gray-200">
+                    <!-- Rows will be populated by JS -->
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Loading stats...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const courseId = {{ course.id }};
+
+    // Handle Invite
+    document.getElementById('invite-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const msgDiv = document.getElementById('invite-message');
+
+        try {
+            const res = await fetch(`/api/courses/${courseId}/invite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+
+            msgDiv.classList.remove('hidden', 'text-green-600', 'text-red-600');
+            if (res.ok) {
+                msgDiv.textContent = data.message;
+                msgDiv.classList.add('text-green-600');
+                document.getElementById('email').value = '';
+                loadStats(); // Refresh stats to show new student
+            } else {
+                msgDiv.textContent = data.detail || data.message || 'Error inviting user';
+                msgDiv.classList.add('text-red-600');
+            }
+        } catch (err) {
+            console.error(err);
+            msgDiv.textContent = 'Network error';
+            msgDiv.classList.remove('hidden');
+            msgDiv.classList.add('text-red-600');
+        }
+    });
+
+    // Load Stats
+    async function loadStats() {
+        const tbody = document.getElementById('stats-body');
+        try {
+            const res = await fetch(`/api/courses/${courseId}/stats`);
+            if (!res.ok) throw new Error('Failed to load stats');
+            const stats = await res.json();
+
+            tbody.innerHTML = '';
+            if (stats.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No students enrolled yet.</td></tr>';
+                return;
+            }
+
+            stats.forEach(s => {
+                const row = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${s.student_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.student_email}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.enrolled_at}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <span class="mr-2">${s.progress}</span>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 w-24">
+                                    <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${s.progress}"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.quiz_average}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.quizzes_taken}</td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">Error loading stats.</td></tr>';
+        }
+    }
+
+    loadStats();
+</script>
+{% endblock %}

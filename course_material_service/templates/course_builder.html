@@ -601,239 +601,79 @@
             </div>
         </div>
     </div>
-    <!-- Chat Assistant Widget -->
-    <div id="chatWidget" class="fixed bottom-8 right-8 z-40 flex flex-col items-end font-sans">
-        <!-- Chat Window -->
-        <div id="chatWindow"
-            class="bg-white rounded-2xl shadow-2xl w-[450px] h-[600px] mb-4 flex flex-col overflow-hidden transition-all duration-300 transform scale-0 origin-bottom-right border border-gray-200"
-            style="display: none;">
-            <div class="bg-indigo-600 p-4 flex justify-between items-center shadow-md">
-                <h3 class="text-white font-bold flex items-center gap-3 text-lg">
-                    <span class="bg-white text-indigo-600 p-1.5 rounded-full">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                    </span>
-                    AI Course Designer
-                </h3>
-                <button onclick="toggleChat()" class="text-white hover:text-gray-200 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-            <div id="chatMessages" class="flex-1 p-5 overflow-y-auto bg-gray-50 space-y-4">
-                <!-- Messages -->
-                <div class="flex justify-start">
-                    <div
-                        class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 text-gray-700 shadow-sm max-w-[85%]">
-                        <p class="font-medium text-indigo-600 mb-1 text-xs uppercase tracking-wider">Assistant</p>
-                        Hi! I'm your AI design partner. Tell me what you want to teach, and I'll build the modules for
-                        you.
-                    </div>
-                </div>
-            </div>
-            <div class="p-4 bg-white border-t border-gray-100">
-                <div class="flex gap-2">
-                    <input type="text" id="chatInput"
-                        class="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
-                        placeholder="e.g., 'Add a module on Advanced CSS'" onkeypress="handleChatKey(event)">
-                    <button onclick="sendChatMessage()"
-                        class="bg-indigo-600 text-white rounded-xl px-4 py-2 hover:bg-indigo-700 transition-colors shadow-sm">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
 
-        <!-- Toggle Button -->
-        <button onclick="toggleChat()"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-xl transition-all hover:scale-110 flex items-center justify-center group">
-            <svg class="w-8 h-8 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
-                </path>
-            </svg>
-        </button>
-    </div>
-</div>
 
-{% endblock %}
+    {% endblock %}
 
-{% block scripts %}
-{{ super() }}
-<script>
-    // State Management
-    // State Management
-    let courseData = JSON.parse('{{ course_data | safe if course_data else "null" }}');
+    {% block scripts %}
+    {{ super() }}
+    <script>
+        // State Management
+        // State Management
+        let courseData = JSON.parse('{{ course_data | safe if course_data else "null" }}');
 
-    if (!courseData) {
-        courseData = {
-            title: 'My New Course',
-            modules: [
-                {
-                    id: 'mod-1',
-                    title: 'Module 1: Introduction',
-                    items: []
-                }
-            ]
-        };
-    }
-
-    // Set initial title
-    document.getElementById('courseTitleInput').value = courseData.title || "My New Course";
-
-    function updateCourseTitle(val) {
-        courseData.title = val;
-    }
-    let selectedItem = null; // { type: 'module'|'item', id: string, parentId?: string }
-    let savedCourseId = courseData && courseData.id ? courseData.id : null;
-
-    // DOM Elements
-    const modulesList = document.getElementById('modulesList');
-    const propertiesPanel = document.getElementById('propertiesPanel');
-    const propertiesForm = document.getElementById('propertiesForm');
-    const noSelection = document.getElementById('noSelection');
-    const btnGenerate = document.getElementById('btnGenerate');
-
-    // Progress Modal Elements
-    const progressModal = document.getElementById('progressModal');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const statusText = document.getElementById('statusText');
-    const logContainer = document.getElementById('logContainer');
-    const btnCloseProgress = document.getElementById('btnCloseProgress');
-
-    // Chat Elements
-    const chatWindow = document.getElementById('chatWindow');
-    const chatMessages = document.getElementById('chatMessages');
-    const chatInput = document.getElementById('chatInput');
-
-    // --- Initialization ---
-    function init() {
-        renderModules();
-        btnGenerate.disabled = true;
-        btnGenerate.style.opacity = 0.5;
-    }
-
-    // --- Chat Logic ---
-    function toggleChat() {
-        if (chatWindow.style.display === 'none') {
-            chatWindow.style.display = 'flex';
-            setTimeout(() => {
-                chatWindow.classList.remove('scale-0');
-                chatWindow.classList.add('scale-100');
-            }, 10);
-            chatInput.focus();
-        } else {
-            chatWindow.classList.remove('scale-100');
-            chatWindow.classList.add('scale-0');
-            setTimeout(() => {
-                chatWindow.style.display = 'none';
-            }, 300);
+        if (!courseData) {
+            courseData = {
+                title: 'My New Course',
+                modules: [
+                    {
+                        id: 'mod-1',
+                        title: 'Module 1: Introduction',
+                        items: []
+                    }
+                ]
+            };
         }
-    }
 
-    function handleChatKey(e) {
-        if (e.key === 'Enter') sendChatMessage();
-    }
+        // Set initial title
+        document.getElementById('courseTitleInput').value = courseData.title || "My New Course";
 
-    async function sendChatMessage() {
-        const msg = chatInput.value.trim();
-        if (!msg) return;
+        function updateCourseTitle(val) {
+            courseData.title = val;
+        }
+        let selectedItem = null; // { type: 'module'|'item', id: string, parentId?: string }
+        let savedCourseId = courseData && courseData.id ? courseData.id : null;
 
-        // Add User Message
-        addChatMessage(msg, 'user');
-        chatInput.value = '';
+        // DOM Elements
+        const modulesList = document.getElementById('modulesList');
+        const propertiesPanel = document.getElementById('propertiesPanel');
+        const propertiesForm = document.getElementById('propertiesForm');
+        const noSelection = document.getElementById('noSelection');
+        const btnGenerate = document.getElementById('btnGenerate');
 
-        // Show Loading
-        const loadingId = addChatMessage('Thinking...', 'system', true);
+        // Progress Modal Elements
+        const progressModal = document.getElementById('progressModal');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const statusText = document.getElementById('statusText');
+        const logContainer = document.getElementById('logContainer');
+        const btnCloseProgress = document.getElementById('btnCloseProgress');
 
-        try {
-            const response = await fetch('/assist-course-design', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: msg,
-                    current_plan: courseData
-                })
-            });
+        // --- Initialization ---
+        function init() {
+            renderModules();
+            btnGenerate.disabled = true;
+            btnGenerate.style.opacity = 0.5;
+        }
 
-            if (!response.ok) throw new Error('Failed to get AI response');
 
-            const result = await response.json();
 
-            // Remove Loading
-            document.getElementById(loadingId).remove();
-
-            // Add AI Message
-            if (result.message) {
-                // Simple markdown-like formatting for bold/list
-                let formattedMsg = result.message
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>');
-                addChatMessage(formattedMsg, 'system');
+        // --- Rendering ---
+        function renderModules() {
+            modulesList.innerHTML = '';
+            if (courseData.modules) {
+                courseData.modules.forEach(mod => {
+                    const modEl = createModuleElement(mod);
+                    modulesList.appendChild(modEl);
+                });
             }
-
-            // Update Plan if provided
-            if (result.updated_plan) {
-                courseData = result.updated_plan;
-                renderModules();
-                // Optional: Flash success or something
-            }
-
-        } catch (error) {
-            console.error(error);
-            document.getElementById(loadingId).innerText = 'Error: ' + error.message;
-        }
-    }
-
-    function addChatMessage(text, sender, isLoading = false) {
-        const id = 'msg-' + Date.now();
-        const div = document.createElement('div');
-        div.id = id;
-        div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-
-        const bubble = document.createElement('div');
-        bubble.className = sender === 'user'
-            ? 'bg-indigo-600 text-white rounded-lg rounded-tr-none p-3 text-sm shadow-sm max-w-[85%]'
-            : 'bg-white border border-gray-200 rounded-lg rounded-tl-none p-3 text-sm text-gray-700 shadow-sm max-w-[85%]';
-
-        if (isLoading) {
-            bubble.innerHTML = '<span class="animate-pulse">...</span>';
-        } else {
-            bubble.innerText = text;
         }
 
-        div.appendChild(bubble);
-        chatMessages.appendChild(div);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        return id;
-    }
-
-    // --- Rendering ---
-    function renderModules() {
-        modulesList.innerHTML = '';
-        if (courseData.modules) {
-            courseData.modules.forEach(mod => {
-                const modEl = createModuleElement(mod);
-                modulesList.appendChild(modEl);
-            });
-        }
-    }
-
-    function createModuleElement(mod) {
-        const el = document.createElement('div');
-        el.className = 'module-box';
-        el.id = mod.id;
-        el.innerHTML = `
+        function createModuleElement(mod) {
+            const el = document.createElement('div');
+            el.className = 'module-box';
+            el.id = mod.id;
+            el.innerHTML = `
             <div class="module-header">
                 <div class="module-title-group">
                     <div class="module-handle">
@@ -855,27 +695,27 @@
             </div>
         `;
 
-        const itemsContainer = el.querySelector('.items-container');
-        if (mod.items) {
-            mod.items.forEach(item => {
-                itemsContainer.appendChild(createItemElement(item, mod.id));
-            });
+            const itemsContainer = el.querySelector('.items-container');
+            if (mod.items) {
+                mod.items.forEach(item => {
+                    itemsContainer.appendChild(createItemElement(item, mod.id));
+                });
+            }
+
+            return el;
         }
 
-        return el;
-    }
+        function createItemElement(item, moduleId) {
+            const el = document.createElement('div');
+            el.className = 'lesson-item';
+            el.draggable = true;
+            el.id = item.id;
+            el.dataset.moduleId = moduleId;
 
-    function createItemElement(item, moduleId) {
-        const el = document.createElement('div');
-        el.className = 'lesson-item';
-        el.draggable = true;
-        el.id = item.id;
-        el.dataset.moduleId = moduleId;
+            // Config
+            const config = getItemConfig(item.type);
 
-        // Config
-        const config = getItemConfig(item.type);
-
-        el.innerHTML = `
+            el.innerHTML = `
             <div class="lesson-icon bg-${config.color}-50 text-${config.color}-600">
                 ${config.icon}
             </div>
@@ -888,376 +728,376 @@
             </div>
         `;
 
-        el.addEventListener('click', (e) => {
-            e.stopPropagation();
-            selectItem(item.id, moduleId);
-        });
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectItem(item.id, moduleId);
+            });
 
-        el.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('itemId', item.id);
-            e.dataTransfer.setData('sourceModuleId', moduleId);
-            e.dataTransfer.effectAllowed = 'move';
-        });
+            el.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('itemId', item.id);
+                e.dataTransfer.setData('sourceModuleId', moduleId);
+                e.dataTransfer.effectAllowed = 'move';
+            });
 
-        return el;
-    }
-
-    function getItemConfig(type) {
-        const icons = {
-            video: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>',
-            quiz: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>',
-            reading: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253"></path></svg>',
-            assignment: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>'
-        };
-        const colors = { video: 'red', quiz: 'green', reading: 'blue', assignment: 'yellow' };
-        const descs = { video: 'Video Lesson', quiz: 'Quiz Assessment', reading: 'Reading Material', assignment: 'Project' };
-
-        return {
-            icon: icons[type] || icons.reading,
-            color: colors[type] || 'gray',
-            defaultDesc: descs[type] || 'Content'
-        };
-    }
-
-    // --- Actions ---
-    function addModule() {
-        const newMod = {
-            id: 'mod-' + Date.now(),
-            title: 'New Module',
-            items: []
-        };
-        courseData.modules.push(newMod);
-        renderModules();
-        setTimeout(() => {
-            const el = document.getElementById(newMod.id);
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    }
-
-    function updateModuleTitle(id, val) {
-        const mod = courseData.modules.find(m => m.id === id);
-        if (mod) mod.title = val;
-    }
-
-    function deleteModule(id) {
-        if (confirm('Delete this module and all its contents?')) {
-            courseData.modules = courseData.modules.filter(m => m.id !== id);
-            renderModules();
-            closeProperties();
+            return el;
         }
-    }
 
-    // --- Drag and Drop Logic ---
-    function handleLibDragStart(e, type) {
-        e.dataTransfer.setData('type', type);
-        e.dataTransfer.setData('source', 'library');
-    }
-
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    }
-
-    function handleDrop(e, targetModuleId) {
-        e.preventDefault();
-        const source = e.dataTransfer.getData('source');
-
-        if (source === 'library') {
-            // New Item
-            const type = e.dataTransfer.getData('type');
-            const newItem = {
-                id: 'item-' + Date.now(),
-                type: type,
-                title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
-                desc: ''
+        function getItemConfig(type) {
+            const icons = {
+                video: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>',
+                quiz: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>',
+                reading: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253"></path></svg>',
+                assignment: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>'
             };
+            const colors = { video: 'red', quiz: 'green', reading: 'blue', assignment: 'yellow' };
+            const descs = { video: 'Video Lesson', quiz: 'Quiz Assessment', reading: 'Reading Material', assignment: 'Project' };
 
-            const mod = courseData.modules.find(m => m.id === targetModuleId);
-            if (mod) {
-                if (!mod.items) mod.items = [];
-                mod.items.push(newItem);
+            return {
+                icon: icons[type] || icons.reading,
+                color: colors[type] || 'gray',
+                defaultDesc: descs[type] || 'Content'
+            };
+        }
+
+        // --- Actions ---
+        function addModule() {
+            const newMod = {
+                id: 'mod-' + Date.now(),
+                title: 'New Module',
+                items: []
+            };
+            courseData.modules.push(newMod);
+            renderModules();
+            setTimeout(() => {
+                const el = document.getElementById(newMod.id);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        function updateModuleTitle(id, val) {
+            const mod = courseData.modules.find(m => m.id === id);
+            if (mod) mod.title = val;
+        }
+
+        function deleteModule(id) {
+            if (confirm('Delete this module and all its contents?')) {
+                courseData.modules = courseData.modules.filter(m => m.id !== id);
                 renderModules();
-                selectItem(newItem.id, targetModuleId);
+                closeProperties();
             }
-        } else {
-            // Reordering or Moving Item
-            const itemId = e.dataTransfer.getData('itemId');
+        }
 
-            const sourceModuleId = e.dataTransfer.getData('sourceModuleId');
+        // --- Drag and Drop Logic ---
+        function handleLibDragStart(e, type) {
+            e.dataTransfer.setData('type', type);
+            e.dataTransfer.setData('source', 'library');
+        }
 
-            if (itemId && sourceModuleId) {
-                // Find item and remove from source
-                const sourceMod = courseData.modules.find(m => m.id === sourceModuleId);
-                const itemIndex = sourceMod.items.findIndex(i => i.id === itemId);
-                if (itemIndex > -1) {
-                    const [item] = sourceMod.items.splice(itemIndex, 1);
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
 
-                    // Add to target
-                    const targetMod = courseData.modules.find(m => m.id === targetModuleId);
-                    targetMod.items.push(item);
+        function handleDrop(e, targetModuleId) {
+            e.preventDefault();
+            const source = e.dataTransfer.getData('source');
 
+            if (source === 'library') {
+                // New Item
+                const type = e.dataTransfer.getData('type');
+                const newItem = {
+                    id: 'item-' + Date.now(),
+                    type: type,
+                    title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+                    desc: ''
+                };
+
+                const mod = courseData.modules.find(m => m.id === targetModuleId);
+                if (mod) {
+                    if (!mod.items) mod.items = [];
+                    mod.items.push(newItem);
                     renderModules();
+                    selectItem(newItem.id, targetModuleId);
+                }
+            } else {
+                // Reordering or Moving Item
+                const itemId = e.dataTransfer.getData('itemId');
+
+                const sourceModuleId = e.dataTransfer.getData('sourceModuleId');
+
+                if (itemId && sourceModuleId) {
+                    // Find item and remove from source
+                    const sourceMod = courseData.modules.find(m => m.id === sourceModuleId);
+                    const itemIndex = sourceMod.items.findIndex(i => i.id === itemId);
+                    if (itemIndex > -1) {
+                        const [item] = sourceMod.items.splice(itemIndex, 1);
+
+                        // Add to target
+                        const targetMod = courseData.modules.find(m => m.id === targetModuleId);
+                        targetMod.items.push(item);
+
+                        renderModules();
+                    }
                 }
             }
         }
-    }
 
-    // --- Selection & Properties ---
-    function selectItem(itemId, moduleId) {
-        document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('selected'));
+        // --- Selection & Properties ---
+        function selectItem(itemId, moduleId) {
+            document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('selected'));
 
-        const el = document.getElementById(itemId);
-        if (el) el.classList.add('selected');
+            const el = document.getElementById(itemId);
+            if (el) el.classList.add('selected');
 
-        const mod = courseData.modules.find(m => m.id === moduleId);
-        const item = mod.items.find(i => i.id === itemId);
+            const mod = courseData.modules.find(m => m.id === moduleId);
+            const item = mod.items.find(i => i.id === itemId);
 
-        if (item) {
-            selectedItem = { type: 'item', data: item, moduleId };
-            openProperties();
-        }
-    }
-
-    function openProperties() {
-        if (!selectedItem) return;
-
-        propertiesPanel.classList.add('open');
-        noSelection.style.display = 'none';
-        propertiesForm.style.display = 'block';
-
-        const titleInput = document.getElementById('propTitle');
-        const descInput = document.getElementById('propDesc');
-        const editContentWrapper = document.getElementById('editContentWrapper');
-
-        titleInput.value = selectedItem.data.title;
-        descInput.value = selectedItem.data.desc;
-
-        // Show edit content button only for items (lessons)
-        if (selectedItem.type === 'item') {
-            editContentWrapper.style.display = 'block';
-        } else {
-            editContentWrapper.style.display = 'none';
+            if (item) {
+                selectedItem = { type: 'item', data: item, moduleId };
+                openProperties();
+            }
         }
 
-        titleInput.oninput = (e) => {
-            selectedItem.data.title = e.target.value;
-            const el = document.getElementById(selectedItem.data.id);
-            if (el) el.querySelector('.lesson-title').textContent = e.target.value;
-        };
+        function openProperties() {
+            if (!selectedItem) return;
 
-        descInput.oninput = (e) => {
-            selectedItem.data.desc = e.target.value;
-            const el = document.getElementById(selectedItem.data.id);
-            if (el) el.querySelector('.lesson-desc').textContent = e.target.value;
-        };
+            propertiesPanel.classList.add('open');
+            noSelection.style.display = 'none';
+            propertiesForm.style.display = 'block';
 
-        renderDynamicFields(selectedItem.data);
-    }
+            const titleInput = document.getElementById('propTitle');
+            const descInput = document.getElementById('propDesc');
+            const editContentWrapper = document.getElementById('editContentWrapper');
 
-    function renderDynamicFields(item) {
-        const container = document.getElementById('dynamicFields');
-        container.innerHTML = '';
+            titleInput.value = selectedItem.data.title;
+            descInput.value = selectedItem.data.desc;
 
-        if (item.type === 'video') {
-            container.innerHTML = `
+            // Show edit content button only for items (lessons)
+            if (selectedItem.type === 'item') {
+                editContentWrapper.style.display = 'block';
+            } else {
+                editContentWrapper.style.display = 'none';
+            }
+
+            titleInput.oninput = (e) => {
+                selectedItem.data.title = e.target.value;
+                const el = document.getElementById(selectedItem.data.id);
+                if (el) el.querySelector('.lesson-title').textContent = e.target.value;
+            };
+
+            descInput.oninput = (e) => {
+                selectedItem.data.desc = e.target.value;
+                const el = document.getElementById(selectedItem.data.id);
+                if (el) el.querySelector('.lesson-desc').textContent = e.target.value;
+            };
+
+            renderDynamicFields(selectedItem.data);
+        }
+
+        function renderDynamicFields(item) {
+            const container = document.getElementById('dynamicFields');
+            container.innerHTML = '';
+
+            if (item.type === 'video') {
+                container.innerHTML = `
                 <div class="form-group">
                     <label class="form-label">Duration (mins)</label>
                     <input type="number" class="form-input" value="${item.duration || ''}" onchange="updateItemData('duration', this.value)">
                 </div>
             `;
-        } else if (item.type === 'quiz') {
-            container.innerHTML = `
+            } else if (item.type === 'quiz') {
+                container.innerHTML = `
                 <div class="form-group">
                     <label class="form-label">Questions</label>
                     <input type="number" class="form-input" value="${item.questions || 5}" onchange="updateItemData('questions', this.value)">
                 </div>
             `;
-        }
-    }
-
-    window.updateItemData = function (key, value) {
-        if (selectedItem) {
-            selectedItem.data[key] = value;
-        }
-    };
-
-    function closeProperties() {
-        propertiesPanel.classList.remove('open');
-        selectedItem = null;
-        document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('selected'));
-    }
-
-    function deleteSelectedItem() {
-        if (selectedItem && selectedItem.type === 'item') {
-            const mod = courseData.modules.find(m => m.id === selectedItem.moduleId);
-            if (mod) {
-                mod.items = mod.items.filter(i => i.id !== selectedItem.data.id);
-                renderModules();
-                closeProperties();
             }
         }
-    }
 
-    // --- Persistence ---
-    // --- Persistence ---
-    async function saveCourse() {
-        const payload = {
-            modules: courseData.modules,
-            course_title: courseData.title || "My Designed Course"
+        window.updateItemData = function (key, value) {
+            if (selectedItem) {
+                selectedItem.data[key] = value;
+            }
         };
 
-        let url = '/save-course-design';
-        if (savedCourseId) {
-            url = `/update-course-design/${savedCourseId}`;
+        function closeProperties() {
+            propertiesPanel.classList.remove('open');
+            selectedItem = null;
+            document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('selected'));
         }
 
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                savedCourseId = result.course_id;
-                // Update URL without reloading if it's a new course
-                if (!window.location.pathname.includes(savedCourseId)) {
-                    window.history.pushState({}, '', `/course-builder/${savedCourseId}`);
+        function deleteSelectedItem() {
+            if (selectedItem && selectedItem.type === 'item') {
+                const mod = courseData.modules.find(m => m.id === selectedItem.moduleId);
+                if (mod) {
+                    mod.items = mod.items.filter(i => i.id !== selectedItem.data.id);
+                    renderModules();
+                    closeProperties();
                 }
-                alert('Course structure saved successfully!');
-                console.log('Saved:', result);
-
-                btnGenerate.disabled = false;
-                btnGenerate.style.opacity = 1;
-            } else {
-                const err = await response.text();
-                alert('Failed to save course: ' + err);
             }
-        } catch (error) {
-            console.error('Error saving course:', error);
-            alert('Error saving course. See console for details.');
-        }
-    }
-
-    // --- Progress Modal Logic ---
-    function openProgressModal() {
-        progressModal.classList.remove('hidden');
-        progressBar.style.width = '0%';
-        progressText.textContent = '0%';
-        statusText.textContent = 'Starting...';
-        logContainer.innerHTML = '';
-        btnCloseProgress.classList.add('hidden');
-    }
-
-    function closeProgressModal() {
-        progressModal.classList.add('hidden');
-    }
-
-    function addLog(msg) {
-        const div = document.createElement('div');
-        div.textContent = `> ${msg}`;
-        div.className = 'mb-1';
-        logContainer.appendChild(div);
-        logContainer.scrollTop = logContainer.scrollHeight;
-    }
-
-    async function generateContent() {
-        if (!savedCourseId) {
-            alert('Please save the course first.');
-            return;
         }
 
-        openProgressModal();
+        // --- Persistence ---
+        // --- Persistence ---
+        async function saveCourse() {
+            const payload = {
+                modules: courseData.modules,
+                course_title: courseData.title || "My Designed Course"
+            };
 
-        try {
-            const response = await fetch(`/generate-course-content/${savedCourseId}`, {
-                method: 'POST'
-            });
+            let url = '/save-course-design';
+            if (savedCourseId) {
+                url = `/update-course-design/${savedCourseId}`;
+            }
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
 
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
+                if (response.ok) {
+                    const result = await response.json();
+                    savedCourseId = result.course_id;
+                    // Update URL without reloading if it's a new course
+                    if (!window.location.pathname.includes(savedCourseId)) {
+                        window.history.pushState({}, '', `/course-builder/${savedCourseId}`);
+                    }
+                    alert('Course structure saved successfully!');
+                    console.log('Saved:', result);
 
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+                    btnGenerate.disabled = false;
+                    btnGenerate.style.opacity = 1;
+                } else {
+                    const err = await response.text();
+                    alert('Failed to save course: ' + err);
+                }
+            } catch (error) {
+                console.error('Error saving course:', error);
+                alert('Error saving course. See console for details.');
+            }
+        }
 
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        // --- Progress Modal Logic ---
+        function openProgressModal() {
+            progressModal.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+            statusText.textContent = 'Starting...';
+            logContainer.innerHTML = '';
+            btnCloseProgress.classList.add('hidden');
+        }
 
-                    try {
-                        const data = JSON.parse(trimmed.substring(6));
+        function closeProgressModal() {
+            progressModal.classList.add('hidden');
+        }
 
-                        if (data.message) {
-                            addLog(data.message);
-                            statusText.textContent = data.message;
+        function addLog(msg) {
+            const div = document.createElement('div');
+            div.textContent = `> ${msg}`;
+            div.className = 'mb-1';
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        async function generateContent() {
+            if (!savedCourseId) {
+                alert('Please save the course first.');
+                return;
+            }
+
+            openProgressModal();
+
+            try {
+                const response = await fetch(`/generate-course-content/${savedCourseId}`, {
+                    method: 'POST'
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+
+                        try {
+                            const data = JSON.parse(trimmed.substring(6));
+
+                            if (data.message) {
+                                addLog(data.message);
+                                statusText.textContent = data.message;
+                            }
+
+                            if (data.progress !== undefined) {
+                                progressBar.style.width = `${data.progress}%`;
+                                progressText.textContent = `${data.progress}%`;
+                            }
+
+                            if (data.done) {
+                                btnCloseProgress.classList.remove('hidden');
+                                statusText.textContent = 'Completed';
+                                // Redirect to course view after a short delay
+                                setTimeout(() => {
+                                    window.location.href = '/course/' + savedCourseId;
+                                }, 1500);
+                                return; // Exit function
+                            }
+
+                            if (data.error) {
+                                addLog('Error: ' + data.error);
+                                statusText.textContent = 'Error';
+                                btnCloseProgress.classList.remove('hidden');
+                            }
+                        } catch (e) {
+                            console.error('Error parsing SSE data', e);
                         }
-
-                        if (data.progress !== undefined) {
-                            progressBar.style.width = `${data.progress}%`;
-                            progressText.textContent = `${data.progress}%`;
-                        }
-
-                        if (data.done) {
-                            btnCloseProgress.classList.remove('hidden');
-                            statusText.textContent = 'Completed';
-                            // Redirect to course view after a short delay
-                            setTimeout(() => {
-                                window.location.href = '/course/' + savedCourseId;
-                            }, 1500);
-                            return; // Exit function
-                        }
-
-                        if (data.error) {
-                            addLog('Error: ' + data.error);
-                            statusText.textContent = 'Error';
-                            btnCloseProgress.classList.remove('hidden');
-                        }
-                    } catch (e) {
-                        console.error('Error parsing SSE data', e);
                     }
                 }
+            } catch (error) {
+                console.error('Error generating content:', error);
+                addLog('Network Error: ' + error.message);
+                statusText.textContent = 'Failed';
+                btnCloseProgress.classList.remove('hidden');
             }
-        } catch (error) {
-            console.error('Error generating content:', error);
-            addLog('Network Error: ' + error.message);
-            statusText.textContent = 'Failed';
-            btnCloseProgress.classList.remove('hidden');
-        }
-    }
-
-    function exportCourse() {
-        const blob = new Blob([JSON.stringify(courseData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'course_structure.json';
-        a.click();
-    }
-
-    // --- Content Editor Logic ---
-    function openContentEditor() {
-        if (!selectedItem || selectedItem.type !== 'item') return;
-
-        const lessonId = selectedItem.data.id;
-
-        if (isNaN(lessonId)) {
-            alert("Please save the course first to generate IDs for new items.");
-            return;
         }
 
-        // Navigate to separate editor page
-        window.location.href = `/content-editor/${lessonId}`;
-    }
+        function exportCourse() {
+            const blob = new Blob([JSON.stringify(courseData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'course_structure.json';
+            a.click();
+        }
 
-    // Init
-    init();
+        // --- Content Editor Logic ---
+        function openContentEditor() {
+            if (!selectedItem || selectedItem.type !== 'item') return;
 
-</script>
-{% endblock %}
+            const lessonId = selectedItem.data.id;
+
+            if (isNaN(lessonId)) {
+                alert("Please save the course first to generate IDs for new items.");
+                return;
+            }
+
+            // Navigate to separate editor page
+            window.location.href = `/content-editor/${lessonId}`;
+        }
+
+        // Init
+        init();
+
+    </script>
+    {% endblock %}

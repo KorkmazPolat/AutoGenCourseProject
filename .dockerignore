@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.git/
+.gitignore
+.DS_Store
+.env
+course_material_service/generated_videos/*
+!course_material_service/generated_videos/.gitkeep
+test_output*

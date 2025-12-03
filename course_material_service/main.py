@@ -380,6 +380,8 @@ from course_material_service.services import save_course_to_db
 
 @app.on_event("startup")
 async def on_startup():
+    # Initialize database
+    await init_db()
     # Ensure static directories exist
     os.makedirs("course_material_service/static/videos", exist_ok=True)
     os.makedirs("course_material_service/static/images", exist_ok=True)
@@ -574,6 +576,27 @@ async def render_library(request: Request, user_id: int = Depends(get_session_us
         }
     )
 
+@app.get("/enrolled-courses", response_class=HTMLResponse, tags=["web"])
+async def render_enrolled_courses(request: Request, user_id: int = Depends(get_session_user), db: AsyncSession = Depends(get_db)):
+    """Lists courses the user is enrolled in."""
+    # Join Enrollment and Course to get course details
+    result = await db.execute(
+        select(models.Course)
+        .join(models.Enrollment, models.Enrollment.course_id == models.Course.id)
+        .where(models.Enrollment.user_id == user_id)
+        .order_by(models.Enrollment.enrolled_at.desc())
+    )
+    courses = result.scalars().all()
+
+    return templates.TemplateResponse(
+        "enrolled_courses.html",
+        {
+            "request": request,
+            "courses": courses,
+            "current_year": datetime.utcnow().year
+        }
+    )
+
 @app.get("/course-builder", response_class=HTMLResponse, tags=["web"])
 async def create_draft_course_and_redirect(
     request: Request,
@@ -707,7 +730,7 @@ async def render_full_course_db(
                     # We might store script in asset.content or have a separate script asset
                     # For now, let's just pass the video URL if it exists
                     asset_map["video_script"] = {
-                        "video_url": f"/videos/{Path(asset.file_path).name}" if asset.file_path else None,
+                        "video_url": f"/static/videos/{Path(asset.file_path).name}" if asset.file_path else None,
                         "content": asset.content # Script content
                     }
                 elif asset.asset_type == "reading_material":
@@ -1929,15 +1952,15 @@ async def agentic_finalize_course(
             first_video = module_videos[0]
             v_path = first_video.get("video_file")
             if v_path:
-                video_url = f"/videos/{Path(v_path).name}"
+                video_url = f"/static/videos/{Path(v_path).name}"
                 
             c_path = first_video.get("captions_file")
             if c_path:
-                captions_url = f"/videos/{Path(c_path).name}"
+                captions_url = f"/static/videos/{Path(c_path).name}"
                 
             ch_path = first_video.get("chapters_file")
             if ch_path:
-                chapters_url = f"/videos/{Path(ch_path).name}"
+                chapters_url = f"/static/videos/{Path(ch_path).name}"
 
         # READING: treat each lesson as a section in the reading.
         reading_sections: List[Dict[str, Any]] = []
@@ -1951,94 +1974,300 @@ async def agentic_finalize_course(
                 }
             )
 
-        reading_content: Dict[str, Any] = {
-            "summary": summary,
-            "sections": reading_sections,
-            # Pass the full text for the PDF generator if needed, though we use the DB lesson content usually
-            "text": "\n\n".join([l.get("text", "") for l in module_lessons]) 
-        }
-
-        # QUIZ: merge all agentic quizzes for this module into the template
-        # format expected by full_course.html.
-        quiz_questions: List[Dict[str, Any]] = []
-        labels = ["A", "B", "C", "D", "E", "F"]
-        for quiz in module_quizzes:
-            q_list = quiz.get("questions") if isinstance(quiz, dict) else quiz.get("questions")
-            if not q_list:
-                continue
-            for q in q_list:
-                options = q.get("options") or []
-                choices = []
-                for idx_opt, opt_text in enumerate(options):
-                    label = labels[idx_opt] if idx_opt < len(labels) else str(idx_opt + 1)
-                    choices.append({"label": label, "text": opt_text})
-                correct_index = q.get("correct_index", 0)
-                try:
-                    correct_label = choices[correct_index]["label"]
-                except Exception:
-                    correct_label = choices[0]["label"] if choices else "A"
-                quiz_questions.append(
-                    {
-                        "stem": q.get("question", ""),
-                        "choices": choices,
-                        "answer": correct_label,
-                        "learning_outcome": None,
-                        "rationale": None,
-                    }
-                )
-
-        quiz_content: Optional[Dict[str, Any]]
-        if quiz_questions:
-            quiz_content = {
-                "questions": quiz_questions,
-                "remediation": None,
-            }
-        else:
-            quiz_content = None
-
-        assets_for_module: Dict[str, Any] = {
-            "video_script": {
-                "content": video_content,
-                "video_url": video_url,
-                "captions_url": captions_url,
-                "chapters_url": chapters_url
-            },
-            "reading_material": {"content": reading_content},
-            "quiz_questions": {"content": quiz_content},
-        }
-
-        # Wrap the module content as a single lesson for this view
-        lesson_entry = {
-            "info": {
-                "number": module_idx,
-                "title": module_title or title,
-                "summary": summary,
-                "id": lesson_id, # Pass the DB ID of the first lesson
-                "course_id": saved_course.id # Pass course_id explicitly here too
-            },
-            "assets": assets_for_module,
-        }
-        print(f"DEBUG: Module {module_idx} Lesson ID: {lesson_id}") # Debug log
+        # QUIZ: Aggregate quizzes
+        # We'll just take the first quiz for now or merge them
+        quiz_content = {}
+        if module_quizzes:
+            # Merge questions from all quizzes in this module
+            all_questions = []
+            for q in module_quizzes:
+                all_questions.extend(q.get("questions", []))
+            quiz_content = {"questions": all_questions}
 
         modules_output.append(
             {
-                "title": module_title or title,
-                "lessons": [lesson_entry]
+                "title": title,
+                "summary": summary,
+                "lessons": [
+                    {
+                        "info": {
+                            "number": module_idx,
+                            "title": title,
+                            "summary": summary,
+                            "id": lesson_id, # DB ID of the first lesson in module
+                            "course_id": saved_course.id
+                        },
+                        "assets": {
+                            "video_script": {
+                                "content": video_content,
+                                "video_url": video_url,
+                                "captions_url": captions_url,
+                                "chapters_url": chapters_url,
+                            },
+                            "reading_material": {
+                                "content": {
+                                    "summary": "Module Reading",
+                                    "sections": reading_sections
+                                }
+                            },
+                            "quiz_questions": {
+                                "content": quiz_content
+                            }
+                        }
+                    }
+                ]
             }
         )
 
-    page_context = {
-        "request": request,
-        "course_title": course_plan.get("title") or course_title,
-        "course_id": saved_course.id, # Pass the saved course ID
-        "audience": audience,
-        "tone": tone,
-        "duration_minutes": duration_minutes,
-        "modules_output": modules_output,
-        "voice": voice or "alloy",
-    }
-
     return templates.TemplateResponse(
         "full_course.html",
-        page_context,
+        {
+            "request": request,
+            "course_title": course_title,
+            "course_id": saved_course.id,
+            "modules_output": modules_output,
+            "voice": voice or "alloy",
+        },
     )
+
+
+# --- New Endpoints for Quiz, Invite, and Stats ---
+
+class QuizSubmission(BaseModel):
+    lesson_id: int
+    score: float
+    max_score: float
+
+@app.post("/api/quiz/submit", tags=["student"])
+async def submit_quiz_result(
+    submission: QuizSubmission,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_session_user)
+):
+    # Find the quiz asset for this lesson
+    # We assume one quiz per lesson for simplicity, or we attach it to the lesson
+    # In our DB model, QuizAttempt links to an Asset.
+    # We need to find the asset_id for the 'quiz' type of this lesson.
+    result = await db.execute(
+        select(models.LessonAsset)
+        .where(models.LessonAsset.lesson_id == submission.lesson_id)
+        .where(models.LessonAsset.asset_type == "quiz")
+    )
+    asset = result.scalars().first()
+    
+    if not asset:
+        # If no specific asset found (maybe generated on fly?), we can't link it easily.
+        # But wait, we saved assets in save_course_to_db.
+        # If it's missing, we might need to create a placeholder or error.
+        # For now, let's log warning and try to find ANY asset or just fail.
+        print(f"Warning: No quiz asset found for lesson {submission.lesson_id}")
+        # Fallback: Create a dummy asset if needed or just return success (but data won't be tracked perfectly)
+        return {"status": "error", "message": "Quiz asset not found"}
+
+    attempt = models.QuizAttempt(
+        user_id=user_id,
+        asset_id=asset.id,
+        score=submission.score,
+        max_score=submission.max_score
+    )
+    db.add(attempt)
+    await db.commit()
+    return {"status": "success", "score": submission.score}
+
+
+class InviteRequest(BaseModel):
+    email: str
+
+@app.post("/api/courses/{course_id}/invite", tags=["instructor"])
+async def invite_user_to_course(
+    course_id: int,
+    invite: InviteRequest,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_session_user)
+):
+    # Verify ownership
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if course.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Only the course owner can invite users")
+
+    # Find user to invite
+    result_user = await db.execute(select(models.User).where(models.User.email == invite.email))
+    target_user = result_user.scalars().first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User with this email not found")
+
+    # Check if already enrolled
+    result_enroll = await db.execute(
+        select(models.Enrollment)
+        .where(models.Enrollment.course_id == course_id)
+        .where(models.Enrollment.user_id == target_user.id)
+    )
+    if result_enroll.scalars().first():
+        return {"status": "already_enrolled", "message": "User is already enrolled"}
+
+    # Enroll
+    enrollment = models.Enrollment(user_id=target_user.id, course_id=course_id)
+    db.add(enrollment)
+    await db.commit()
+    return {"status": "success", "message": f"User {target_user.full_name or target_user.email} enrolled"}
+
+
+@app.get("/api/courses/{course_id}/stats", tags=["instructor"])
+async def get_course_stats(
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_session_user)
+):
+    # Verify ownership
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if course.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Get enrollments
+    result_enrollments = await db.execute(
+        select(models.Enrollment).where(models.Enrollment.course_id == course_id)
+    )
+    enrollments = result_enrollments.scalars().all()
+    
+    stats = []
+    for enroll in enrollments:
+        # Get user details
+        u_res = await db.execute(select(models.User).where(models.User.id == enroll.user_id))
+        student = u_res.scalars().first()
+        
+        # Get quiz scores
+        # We need to find all quiz assets for this course, then find attempts for this user
+        # 1. Get all module IDs
+        mod_res = await db.execute(select(models.CourseModule.id).where(models.CourseModule.course_id == course_id))
+        mod_ids = mod_res.scalars().all()
+        
+        # 2. Get all lesson IDs
+        les_res = await db.execute(select(models.Lesson.id).where(models.Lesson.module_id.in_(mod_ids)))
+        lesson_ids = les_res.scalars().all()
+        
+        # 3. Get all quiz asset IDs
+        asset_res = await db.execute(
+            select(models.LessonAsset.id)
+            .where(models.LessonAsset.lesson_id.in_(lesson_ids))
+            .where(models.LessonAsset.asset_type == "quiz")
+        )
+        quiz_asset_ids = asset_res.scalars().all()
+        
+        # 4. Get attempts
+        attempts_res = await db.execute(
+            select(models.QuizAttempt)
+            .where(models.QuizAttempt.user_id == student.id)
+            .where(models.QuizAttempt.asset_id.in_(quiz_asset_ids))
+        )
+        attempts = attempts_res.scalars().all()
+        
+        # Calculate average score
+        avg_score = 0
+        if attempts:
+            avg_score = sum(a.score / a.max_score for a in attempts) / len(attempts) * 100
+            
+        stats.append({
+            "student_name": student.full_name or "Unknown",
+            "student_email": student.email,
+            "enrolled_at": enroll.enrolled_at.strftime("%Y-%m-%d"),
+            "progress": f"{enroll.progress_percent}%",
+            "quiz_average": f"{avg_score:.1f}%",
+            "quizzes_taken": len(attempts)
+        })
+        
+    return stats
+
+@app.get("/course/{course_id}/dashboard", response_class=HTMLResponse, tags=["web"])
+async def course_dashboard(
+    request: Request,
+    course_id: int,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_session_user)
+):
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course or course.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Course not found or access denied")
+        
+    return templates.TemplateResponse(
+        "course_dashboard.html",
+        {"request": request, "course": course}
+    )
+
+
+class GlobalAgentRequest(BaseModel):
+    message: str
+    context: Dict[str, Any]
+
+@app.post("/api/global-agent")
+async def global_agent_chat(request: GlobalAgentRequest):
+    """
+    Handle chat messages for the global AI assistant.
+    """
+    try:
+        # 1. System Prompt
+        system_prompt = """You are the AI Assistant for the "Course Generator" platform.
+Your goal is to help users create, manage, and understand their courses.
+
+RULES:
+1. You are visible on every page. Use the 'context' provided to understand where the user is.
+2. ONLY answer questions related to:
+   - Course creation and design.
+   - Using this platform (navigation, features).
+   - Educational theory or content structuring.
+   - The specific course content the user is working on (if provided in context).
+3. If a user asks about UNRELATED topics (e.g., sports, politics, general trivia not related to education), politely DECLINE to answer. Say something like: "I'm here to help with your course creation. I can't answer general questions about [topic]."
+4. If the user asks for navigation help (e.g., "Go to dashboard", "Where are my courses?"), you can suggest a navigation action.
+
+OUTPUT FORMAT:
+Return a JSON object with:
+- "message": The text response to show the user.
+- "action": (Optional) "navigate" if you want to redirect the user.
+- "url": (Optional) The URL to redirect to if action is "navigate".
+
+PAGES CONTEXT:
+- /dashboard or /: The main course creation form.
+- /library: List of created courses.
+- /enrolled-courses: List of courses the user is taking.
+- /course-builder: The interactive drag-and-drop builder.
+
+Example JSON response:
+{
+  "message": "Sure! I can take you to your library.",
+  "action": "navigate",
+  "url": "/library"
+}
+"""
+
+        # 2. User Context
+        user_context_str = f"Current Page: {request.context.get('url')}\nPage Title: {request.context.get('title')}\n"
+        if request.context.get('courseData'):
+            user_context_str += f"Current Course Data: {json.dumps(request.context.get('courseData'))[:1000]}..." # Truncate if too long
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Context:\n{user_context_str}\n\nUser Message: {request.message}"}
+        ]
+
+        # 3. Call OpenAI
+        client = OpenAI()
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            response_format={"type": "json_object"}
+        )
+
+        response_text = completion.choices[0].message.content
+        return json.loads(response_text)
+
+    except Exception as e:
+        logger.error(f"Global agent error: {e}")
+        return {"message": "I'm having trouble connecting right now. Please try again."}
+
+

@@ -419,7 +419,7 @@
                 data-module="{{ info.number }}">Start Quiz</button>
             </div>
             <!-- Exam body (hidden until start) -->
-            <form class="quiz-form exam-body hidden" id="quiz-form-{{ info.number }}">
+            <form class="quiz-form exam-body hidden" id="quiz-form-{{ info.number }}" data-lesson-id="{{ info.id }}">
               <div class="space-y-8">
                 {% for question in quiz.questions %}
                 {% set qidx = loop.index0 %}
@@ -433,17 +433,17 @@
 
                   <div class="choice-list space-y-3">
                     {% for choice in question.choices %}
-                    <label class="choice-item block relative cursor-pointer group">
+                    <div class="choice-item block cursor-pointer group" onclick="selectQuizOption(this)">
                       <input type="radio" name="q{{ qidx }}-m{{ info.number }}" value="{{ choice.label }}"
-                        class="peer sr-only" />
+                        class="hidden" />
                       <div
-                        class="p-4 rounded-lg border-2 border-gray-200 hover:border-indigo-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 transition-all flex items-center">
+                        class="choice-box p-4 rounded-lg border-2 border-gray-200 hover:border-indigo-300 transition-all flex items-center">
                         <span
-                          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold mr-3 peer-checked:bg-indigo-600 peer-checked:text-white transition-colors">{{
+                          class="choice-badge w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold mr-3 transition-colors">{{
                           choice.label }}</span>
                         <span class="text-gray-700 group-hover:text-gray-900">{{ choice.text }}</span>
                       </div>
-                    </label>
+                    </div>
                     {% endfor %}
                   </div>
 
@@ -497,7 +497,44 @@
 {% block scripts %}
 <script>
   (function () {
-    function evaluateQuiz(form) {
+    window.selectQuizOption = function (element) {
+      const input = element.querySelector('input[type="radio"]');
+      if (!input) return;
+      input.checked = true;
+
+      // Reset siblings
+      const container = element.closest('.choice-list');
+      const allItems = container.querySelectorAll('.choice-item');
+
+      allItems.forEach(item => {
+        const box = item.querySelector('.choice-box');
+        const badge = item.querySelector('.choice-badge');
+
+        if (box) {
+          box.classList.remove('border-indigo-600', 'bg-indigo-50');
+          box.classList.add('border-gray-200');
+        }
+        if (badge) {
+          badge.classList.remove('bg-indigo-600', 'text-white');
+          badge.classList.add('bg-gray-100', 'text-gray-500');
+        }
+      });
+
+      // Highlight selected
+      const box = element.querySelector('.choice-box');
+      const badge = element.querySelector('.choice-badge');
+
+      if (box) {
+        box.classList.remove('border-gray-200');
+        box.classList.add('border-indigo-600', 'bg-indigo-50');
+      }
+      if (badge) {
+        badge.classList.remove('bg-gray-100', 'text-gray-500');
+        badge.classList.add('bg-indigo-600', 'text-white');
+      }
+    }
+
+    async function evaluateQuiz(form) {
       const questions = Array.from(form.querySelectorAll('.question'));
       let correct = 0;
       let wrong = 0;
@@ -560,6 +597,24 @@
       // Toggle buttons
       form.querySelector('.submit-quiz').classList.add('hidden');
       form.querySelector('.reset-quiz').classList.remove('hidden');
+
+      // Submit to backend
+      const lessonId = form.getAttribute('data-lesson-id');
+      if (lessonId) {
+        try {
+          await fetch('/api/quiz/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lesson_id: parseInt(lessonId),
+              score: correct,
+              max_score: total
+            })
+          });
+        } catch (e) {
+          console.error("Failed to submit quiz score", e);
+        }
+      }
     }
 
     function resetQuiz(form) {

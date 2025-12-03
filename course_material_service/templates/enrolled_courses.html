@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Enrolled Courses - ALPHA{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-8 animate-fadeIn">
+
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Enrolled Courses</h1>
+            <p class="text-gray-600 text-lg mt-2">Courses you are currently taking.</p>
+        </div>
+    </div>
+
+    {% if courses %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for course in courses %}
+        <div
+            class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col h-full">
+            <div class="flex justify-between items-start mb-4">
+                <div class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
+                    Enrolled
+                </div>
+                <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center">
+                    Active
+                </span>
+            </div>
+
+            <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ course.title }}</h3>
+            <p class="text-sm text-gray-500 mb-4 line-clamp-3 flex-grow">{{ course.description or 'No description
+                available.' }}</p>
+
+            <div class="mt-auto">
+                <a href="/course/{{ course.id }}"
+                    class="block w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm">
+                    Continue Learning
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p class="text-gray-500">You are not enrolled in any courses yet.</p>
+        <p class="text-gray-400 text-sm mt-1">Ask an instructor to invite you!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,164 +1,218 @@
 {% extends "base.html" %}
 
-{% block title %}Course Generator - ALPHA{% endblock %}
-
-{% block head %}
-{{ super() }}
-{% endblock %}
+{% block title %}Create New Course - ALPHA{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto bg-white p-8 md:p-10 rounded-2xl shadow-xl animate-fadeIn">
+<div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fadeIn">
+    <div class="text-center mb-12">
+        <h1
+            class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight mb-4">
+            AI Course Generator
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+            Transform your ideas into professional courses in minutes. Our multi-agent AI orchestrates the entire
+            process.
+        </p>
+    </div>
 
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
-            <p class="text-gray-600 text-lg mt-2">Manage your courses and create new ones.</p>
+    <div
+        class="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/20 ring-1 ring-black/5 relative">
+        <!-- Decorative background blob -->
+        <div
+            class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-purple-100 blur-3xl opacity-50 pointer-events-none">
         </div>
-        <button onclick="document.getElementById('course-form-container').classList.toggle('hidden')"
-            class="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Create New Course
-        </button>
-    </div>
+        <div
+            class="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full bg-indigo-100 blur-3xl opacity-50 pointer-events-none">
+        </div>
 
-    <!-- My Library Section Removed (Moved to /library) -->
-    <div class="mb-8 text-center">
-        <a href="/library" class="text-indigo-600 font-semibold hover:underline">View My Library</a>
-    </div>
+        <div class="relative bg-gradient-to-r from-indigo-600 to-purple-700 px-8 py-8 text-white overflow-hidden">
+            <div class="absolute inset-0 bg-pattern opacity-10"></div> <!-- Optional pattern overlay -->
+            <h2 class="text-2xl font-bold flex items-center gap-3 relative z-10">
+                <span class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                </span>
+                Course Configuration
+            </h2>
+            <p class="mt-2 text-indigo-100 relative z-10">Define the core parameters for your new curriculum.</p>
+        </div>
 
-    <div id="course-form-container" class="hidden border-t border-gray-200 my-8 pt-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Create New Course</h2>
-        <form id="course-form" method="post" action="/create-course-plan" class="space-y-6">
+        <form id="course-form" method="post" action="/create-full-course-agent" class="p-8 space-y-10 relative z-10">
 
-            <div>
-                <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Core Details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Core Info -->
+            <div class="space-y-8">
+                <div>
+                    <label for="course_title"
+                        class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Course Title</label>
+                    <div class="relative">
+                        <input type="text" id="course_title" name="course_title" required
+                            class="block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-4 px-5 text-lg text-gray-900 placeholder-gray-400 transition-all duration-200"
+                            placeholder="e.g., Advanced Machine Learning Patterns">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <label class="block text-gray-700 font-semibold mb-1" for="course_title">Course Title</label>
-                        <input id="course_title" name="course_title" type="text"
-                            placeholder="e.g., Introduction to Python"
-                            class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                            value="{{ values.get('course_title','') }}" required>
+                        <label for="audience"
+                            class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Target
+                            Audience</label>
+                        <input type="text" id="audience" name="audience"
+                            class="block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-gray-900 placeholder-gray-400 transition-all"
+                            placeholder="e.g., Senior Engineers">
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-semibold mb-1" for="audience">Audience</label>
-                        <input id="audience" name="audience" type="text" placeholder="e.g., Beginner developers"
-                            class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                            value="{{ values.get('audience','') }}">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-semibold mb-1" for="tone">Tone</label>
-                        <input id="tone" name="tone" type="text" placeholder="e.g., Professional and engaging"
-                            class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                            value="{{ values.get('tone','') }}">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-semibold mb-1" for="duration_minutes">Target Duration
-                            (Minutes)</label>
-                        <input id="duration_minutes" name="duration_minutes" type="number"
-                            placeholder="e.g., 10 (for a single video)"
-                            class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                            value="{{ values.get('duration_minutes','') }}">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-semibold mb-1" for="num_modules">Number of
-                            Modules</label>
-                        <input id="num_modules" name="num_modules" type="number" placeholder="e.g., 2"
-                            class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                            value="{{ values.get('num_modules','') }}">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-semibold mb-1" for="num_lessons">Lessons per
-                            Module</label>
-                        <input id="num_lessons" name="num_lessons" type="number" placeholder="e.g., 3"
-                            class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                            value="{{ values.get('num_lessons','') }}">
+                        <label for="tone"
+                            class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Content
+                            Tone</label>
+                        <div class="relative">
+                            <select id="tone" name="tone"
+                                class="block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 text-gray-900 transition-all appearance-none">
+                                <option value="Professional and engaging">Professional & Engaging</option>
+                                <option value="Casual and friendly">Casual & Friendly</option>
+                                <option value="Academic and rigorous">Academic & Rigorous</option>
+                                <option value="Enthusiastic and inspiring">Enthusiastic & Inspiring</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Structure Settings -->
+            <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-100 shadow-inner">
+                <h3 class="text-sm font-bold text-indigo-600 uppercase tracking-wide mb-6 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h7"></path>
+                    </svg>
+                    Curriculum Structure
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="group">
+                        <label for="num_modules"
+                            class="block text-xs font-semibold text-gray-500 mb-2 group-hover:text-indigo-600 transition-colors">MODULES</label>
+                        <input type="number" id="num_modules" name="num_modules" value="3" min="1" max="10"
+                            class="block w-full rounded-lg border-gray-200 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-center font-mono text-lg py-2">
+                    </div>
+                    <div class="group">
+                        <label for="num_lessons"
+                            class="block text-xs font-semibold text-gray-500 mb-2 group-hover:text-indigo-600 transition-colors">LESSONS
+                            / MODULE</label>
+                        <input type="number" id="num_lessons" name="num_lessons" value="3" min="1" max="10"
+                            class="block w-full rounded-lg border-gray-200 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-center font-mono text-lg py-2">
+                    </div>
+                    <div class="group">
+                        <label for="duration_minutes"
+                            class="block text-xs font-semibold text-gray-500 mb-2 group-hover:text-indigo-600 transition-colors">AVG.
+                            DURATION (MIN)</label>
+                        <input type="number" id="duration_minutes" name="duration_minutes" value="5" min="1" max="60"
+                            class="block w-full rounded-lg border-gray-200 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-center font-mono text-lg py-2">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learning Outcomes -->
             <div>
-                <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Source Material (PDF)</h2>
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-1" for="document-dropzone">Upload Course
-                        Materials</label>
-                    <div id="document-dropzone"
-                        class="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-indigo-200 bg-indigo-50/40 rounded-xl py-6 px-4 text-center text-indigo-900 transition-all duration-300 ease-in-out cursor-pointer hover:border-indigo-400 hover:bg-indigo-50">
-                        <input id="document-input" type="file" accept="application/pdf" class="hidden">
-                        <svg class="w-10 h-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                <label for="learning_outcomes"
+                    class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Learning Outcomes</label>
+                <div class="relative">
+                    <textarea id="learning_outcomes" name="learning_outcomes" rows="5" required
+                        class="block w-full rounded-xl border-gray-200 bg-gray-50 focus:bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-4 px-5 text-gray-900 placeholder-gray-400 transition-all resize-none"
+                        placeholder="- Build a complete web application&#10;- Understand state management&#10;- Deploy to production"></textarea>
+                    <div class="absolute top-4 right-4 text-gray-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
                         </svg>
-                        <p class="text-sm font-semibold">Drag & drop a PDF here</p>
-                        <p class="text-sm text-indigo-600">
-                            or
-                            <button type="button" id="document-browse"
-                                class="font-semibold underline underline-offset-4 hover:text-indigo-800">browse
-                                files</button>
-                        </p>
-                        <p class="text-xs text-indigo-500">Upload source material to ground the AI outputs.</p>
                     </div>
-                    <p id="document-status" class="mt-2 text-sm text-gray-500">No document uploaded yet.</p>
                 </div>
+                <p class="text-xs text-gray-500 mt-2 ml-1">Enter each outcome on a new line.</p>
             </div>
 
+            <!-- Source Material -->
             <div>
-                <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">Learning Outcomes</h2>
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-1" for="learning_outcomes">Outcomes</label>
-                    <textarea id="learning_outcomes" name="learning_outcomes" rows="5"
-                        placeholder="- Explain why prompt design matters&#10;- Compare prompting patterns&#10;- Use prompts to debug failures"
-                        class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                        required>{{ values.get('learning_outcomes','') }}</textarea>
-                    <p class="text-xs text-gray-500 mt-1">Enter one outcome per line. This is crucial for generation.
-                    </p>
+                <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Source Material
+                    (Optional)</label>
+                <div id="document-dropzone"
+                    class="relative group border-2 border-dashed border-gray-300 rounded-2xl p-10 text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-all cursor-pointer bg-white">
+                    <input id="document-input" type="file" accept="application/pdf"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                    <div class="space-y-3 pointer-events-none relative z-10">
+                        <div
+                            class="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                            <svg class="h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                        </div>
+                        <div class="text-gray-600">
+                            <span class="font-bold text-indigo-600 hover:underline">Click to upload</span> or drag and
+                            drop
+                        </div>
+                        <p class="text-xs text-gray-400">PDF documents up to 10MB</p>
+                    </div>
                 </div>
-                <div class="flex items-center mt-4">
-                    <input id="skip_video" name="skip_video" type="checkbox" value="true"
-                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="skip_video" class="ml-2 block text-sm text-gray-900">
-                        Skip Video Generation (Fast Mode)
-                    </label>
-                </div>
+                <p id="document-status" class="mt-2 text-sm text-gray-500 font-medium text-center"></p>
             </div>
 
-            <div class="pt-6 border-t">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Generate Full Course</h2>
-                <p class="text-sm text-gray-500 mb-4">
-                    Choose between the classic generator and the new agentic AI pipeline.
+            <!-- Submit -->
+            <div class="pt-6">
+                <button type="submit"
+                    class="w-full flex justify-center items-center gap-3 py-5 px-6 border border-transparent rounded-2xl shadow-xl text-lg font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:scale-[1.01] hover:shadow-2xl">
+                    <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Generate Course with Agentic AI
+                </button>
+                <p class="mt-4 text-center text-xs text-gray-400 font-medium tracking-wide uppercase">
+                    Powered by DeepMind Agents
                 </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button type="submit" formaction="/create-full-course"
-                        class="w-full px-4 py-4 font-semibold rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm md:text-base">
-                        Full Course (Legacy Pipeline)
-                        <span class="block text-xs font-normal text-green-100 mt-1">
-                            RAG-powered prompts and existing video builder
-                        </span>
-                    </button>
-                    <button type="submit" formaction="/create-full-course-agent"
-                        class="w-full px-4 py-4 font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm md:text-base">
-                        Full Course (Agentic AI)
-                        <span class="block text-xs font-normal text-blue-100 mt-1">
-                            Multi-agent planner, lessons, quizzes, and validation
-                        </span>
-                    </button>
-                </div>
             </div>
         </form>
     </div>
 </div>
 
-<div id="loading-overlay" class="hidden fixed inset-0 bg-white/95 flex flex-col items-center justify-center z-50">
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-96 max-w-[90vw] text-center animate-fadeIn">
-        <h2 class="text-2xl font-bold mb-4">Creating your content…</h2>
-        <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-            <div id="progress-bar" class="h-full w-0 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+<!-- Loading Overlay -->
+<div id="loading-overlay"
+    class="hidden fixed inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-50 transition-opacity duration-300">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-100">
+        <div class="mb-6 relative">
+            <div class="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto">
+            </div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
         </div>
-        <p id="progress-text" class="mt-2 font-mono text-gray-700">0%</p>
-        <p id="progress-hint" class="mt-2 text-gray-500">Drafting materials…</p>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Orchestrating Agents</h2>
+        <p class="text-gray-500 mb-6">Our AI team is researching, planning, and building your course.</p>
+
+        <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden mb-2">
+            <div id="progress-bar" class="h-full w-0 bg-indigo-600 transition-all duration-500 ease-out"></div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-400 font-medium">
+            <span id="progress-text">0%</span>
+            <span id="progress-hint">Initializing...</span>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -166,33 +220,4 @@
 {% block scripts %}
 {{ super() }}
 <script src="{{ url_for('static', path='main.js') }}" defer></script>
-<script>
-    async function togglePublish(courseId, btn) {
-        try {
-            const response = await fetch(`/publish-course/${courseId}`, {
-                method: 'POST'
-            });
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                // Reload to update UI state properly
-                window.location.reload();
-            } else {
-                alert('Failed to update course status');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred');
-        }
-    }
-
-    function copyLink(courseId) {
-        const url = `${window.location.origin}/course/${courseId}`;
-        navigator.clipboard.writeText(url).then(() => {
-            alert('Link copied to clipboard!');
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-        });
-    }
-</script>
 {% endblock %}

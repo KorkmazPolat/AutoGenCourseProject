@@ -38,7 +38,7 @@
                             d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
                         </path>
                     </svg>
-                    <span>Dashboard</span>
+                    <span>Course Generator</span>
                 </a>
 
                 <a href="/library"
@@ -51,26 +51,17 @@
                     <span>My Library</span>
                 </a>
 
-                <a href="/system-architecture"
+                <a href="/enrolled-courses"
                     class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors font-medium">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
                         </path>
                     </svg>
-                    <span>Architecture</span>
+                    <span>Enrolled Courses</span>
                 </a>
-                <a href="/use-cases"
-                    class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors font-medium">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
-                        </path>
-                    </svg>
-                    <span>Use Cases</span>
-                </a>
+
+
 
                 <a href="/course-builder"
                     class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors font-medium">
@@ -106,7 +97,204 @@
 
     </div>
 
-    {% block scripts %}{% endblock %}
+    <!-- Global Chat Assistant Widget -->
+    <div id="chatWidget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
+        <!-- Chat Window -->
+        <div id="chatWindow"
+            class="bg-white rounded-2xl shadow-2xl w-[400px] h-[550px] mb-4 flex flex-col overflow-hidden transition-all duration-300 transform scale-0 origin-bottom-right border border-gray-200"
+            style="display: none;">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex justify-between items-center shadow-md">
+                <h3 class="text-white font-bold flex items-center gap-2 text-lg">
+                    <span class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                    </span>
+                    AI Assistant
+                </h3>
+                <button onclick="toggleChat()" class="text-white/80 hover:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Quick Skills / Suggestions -->
+            <div class="bg-gray-50 p-3 border-b border-gray-100 flex gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="sendQuickAction('Explain this page')"
+                    class="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                    Explain Page
+                </button>
+                <button onclick="sendQuickAction('Suggest improvements')"
+                    class="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                    Suggest Ideas
+                </button>
+                <button onclick="sendQuickAction('Help me navigate')"
+                    class="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                    Navigation Help
+                </button>
+            </div>
+
+            <div id="chatMessages" class="flex-1 p-4 overflow-y-auto bg-white space-y-4">
+                <!-- Messages -->
+                <div class="flex justify-start">
+                    <div class="bg-gray-100 rounded-2xl rounded-tl-none p-3 text-gray-700 text-sm max-w-[85%]">
+                        <p class="font-semibold text-indigo-600 text-xs mb-1">AI Agent</p>
+                        Hello! I'm here to help you build your course. Ask me anything about the platform or your
+                        content.
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-white border-t border-gray-100">
+                <div class="flex gap-2 items-center">
+                    <input type="text" id="chatInput"
+                        class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                        placeholder="Type a message..." onkeypress="handleChatKey(event)">
+                    <button onclick="sendChatMessage()"
+                        class="bg-indigo-600 text-white rounded-xl p-2.5 hover:bg-indigo-700 transition-colors shadow-sm flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggle Button -->
+        <button onclick="toggleChat()"
+            class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center group">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+                </path>
+            </svg>
+        </button>
+    </div>
+
+    {% block scripts %}
+    <script>
+        // Global Chat Logic
+        const chatWindow = document.getElementById('chatWindow');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+
+        function toggleChat() {
+            if (chatWindow.style.display === 'none') {
+                chatWindow.style.display = 'flex';
+                // Small delay to allow display:flex to apply before opacity transition
+                setTimeout(() => {
+                    chatWindow.classList.remove('scale-0');
+                    chatWindow.classList.add('scale-100');
+                }, 10);
+                chatInput.focus();
+            } else {
+                chatWindow.classList.remove('scale-100');
+                chatWindow.classList.add('scale-0');
+                setTimeout(() => {
+                    chatWindow.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        function handleChatKey(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        function sendQuickAction(action) {
+            chatInput.value = action;
+            sendChatMessage();
+        }
+
+        async function sendChatMessage() {
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+
+            // Add User Message
+            addChatMessage(msg, 'user');
+            chatInput.value = '';
+
+            // Show Loading
+            const loadingId = addChatMessage('Thinking...', 'system', true);
+
+            try {
+                // Gather context
+                const context = {
+                    url: window.location.href,
+                    title: document.title,
+                    // If courseData exists (on builder page), include it
+                    courseData: (typeof courseData !== 'undefined') ? courseData : null
+                };
+
+                const response = await fetch('/api/global-agent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: msg,
+                        context: context
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to get AI response');
+
+                const result = await response.json();
+
+                // Remove Loading
+                document.getElementById(loadingId).remove();
+
+                // Add AI Message
+                if (result.message) {
+                    let formattedMsg = result.message
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>');
+                    addChatMessage(formattedMsg, 'system');
+                }
+
+                // Handle specific actions if needed (e.g. navigation)
+                if (result.action === 'navigate' && result.url) {
+                    window.location.href = result.url;
+                }
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById(loadingId).innerText = 'Error: ' + error.message;
+            }
+        }
+
+        function addChatMessage(text, sender, isLoading = false) {
+            const id = 'msg-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn mb-4`;
+
+            const bubble = document.createElement('div');
+            // Added break-words and whitespace-pre-wrap for better text handling
+            const baseClasses = "rounded-2xl p-3 text-sm shadow-sm max-w-[80%] break-words whitespace-pre-wrap";
+
+            bubble.className = sender === 'user'
+                ? `${baseClasses} bg-indigo-600 text-white rounded-tr-none`
+                : `${baseClasses} bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200`;
+
+            if (isLoading) {
+                bubble.innerHTML = '<div class="flex space-x-1"><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div></div>';
+            } else {
+                bubble.innerHTML = text;
+            }
+
+            div.appendChild(bubble);
+            chatMessages.appendChild(div);
+            // Ensure we scroll to the very bottom
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 50);
+            return id;
+        }
+    </script>
+    {% endblock %}
 </body>
 
 </html>

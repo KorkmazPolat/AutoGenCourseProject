@@ -31,39 +31,45 @@ class VideoGeneratorAgent(BaseAgent):
         try:
             from course_material_service.video_builder import generate_video_from_script
             
-            # Map VideoScript schema to what video_builder expects
-            # VideoScript: { "lesson": str, "scenes": [{"text": str, "duration": int}] }
-            # video_builder expects: { "presentation": [...], "narration": [...] }
-            # We will synthesize a simple presentation from the scenes.
+            # Combine full script to let AI decide segmentation
+            full_script_text = "\n".join([s.text for s in script.scenes])
             
-            # Use LLM to design the visual presentation based on the script
-            # This ensures variety and professional content structure
+            # Use LLM to design the visual presentation AND re-segment narration
             design_prompt = f"""
-            You are a professional presentation designer.
-            Create a JSON structure for a video presentation based on the following narration script.
+            You are a professional video producer and instructional designer.
             
-            Lesson Title: {script.lesson}
+            Input Script:
+            "{full_script_text}"
             
-            Script Sections:
-            {json.dumps([s.text for s in script.scenes], indent=2)}
+            Task:
+            1. Re-organize this script into an engaging video presentation.
+            2. Determine the OPTIMAL number of slides. 
+               - Aim for 1 slide per 45-60 seconds of narration (approx 100-130 words).
+               - Avoid creating too many short slides. Group related ideas together.
+               - Minimum 3 slides, Maximum 10 slides for this length.
+            3. For each slide:
+               a. Provide the 'narration' text (you can slightly smooth/edit the original script for better flow, but keep the core message).
+               b. Design the 'slide' visuals (heading, layout, content_blocks).
             
-            For EACH script section, design a corresponding slide.
-            Return a JSON object with a "slides" key containing a list of slide objects.
+            Output JSON structure:
+            {{
+              "segments": [
+                {{
+                  "narration": "The spoken script for this segment...",
+                  "slide": {{
+                    "heading": "Short Punchy Title",
+                    "content_blocks": [
+                      {{ "type": "bullets", "items": ["Key point 1", "Key point 2"] }}
+                    ]
+                  }}
+                }}
+              ]
+            }}
             
-            Each slide object must have:
-            - "heading": A short, punchy headline (max 5 words).
-            - "layout": One of ["bullets", "quote", "callout", "checklist", "example"].
-            - "content_blocks": A list of blocks to render.
-                - For "bullets": {{ "type": "bullets", "items": ["point 1", "point 2"] }}
-                - For "quote": {{ "type": "quote", "text": "The quote text" }}
-                - For "callout": {{ "type": "callout", "text": "Important tip or note" }}
-                - For "checklist": {{ "type": "checklist", "items": ["step 1", "step 2"] }}
-                - For "example": {{ "type": "example", "title": "Example Title", "text": "The example content" }}
-            
-            Rules:
-            1. Vary the layouts! Do not just use bullets every time.
-            2. Summarize the script into key points. Do NOT copy the full script onto the slide.
-            3. Keep text concise and readable.
+            Slide Design Rules:
+            - "content_blocks" MUST NEVER BE EMPTY.
+            - Use "bullets" (list of strings), "quote" (text), "callout" (text), or "checklist" (list).
+            - Content must be concise (max 8 words per bullet).
             """
             
             try:
@@ -73,34 +79,40 @@ class VideoGeneratorAgent(BaseAgent):
                     response_format={"type": "json_object"}
                 )
                 design_data = json.loads(design_completion.choices[0].message.content)
-                designed_slides = design_data.get("slides", [])
+                segments = design_data.get("segments", [])
             except Exception as e:
                 print(f"Slide design failed, falling back to simple mode: {e}")
-                designed_slides = []
+                segments = []
 
             presentation = []
             narration = []
             
-            for i, scene in enumerate(script.scenes, 1):
-                # Get designed slide or fallback
-                if i <= len(designed_slides):
-                    slide_design = designed_slides[i-1]
-                    presentation.append({
-                        "page": i,
-                        "heading": slide_design.get("heading", script.lesson),
-                        "content": "", # Legacy field
-                        "content_blocks": slide_design.get("content_blocks", [])
-                    })
-                else:
-                    # Fallback
-                    presentation.append({
-                        "page": i,
-                        "heading": script.lesson,
-                        "content": scene.text[:100] + "..."
-                    })
+            # Fallback if AI fails to generate segments
+            if not segments:
+                # Create one big segment or split by paragraphs
+                segments = [{"narration": full_script_text, "slide": {"heading": script.lesson, "content_blocks": []}}]
+
+            for i, segment in enumerate(segments, 1):
+                slide_design = segment.get("slide", {})
+                script_text = segment.get("narration", "")
+                
+                # Ensure content blocks
+                blocks = slide_design.get("content_blocks", [])
+                if not blocks:
+                    # Smart fallback
+                    sentences = [s.strip() for s in script_text.split('.') if len(s.strip()) > 10]
+                    items = sentences[:4] if sentences else [script_text[:50] + "..."]
+                    blocks = [{"type": "bullets", "items": items}]
+
+                presentation.append({
+                    "page": i,
+                    "heading": slide_design.get("heading", script.lesson),
+                    "content": "", 
+                    "content_blocks": blocks
+                })
                 
                 narration.append({
-                    "script": scene.text
+                    "script": script_text
                 })
                 
             video_payload = {
@@ -114,8 +126,8 @@ class VideoGeneratorAgent(BaseAgent):
                 video_payload=video_payload,
                 output_path=video_path,
                 client=self._llm_client,
-                voice="alloy", # Default
-                tts_model="gpt-4o-mini-tts" # Default
+                voice="alloy", 
+                tts_model="gpt-4o-mini-tts" 
             )
             
             # Return the absolute path, but the service will need to serve it relative to static
