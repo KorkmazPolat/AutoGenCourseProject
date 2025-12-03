@@ -18,7 +18,9 @@ from course_material_service.database import get_db
 from course_material_service import models
 
 router = APIRouter()
-templates = Jinja2Templates(directory="course_material_service/templates")
+from pathlib import Path
+
+templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "course_material_service" / "templates"))
 
 
 from course_material_service.dependencies import get_session_user
@@ -567,9 +569,11 @@ async def get_course_view(
                 video_script = None
 
             # 2. Reading (Lesson Content)
-            # Only show reading if it's not the default placeholder
+            # Only show reading if it's not the default placeholder AND it is a pure reading lesson (no video/quiz)
             reading_material = {}
-            if lesson.content and lesson.content != "Placeholder content":
+            has_special_assets = any(a.asset_type in ["video", "quiz"] for a in assets)
+            
+            if not has_special_assets and lesson.content and lesson.content != "Placeholder content":
                 reading_material = {
                     "content": {
                         "text": lesson.content,
@@ -581,14 +585,18 @@ async def get_course_view(
             # 3. Quiz
             quiz_questions = {}
             quiz_asset = next((a for a in assets if a.asset_type == "quiz"), None)
-            if quiz_asset and quiz_asset.content:
+            if quiz_asset:
+                print(f"DEBUG: Found quiz asset for lesson {lesson.id}")
                 q_data = quiz_asset.content
                 if isinstance(q_data, str):
                     try:
                         q_data = json.loads(q_data)
                     except:
+                        print(f"DEBUG: Failed to parse quiz JSON for lesson {lesson.id}")
                         q_data = {}
                 
+                print(f"DEBUG: Quiz data for lesson {lesson.id}: {q_data}")
+
                 questions = []
                 raw_qs = q_data.get("questions", [])
                 if raw_qs:
@@ -612,12 +620,13 @@ async def get_course_view(
                             "rationale": None
                         })
 
-                    quiz_questions = {
-                        "content": {
-                            "questions": questions,
-                            "remediation": None
-                        }
+                # Always populate quiz_questions if asset exists, so tab shows up
+                quiz_questions = {
+                    "content": {
+                        "questions": questions,
+                        "remediation": q_data.get("remediation") or "No questions available."
                     }
+                }
 
             module_data["lessons"].append({
                 "info": {
@@ -662,9 +671,9 @@ async def assist_course_design(request: CourseAssistRequest):
     client = OpenAI(api_key=api_key)
     
     system_prompt = """You are an expert instructional designer assistant. 
-    Your task is to modify the provided Course Data JSON based on the user's request.
-    
-    The JSON structure is:
+    You help the user build a course structure. You can either answer their questions or modify the course plan.
+
+    The Course Plan JSON structure is:
     {
       "modules": [
         {
@@ -682,14 +691,19 @@ async def assist_course_design(request: CourseAssistRequest):
       ]
     }
     
+    You must return a JSON object with the following structure:
+    {
+        "message": "Your reply to the user (explanation, confirmation, or answer)",
+        "updated_plan": { ... the full course plan object ... } OR null
+    }
+
     Rules:
-    1. Return ONLY the valid JSON of the updated course data.
-    2. Do not include markdown formatting or explanations.
+    1. If the user asks a question (e.g., "What is a good topic?"), provide a helpful "message" and set "updated_plan" to null.
+    2. If the user asks to change the course (e.g., "Add a module"), perform the change on the provided Current Course Plan and return the FULL updated object in "updated_plan". Also provide a brief confirmation in "message".
     3. Maintain existing IDs for existing items.
     4. If adding new modules or items, generate a unique string ID (e.g., "mod-new-1", "item-new-1").
     5. Default new item type to "video" unless specified otherwise.
     6. Default new item description to a brief summary of the title.
-    7. Respect the user's intent (add, remove, rename, reorder).
     """
     
     user_prompt = f"""
@@ -698,7 +712,7 @@ async def assist_course_design(request: CourseAssistRequest):
     
     User Request: "{request.message}"
     
-    Return the updated JSON:
+    Return the JSON response:
     """
     
     try:
@@ -714,15 +728,9 @@ async def assist_course_design(request: CourseAssistRequest):
         )
         
         content = completion.choices[0].message.content
-        updated_plan = json.loads(content)
+        response_data = json.loads(content)
         
-        # Normalize if needed (ensure 'modules' key exists)
-        if "modules" not in updated_plan:
-             # Try to find it if nested or malformed, otherwise return original with error note?
-             # For now assume GPT-4o-mini follows instructions well with json_object mode.
-             pass
-             
-        return updated_plan
+        return response_data
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

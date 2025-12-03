@@ -672,7 +672,7 @@
 <script>
     // State Management
     // State Management
-    let courseData = {{ course_data | safe if course_data else 'null' }};
+    let courseData = JSON.parse('{{ course_data | safe if course_data else "null" }}');
 
     if (!courseData) {
         courseData = {
@@ -768,17 +768,26 @@
 
             if (!response.ok) throw new Error('Failed to get AI response');
 
-            const updatedPlan = await response.json();
-
-            // Update State
-            courseData = updatedPlan;
-            renderModules();
+            const result = await response.json();
 
             // Remove Loading
             document.getElementById(loadingId).remove();
 
-            // Add AI Response
-            addChatMessage('I have updated the course plan based on your request.', 'system');
+            // Add AI Message
+            if (result.message) {
+                // Simple markdown-like formatting for bold/list
+                let formattedMsg = result.message
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                addChatMessage(formattedMsg, 'system');
+            }
+
+            // Update Plan if provided
+            if (result.updated_plan) {
+                courseData = result.updated_plan;
+                renderModules();
+                // Optional: Flash success or something
+            }
 
         } catch (error) {
             console.error(error);

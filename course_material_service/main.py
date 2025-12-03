@@ -525,8 +525,12 @@ def render_login_form(request: Request):
 
 @app.get("/", response_class=HTMLResponse, tags=["web"])
 def render_root(request: Request):
-    """Redirects root (/) to the login page."""
-    return RedirectResponse(url="/login", status_code=303)
+    """Serves the public landing page."""
+    # Always show landing page at root, even if logged in.
+    return templates.TemplateResponse(
+        "landing_page.html",
+        {"request": request}
+    )
 
 @app.post("/publish-course/{course_id}", tags=["web"])
 async def publish_course(course_id: int, db: AsyncSession = Depends(get_db), user_id: int = Depends(get_session_user)):
