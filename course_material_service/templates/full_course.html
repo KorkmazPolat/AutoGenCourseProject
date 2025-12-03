@@ -3,7 +3,7 @@
 {% block title %}{{ course_title }} - Full Course - ALPHA{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto mb-10">
+<div class="w-full px-6 mb-10">
   <!-- Hero header -->
   <div class="relative overflow-hidden rounded-2xl mb-8">
     <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 opacity-90"></div>
@@ -22,7 +22,7 @@
 
   <div class="grid grid-cols-12 gap-6">
     <!-- Sidebar: modules as pages -->
-    <aside class="col-span-12 md:col-span-4 lg:col-span-3">
+    <aside class="col-span-12 md:col-span-3 lg:col-span-2">
       <div class="sticky top-6 bg-white rounded-2xl shadow-xl p-5 overflow-y-auto max-h-[calc(100vh-4rem)]">
         <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Course Modules</h2>
         {% if modules_output %}
@@ -53,7 +53,7 @@
     </aside>
 
     <!-- Main content: one page per module with subheadings -->
-    <section class="col-span-12 md:col-span-8 lg:col-span-9">
+    <section class="col-span-12 md:col-span-9 lg:col-span-10">
       {% if modules_output %}
       {% for module in modules_output %}
       {% for lesson in module.lessons %}
@@ -149,8 +149,202 @@
             <h3 class="text-lg font-semibold text-gray-900 mb-2">Reading</h3>
             {% if reading %}
             {% if reading.text %}
-            <div class="prose max-w-none text-gray-700">
-              {{ reading.text | markdown | safe }}
+            <!-- PDF Viewer UI -->
+            <div
+              class="pdf-viewer-container flex flex-col h-[850px] bg-gray-700 rounded-lg overflow-hidden border border-gray-600 shadow-2xl">
+              <!-- Toolbar -->
+              <div
+                class="pdf-toolbar bg-gray-800 text-gray-300 px-4 py-3 flex items-center justify-between border-b border-gray-900 shadow-md z-10">
+                <div class="flex items-center space-x-4">
+                  <span class="font-semibold text-white tracking-wide text-sm">{{ info.title }}.pdf</span>
+                </div>
+                <div class="flex items-center space-x-2 bg-gray-700 rounded-lg px-2 py-1">
+                  <button class="hover:text-white p-1"><svg class="w-4 h-4" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                    </svg></button>
+                  <span class="text-xs font-mono text-white">100%</span>
+                  <button class="hover:text-white p-1"><svg class="w-4 h-4" fill="none" stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg></button>
+                </div>
+                <div class="flex items-center space-x-4">
+                  <button class="hover:text-white transition-colors" title="Download">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                  </button>
+                  <button class="hover:text-white transition-colors" title="Print">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                      </path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Scrollable Viewport -->
+              <div class="pdf-viewport flex-1 bg-gray-500 overflow-y-auto flex justify-center p-8">
+                <!-- A4 Page Simulation -->
+                <div
+                  class="pdf-page bg-white shadow-2xl w-full max-w-[800px] min-h-[1100px] p-12 relative mx-auto text-gray-900 transition-transform duration-200"
+                  style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.6;">
+
+                  <style>
+                    /* Professional Document Styling */
+                    .pdf-content h1,
+                    .pdf-content h2,
+                    .pdf-content h3,
+                    .pdf-content h4 {
+                      font-family: 'Times New Roman', Times, serif;
+                      color: #111827;
+                      margin-top: 1.5em;
+                      margin-bottom: 0.5em;
+                      line-height: 1.2;
+                    }
+
+                    .pdf-content h1 {
+                      font-size: 24pt;
+                      font-weight: bold;
+                      border-bottom: 2px solid #000;
+                      padding-bottom: 0.2em;
+                    }
+
+                    .pdf-content h2 {
+                      font-size: 18pt;
+                      font-weight: bold;
+                      border-bottom: 1px solid #e5e7eb;
+                      padding-bottom: 0.2em;
+                    }
+
+                    .pdf-content h3 {
+                      font-size: 14pt;
+                      font-weight: bold;
+                    }
+
+                    .pdf-content h4 {
+                      font-size: 12pt;
+                      font-weight: bold;
+                      font-style: italic;
+                    }
+
+                    .pdf-content p {
+                      margin-bottom: 1em;
+                      text-align: justify;
+                    }
+
+                    .pdf-content ul,
+                    .pdf-content ol {
+                      margin-bottom: 1em;
+                      padding-left: 2em;
+                    }
+
+                    .pdf-content ul {
+                      list-style-type: disc;
+                    }
+
+                    .pdf-content ol {
+                      list-style-type: decimal;
+                    }
+
+                    .pdf-content li {
+                      margin-bottom: 0.5em;
+                    }
+
+                    .pdf-content pre {
+                      background-color: #f3f4f6;
+                      padding: 1em;
+                      border-radius: 4px;
+                      font-family: 'Courier New', Courier, monospace;
+                      font-size: 10pt;
+                      overflow-x: auto;
+                      margin-bottom: 1em;
+                      border: 1px solid #e5e7eb;
+                    }
+
+                    .pdf-content code {
+                      font-family: 'Courier New', Courier, monospace;
+                      background-color: #f3f4f6;
+                      padding: 0.1em 0.3em;
+                      border-radius: 2px;
+                      font-size: 0.9em;
+                    }
+
+                    .pdf-content pre code {
+                      background-color: transparent;
+                      padding: 0;
+                    }
+
+                    .pdf-content blockquote {
+                      border-left: 4px solid #d1d5db;
+                      padding-left: 1em;
+                      margin-left: 0;
+                      margin-right: 0;
+                      margin-bottom: 1em;
+                      font-style: italic;
+                      color: #4b5563;
+                    }
+
+                    .pdf-content table {
+                      width: 100%;
+                      border-collapse: collapse;
+                      margin-bottom: 1em;
+                      font-size: 11pt;
+                    }
+
+                    .pdf-content th,
+                    .pdf-content td {
+                      border: 1px solid #d1d5db;
+                      padding: 0.5em;
+                      text-align: left;
+                    }
+
+                    .pdf-content th {
+                      background-color: #f9fafb;
+                      font-weight: bold;
+                    }
+                  </style>
+
+                  <!-- Document Header -->
+                  <div class="border-b-2 border-black pb-4 mb-8 flex justify-between items-end">
+                    <div>
+                      <h1 class="text-2xl font-bold uppercase tracking-wider text-black mb-1"
+                        style="font-family: 'Times New Roman', Times, serif;">{{ info.title }}</h1>
+                      <p class="text-sm text-gray-600 italic">Module {{ info.number }} • Course Material</p>
+                    </div>
+                    <div class="text-right">
+                      <div class="w-8 h-8 bg-black text-white flex items-center justify-center font-bold rounded-sm">A
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Content -->
+                  <div class="pdf-content">
+                    {% if reading.text %}
+                    {{ reading.text | markdown | safe }}
+                    {% else %}
+                    <!-- Fallback if text is not directly available, render sections -->
+                    {% if reading.summary %}
+                    <p class="font-bold mb-4">{{ reading.summary }}</p>
+                    {% endif %}
+                    {% for section in reading.sections %}
+                    <h2>{{ section.heading }}</h2>
+                    <div>{{ section.content | markdown | safe }}</div>
+                    {% endfor %}
+                    {% endif %}
+                  </div>
+
+                  <!-- Document Footer -->
+                  <div
+                    class="mt-12 pt-4 border-t border-gray-300 flex justify-between text-[10px] text-gray-500 font-sans">
+                    <span>Alpha Learning Systems</span>
+                    <span>Page 1</span>
+                  </div>
+                </div>
+              </div>
             </div>
             {% else %}
             {% if reading.summary %}<p><strong>Summary:</strong> {{ reading.summary }}</p>{% endif %}

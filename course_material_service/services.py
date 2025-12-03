@@ -97,4 +97,5 @@ async def save_course_to_db(db: AsyncSession, result: Dict[str, Any], learning_o
             ))
 
     await db.commit()
+    await db.refresh(course)
     return course

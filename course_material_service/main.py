@@ -665,6 +665,190 @@ async def render_course_builder_with_data(
         }
     )
 
+@app.get("/course/{course_id}", response_class=HTMLResponse, tags=["web"])
+async def render_full_course_db(
+    request: Request,
+    course_id: int,
+    user_id: int = Depends(get_session_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Renders the full course view (video/reading/quiz) from the database."""
+    # Fetch Course
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    # Fetch Modules
+    result_mods = await db.execute(
+        select(models.CourseModule).where(models.CourseModule.course_id == course_id).order_by(models.CourseModule.order_index)
+    )
+    modules = result_mods.scalars().all()
+
+    modules_output = []
+    for module in modules:
+        # Fetch Lessons
+        result_lessons = await db.execute(
+            select(models.Lesson).where(models.Lesson.module_id == module.id).order_by(models.Lesson.order_index)
+        )
+        lessons = result_lessons.scalars().all()
+        
+        lesson_list = []
+        for lesson in lessons:
+            # Fetch Assets
+            result_assets = await db.execute(
+                select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id)
+            )
+            assets = result_assets.scalars().all()
+            
+            asset_map = {}
+            for asset in assets:
+                if asset.asset_type == "video":
+                    # We might store script in asset.content or have a separate script asset
+                    # For now, let's just pass the video URL if it exists
+                    asset_map["video_script"] = {
+                        "video_url": f"/videos/{Path(asset.file_path).name}" if asset.file_path else None,
+                        "content": asset.content # Script content
+                    }
+                elif asset.asset_type == "reading_material":
+                    asset_map["reading_material"] = {"content": asset.content}
+                elif asset.asset_type == "quiz":
+                    asset_map["quiz_questions"] = {"content": asset.content}
+            
+            lesson_list.append({
+                "info": {
+                    "number": lesson.order_index, # Use order index as number
+                    "title": lesson.title,
+                    "summary": lesson.content[:200] + "..." if lesson.content else "",
+                    "id": lesson.id
+                },
+                "assets": asset_map
+            })
+            
+        modules_output.append({
+            "title": module.title,
+            "lessons": lesson_list
+        })
+
+    return templates.TemplateResponse(
+        "full_course.html",
+        {
+            "request": request,
+            "course_title": course.title,
+            "course_id": course.id,
+            "modules_output": modules_output,
+            "voice": "alloy" 
+        }
+    )
+
+@app.get("/api/courses/{course_id}/modules/{module_id}/lessons/{lesson_id}/pdf", tags=["content"])
+async def get_lesson_pdf(
+    course_id: int,
+    module_id: int,
+    lesson_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Generates and returns a PDF for the specified lesson."""
+    try:
+        from course_material_service.pdf_utils import markdown_to_pdf
+    except ImportError:
+        from pdf_utils import markdown_to_pdf
+    
+    # Fetch Lesson
+    result = await db.execute(select(models.Lesson).where(models.Lesson.id == lesson_id))
+    lesson = result.scalars().first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Fetch Assets (to check for reading material overrides)
+    result_assets = await db.execute(select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id))
+    assets = result_assets.scalars().all()
+    
+    # Determine content
+    content = lesson.content
+    reading_asset = next((a for a in assets if a.asset_type == "reading_material"), None)
+    if reading_asset and reading_asset.content:
+        # If structured reading asset exists, use its text
+        if isinstance(reading_asset.content, dict):
+            content = reading_asset.content.get("text", content)
+        elif isinstance(reading_asset.content, str):
+            content = reading_asset.content
+
+    pdf_bytes = markdown_to_pdf(content, title=lesson.title)
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={lesson.title}.pdf"}
+    )
+
+@app.get("/api/courses/{course_id}/modules/index/{module_idx}/lessons/index/{lesson_idx}/pdf", tags=["content"])
+async def get_lesson_pdf_by_index(
+    course_id: int,
+    module_idx: int,
+    lesson_idx: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Generates PDF by looking up lesson via index (more robust than ID)."""
+    try:
+        from course_material_service.pdf_utils import markdown_to_pdf
+    except ImportError:
+        from pdf_utils import markdown_to_pdf
+
+    # Fetch Course
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    # Fetch Modules
+    result_mods = await db.execute(
+        select(models.CourseModule)
+        .where(models.CourseModule.course_id == course_id)
+        .order_by(models.CourseModule.order_index)
+    )
+    modules = result_mods.scalars().all()
+    
+    if module_idx < 0 or module_idx >= len(modules):
+        raise HTTPException(status_code=404, detail="Module index out of range")
+        
+    module = modules[module_idx]
+
+    # Fetch Lessons
+    result_lessons = await db.execute(
+        select(models.Lesson)
+        .where(models.Lesson.module_id == module.id)
+        .order_by(models.Lesson.order_index)
+    )
+    lessons = result_lessons.scalars().all()
+
+    if lesson_idx < 0 or lesson_idx >= len(lessons):
+        # Fallback: if there's only one lesson and index is 0, it might be okay
+        raise HTTPException(status_code=404, detail="Lesson index out of range")
+
+    lesson = lessons[lesson_idx]
+
+    # Fetch Assets
+    result_assets = await db.execute(select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id))
+    assets = result_assets.scalars().all()
+    
+    # Determine content
+    content = lesson.content
+    reading_asset = next((a for a in assets if a.asset_type == "reading_material"), None)
+    if reading_asset and reading_asset.content:
+        if isinstance(reading_asset.content, dict):
+            content = reading_asset.content.get("text", content)
+        elif isinstance(reading_asset.content, str):
+            content = reading_asset.content
+
+    pdf_bytes = markdown_to_pdf(content, title=lesson.title)
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={lesson.title}.pdf"}
+    )
+
 @app.post("/login", response_class=HTMLResponse, tags=["web"])
 async def handle_login(
     request: Request,
@@ -1651,7 +1835,8 @@ async def agentic_finalize_course(
     result = await run_in_threadpool(manager.run, outcomes, skip_video=skip_video)
     
     # Save to DB
-    await save_course_to_db(db, result, outcomes, user_id)
+    saved_course = await save_course_to_db(db, result, outcomes, user_id)
+    print(f"DEBUG: Saved course ID: {saved_course.id}") # Debug log
 
     course_plan = result.get("course_plan", {}) or {}
     modules = course_plan.get("modules") or []
@@ -1665,6 +1850,22 @@ async def agentic_finalize_course(
     # legacy full_course.html template but the content comes from AgentManager.
     modules_output: List[Dict[str, Any]] = []
     lesson_index = 0
+    
+    # We need to fetch the actual DB lessons to get their IDs for the PDF link
+    # Since save_course_to_db commits, we can query them back or modify save_course_to_db to return them.
+    # For now, let's query them back to be safe and simple.
+    result_db_lessons = await db.execute(
+        select(models.Lesson)
+        .join(models.CourseModule)
+        .where(models.CourseModule.course_id == saved_course.id)
+        .order_by(models.CourseModule.order_index, models.Lesson.order_index)
+    )
+    db_lessons = result_db_lessons.scalars().all()
+    # Create a map of lesson title -> lesson id for easy lookup
+    # Note: Titles might not be unique globally, but should be unique per module usually. 
+    # A safer way is to rely on the order since we save them in order.
+    
+    db_lesson_index = 0
 
     for module_idx, module in enumerate(modules, start=1):
         module_title = module.get("title") if isinstance(module, dict) else getattr(module, "title", None)
@@ -1678,12 +1879,22 @@ async def agentic_finalize_course(
         module_scripts = scripts[lesson_index : lesson_index + count] if count else []
         module_videos = videos[lesson_index : lesson_index + count] if count else []
         module_quizzes = quizzes[lesson_index : lesson_index + count] if count else []
+        
+        # Get corresponding DB lessons
+        module_db_lessons = db_lessons[db_lesson_index : db_lesson_index + count] if count else []
+        
         lesson_index += count
+        db_lesson_index += count
 
         # Build a summary from the first lesson, if available.
         primary_lesson: Dict[str, Any] = module_lessons[0] if module_lessons else {}
+        primary_db_lesson = module_db_lessons[0] if module_db_lessons else None
+        
         title = primary_lesson.get("title") or module_title or f"Module {module_idx}"
         summary = primary_lesson.get("summary") or ""
+        
+        # Use the DB ID if available
+        lesson_id = primary_db_lesson.id if primary_db_lesson else 0
 
         # VIDEO SCRIPT: Use the generated scripts and videos
         narration_blocks: List[Dict[str, Any]] = []
@@ -1743,6 +1954,8 @@ async def agentic_finalize_course(
         reading_content: Dict[str, Any] = {
             "summary": summary,
             "sections": reading_sections,
+            # Pass the full text for the PDF generator if needed, though we use the DB lesson content usually
+            "text": "\n\n".join([l.get("text", "") for l in module_lessons]) 
         }
 
         # QUIZ: merge all agentic quizzes for this module into the template
@@ -1794,20 +2007,30 @@ async def agentic_finalize_course(
             "quiz_questions": {"content": quiz_content},
         }
 
+        # Wrap the module content as a single lesson for this view
+        lesson_entry = {
+            "info": {
+                "number": module_idx,
+                "title": module_title or title,
+                "summary": summary,
+                "id": lesson_id, # Pass the DB ID of the first lesson
+                "course_id": saved_course.id # Pass course_id explicitly here too
+            },
+            "assets": assets_for_module,
+        }
+        print(f"DEBUG: Module {module_idx} Lesson ID: {lesson_id}") # Debug log
+
         modules_output.append(
             {
-                "info": {
-                    "number": module_idx,
-                    "title": module_title or title,
-                    "summary": summary,
-                },
-                "assets": assets_for_module,
+                "title": module_title or title,
+                "lessons": [lesson_entry]
             }
         )
 
     page_context = {
         "request": request,
         "course_title": course_plan.get("title") or course_title,
+        "course_id": saved_course.id, # Pass the saved course ID
         "audience": audience,
         "tone": tone,
         "duration_minutes": duration_minutes,

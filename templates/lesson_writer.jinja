@@ -9,27 +9,24 @@ Research Context: {{ research_context | tojson }}
 {% endif %}
 
 **CRITICAL INSTRUCTIONS:**
-1.  **NOT A SCRIPT:** Do NOT write a video script, screenplay, or speech. Do NOT use "In this video..." or "Welcome back...". Write a **written document** meant to be read.
-2.  **DEPTH & LENGTH:** The content must be substantial (at least 1000 words). It should cover the topic in enough detail that a student could learn it *without* watching the video.
-3.  **Structure:**
-    *   **Introduction:** A formal introduction to the topic.
-    *   **Core Concepts:** Detailed explanation of theories, definitions, and mechanisms.
-    *   **In-Depth Analysis:** Go beyond the basics. Discuss nuances, edge cases, or advanced applications.
-    *   **Step-by-Step Guides:** If applicable, provide detailed written tutorials.
-    *   **Case Studies / Examples:** Concrete, real-world scenarios.
-    *   **Summary:** A solid conclusion.
-
-4.  **Formatting:**
-    *   Use **Markdown** headers (`##`, `###`) to structure the text.
-    *   Use **bold** for key terms.
-    *   Use lists for readability.
-    *   Use `> blockquotes` for key takeaways.
-    *   Use code blocks for technical content.
+1.  **NOT A SCRIPT:** Do NOT write a video script. Write a **formal textbook chapter**.
+2.  **STRUCTURED MARKDOWN:** You MUST use rich Markdown formatting to structure the document. This will be rendered as a PDF.
+    *   Use `##` for main section headers.
+    *   Use `###` for sub-headers.
+    *   Use `**Bold**` for important terms and concepts.
+    *   Use `> Blockquotes` for definitions, warnings, or key takeaways.
+    *   Use `*` or `1.` for lists.
+    *   Use `---` to separate major sections.
+3.  **CONTENT DEPTH:**
+    *   **Introduction:** Clear overview of the topic.
+    *   **Core Concepts:** Detailed explanations.
+    *   **Examples:** Concrete scenarios or code snippets.
+    *   **Summary:** A concise wrap-up.
 
 **Output Format:**
 Return ONLY a JSON object matching this schema:
 {
   "title": "{{ lesson_name }}",
-  "text": "Full markdown-formatted textbook chapter...",
+  "text": "# {{ lesson_name }}\n\n## Introduction\n[Content...]\n\n## Core Concepts\n[Content...]\n\n...",
   "summary": "Brief summary..."
 }

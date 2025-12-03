@@ -106,7 +106,7 @@ class LessonWriterAgent(BaseAgent):
             lesson_name=writer_input.lesson_name,
             learning_outcomes=writer_input.learning_outcomes,
         )
-        llm_result = self.call_llm(prompt)
+        llm_result = self.call_llm(prompt, response_format={"type": "json_object"})
 
         # Be defensive: if the LLM returns non-JSON text, fall back to a
         # minimal LessonContent instead of raising and breaking the pipeline.

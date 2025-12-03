@@ -140,69 +140,78 @@ def _create_slide_image(
     margin_x, margin_y = 72, 68
     content_width = W - (2 * margin_x)
 
-    # Create gradient background
+    # Create gradient background with subtle grid pattern
     base_img = Image.new("RGB", size, color=background_color)
     draw = ImageDraw.Draw(base_img)
     
     # Generate gradient
     if theme == "dark":
-        top_color = (20, 24, 35)
-        bottom_color = (10, 12, 18)
+        top_color = (15, 23, 42) # Slate 900
+        bottom_color = (30, 41, 59) # Slate 800
     else:
         top_color = (255, 255, 255)
-        bottom_color = (240, 245, 255)
+        bottom_color = (241, 245, 249) # Slate 100
 
     for y in range(H):
         r = int(top_color[0] + (bottom_color[0] - top_color[0]) * y / H)
         g = int(top_color[1] + (bottom_color[1] - top_color[1]) * y / H)
         b = int(top_color[2] + (bottom_color[2] - top_color[2]) * y / H)
         draw.line([(0, y), (W, y)], fill=(r, g, b))
+        
+    # Draw subtle grid
+    grid_color = (255, 255, 255, 10) if theme == "dark" else (0, 0, 0, 10)
+    grid_size = 40
+    overlay = Image.new("RGBA", size, (0, 0, 0, 0))
+    ov_draw = ImageDraw.Draw(overlay)
+    for x in range(0, W, grid_size):
+        ov_draw.line([(x, 0), (x, H)], fill=grid_color, width=1)
+    for y in range(0, H, grid_size):
+        ov_draw.line([(0, y), (W, y)], fill=grid_color, width=1)
+    base_img.paste(overlay, (0, 0), overlay)
     
     image = base_img
     draw = ImageDraw.Draw(image)
 
-    # Top accent bar
-    draw.rectangle([(0, 0), (W, 8)], fill=accent)
-
-    # Diagonal corner accent for subtle branding flair
-    try:
-        draw.polygon([(W, 0), (W, 80), (W - 140, 0)], fill=(accent[0], max(0, accent[1]-25), max(0, accent[2]-25)))
-    except Exception:
-        pass
-
-    # Heading with subtle shadow
+    # Top accent bar - thicker and glowing
+    draw.rectangle([(0, 0), (W, 12)], fill=accent)
+    
+    # Heading with modern typography
     heading_lines = _wrap_text(draw, slide.heading, heading_font, content_width)
     current_y = margin_y
     for line in heading_lines:
-        # shadow
-        draw.text((margin_x + 2, current_y + 2), line, font=heading_font, fill=(0, 0, 0))
+        # Subtle drop shadow for text
+        draw.text((margin_x + 2, current_y + 2), line, font=heading_font, fill=(0, 0, 0, 128))
         draw.text((margin_x, current_y), line, font=heading_font, fill=heading_color)
         _, _, _, line_height = draw.textbbox((margin_x, current_y), line or " ", font=heading_font)
-        current_y += line_height + 8
+        current_y += line_height + 12
 
-    current_y += 16
+    current_y += 24
 
-    # Body panel with soft shadow
+    # Body panel with glassmorphism effect
     panel_top = current_y - 8
     panel_left = margin_x - 12
     panel_right = W - margin_x + 12
     panel_bottom = H - margin_y + 8
-    # Guard against inverted rectangle coordinates when heading consumes too much space
     if panel_bottom <= panel_top:
         panel_top = max(margin_y, panel_bottom - 20)
-    # shadow
-    shadow_offset = 6
-    draw.rectangle([(panel_left+shadow_offset, panel_top+shadow_offset), (panel_right+shadow_offset, panel_bottom+shadow_offset)], fill=(10, 12, 18))
-    try:
-        draw.rounded_rectangle(
-            [(panel_left, panel_top), (panel_right, panel_bottom)],
-            radius=16,
-            fill=panel_fill,
-            outline=panel_outline,
-            width=2,
-        )
-    except Exception:
-        draw.rectangle([(panel_left, panel_top), (panel_right, panel_bottom)], fill=panel_fill, outline=panel_outline, width=2)
+        
+    # Draw panel shadow
+    shadow_offset = 8
+    draw.rounded_rectangle(
+        [(panel_left+shadow_offset, panel_top+shadow_offset), (panel_right+shadow_offset, panel_bottom+shadow_offset)], 
+        radius=20, 
+        fill=(0, 0, 0)
+    )
+    # Blur shadow manually or just use semi-transparent rect for speed
+    
+    # Draw main panel
+    draw.rounded_rectangle(
+        [(panel_left, panel_top), (panel_right, panel_bottom)],
+        radius=20,
+        fill=panel_fill,
+        outline=panel_outline,
+        width=2,
+    )
 
     def draw_bullets(items: List[str], indent: int = 28) -> None:
         nonlocal current_y
