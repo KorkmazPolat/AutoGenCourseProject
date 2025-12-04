@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from collections import defaultdict
 from concurrent.futures import Future, ThreadPoolExecutor
-from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -20,145 +18,146 @@ class FeedbackEvent:
 
 
 class FeedbackMonitor:
-    """
-    Captures approvals/rejections from different stages so we can surface trends.
-    """
+    """Capture approval/rejection metadata per pipeline stage."""
 
     def __init__(self) -> None:
-        self.events: List[FeedbackEvent] = []
+        self._events: List[FeedbackEvent] = []
 
-    def record(self, stage: str, success: bool, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def log_event(self, stage: str, success: bool, metadata: Optional[Dict[str, Any]] = None) -> None:
         event = FeedbackEvent(stage=stage, success=success, metadata=metadata or {})
-        self.events.append(event)
+        self._events.append(event)
         if not success:
-            logger.warning("Feedback failure on %s: %s", stage, event.metadata)
+            logger.warning("Feedback failure @%s -> %s", stage, event.metadata)
 
     def failure_trends(self) -> Dict[str, int]:
-        failures: Dict[str, int] = defaultdict(int)
-        for event in self.events:
+        failures: Dict[str, int] = {}
+        for event in self._events:
             if not event.success:
-                failures[event.stage] += 1
-        return dict(failures)
+                failures[event.stage] = failures.get(event.stage, 0) + 1
+        return failures
 
     def summary(self) -> Dict[str, Any]:
-        success_count = sum(1 for event in self.events if event.success)
-        failure_count = len(self.events) - success_count
+        stage_totals: Dict[str, Dict[str, int]] = {}
+        for event in self._events:
+            stage_stats = stage_totals.setdefault(event.stage, {"approvals": 0, "rejections": 0})
+            if event.success:
+                stage_stats["approvals"] += 1
+            else:
+                stage_stats["rejections"] += 1
+
         return {
-            "total_events": len(self.events),
-            "success_count": success_count,
-            "failure_count": failure_count,
-            "failures_by_stage": self.failure_trends(),
+            "total_events": len(self._events),
+            "stages": stage_totals,
+            "failure_trends": self.failure_trends(),
             "recent_failures": [
-                event.metadata for event in self.events if not event.success
-            ][-5:],
+                {
+                    "stage": event.stage,
+                    "metadata": event.metadata,
+                    "ts": event.timestamp,
+                }
+                for event in self._events
+                if not event.success
+            ][:5],
         }
 
 
 class PerformanceMonitor:
-    """
-    Lightweight perf tracker that times stage execution and keeps aggregates.
-    """
+    """Record execution durations via context manager usage."""
+
+    class _StageTimer:
+        def __init__(self, monitor: PerformanceMonitor, stage: str) -> None:
+            self._monitor = monitor
+            self._stage = stage
+            self._start: float | None = None
+
+        def __enter__(self) -> PerformanceMonitor._StageTimer:
+            self._start = time.perf_counter()
+            return self
+
+        def __exit__(self, exc_type, exc, exc_tb) -> None:
+            end = time.perf_counter()
+            duration = end - (self._start or end)
+            self._monitor._record(self._stage, duration)
+            if exc:
+                logger.exception("Stage %s failed after %.2fs", self._stage, duration)
 
     def __init__(self) -> None:
-        self.metrics: Dict[str, List[float]] = defaultdict(list)
+        self._durations: Dict[str, List[float]] = {}
 
-    @contextmanager
-    def track(self, stage: str) -> Any:
-        start = time.perf_counter()
-        try:
-            yield
-        finally:
-            duration = time.perf_counter() - start
-            self.metrics[stage].append(duration)
-            logger.debug("Stage %s took %.2fs", stage, duration)
+    def track(self, stage: str) -> PerformanceMonitor._StageTimer:
+        return PerformanceMonitor._StageTimer(self, stage)
 
-    def capture(self, stage: str, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
-        with self.track(stage):
-            return func(*args, **kwargs)
+    def _record(self, stage: str, duration: float) -> None:
+        self._durations.setdefault(stage, []).append(duration)
+        logger.debug("Stage %s duration %.2fs", stage, duration)
 
     def summary(self) -> Dict[str, Dict[str, float]]:
-        summary: Dict[str, Dict[str, float]] = {}
-        for stage, durations in self.metrics.items():
+        snapshot: Dict[str, Dict[str, float]] = {}
+        for stage, durations in self._durations.items():
             if not durations:
                 continue
-            summary[stage] = {
+            snapshot[stage] = {
                 "count": len(durations),
                 "avg_seconds": sum(durations) / len(durations),
-                "max_seconds": max(durations),
                 "min_seconds": min(durations),
+                "max_seconds": max(durations),
             }
-        return summary
+        return snapshot
 
 
 class WorkloadManager:
-    """
-    Queues heavy tasks (video rendering) and captures telemetry + queue depth.
-    """
+    """Manage background tasks (e.g., video rendering) with bounded concurrency."""
 
-    def __init__(self, max_video_workers: int = 2) -> None:
-        self.max_video_workers = max_video_workers
-        self._executor: Optional[ThreadPoolExecutor] = None
-        self.video_tasks: List[Tuple[str, Future]] = []
-        self.queue_depth_history: List[int] = []
-        self.video_durations: List[Dict[str, Any]] = []
+    def __init__(self, max_workers: int = 2) -> None:
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+        self._tasks: List[Tuple[str, Future]] = []
+        self._queue_depths: List[int] = []
+        self._task_log: List[Dict[str, Any]] = []
 
-    def _ensure_executor(self) -> ThreadPoolExecutor:
-        if self._executor is None:
-            self._executor = ThreadPoolExecutor(max_workers=self.max_video_workers)
-        return self._executor
+    def submit_task(self, task_name: str, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Future:
+        pending = sum(1 for _, future in self._tasks if not future.done())
+        self._queue_depths.append(pending)
 
-    def submit_video_task(self, lesson_name: str, script_payload: Dict[str, Any], generator: Any) -> None:
-        pending = sum(1 for _, task in self.video_tasks if not task.done())
-        self.queue_depth_history.append(pending)
-        logger.info("Queueing video generation for '%s' (queue depth: %d)", lesson_name, pending)
-
-        def _task() -> Dict[str, Any]:
+        def _runner() -> Dict[str, Any]:
             start = time.perf_counter()
             try:
-                video_info = generator.generate(script_payload)
-                success = True
-                return {"lesson_name": lesson_name, "video_info": video_info, "duration": time.perf_counter() - start, "success": success}
+                result = func(*args, **kwargs)
+                duration = time.perf_counter() - start
+                return {"task_name": task_name, "result": result, "success": True, "duration": duration, "error": None}
             except Exception as exc:  # noqa: BLE001
                 duration = time.perf_counter() - start
-                logger.exception("Video generation failed for '%s': %s", lesson_name, exc)
-                return {"lesson_name": lesson_name, "video_info": None, "duration": duration, "success": False, "error": str(exc)}
+                logger.exception("Async task %s failed: %s", task_name, exc)
+                return {"task_name": task_name, "result": None, "success": False, "duration": duration, "error": str(exc)}
 
-        executor = self._ensure_executor()
-        future = executor.submit(_task)
-        self.video_tasks.append((lesson_name, future))
+        future = self._executor.submit(_runner)
+        self._tasks.append((task_name, future))
+        return future
 
-    def collect_video_results(self) -> Tuple[List[Any], List[Dict[str, Any]]]:
-        videos: List[Any] = []
-        telemetry: List[Dict[str, Any]] = []
-        for lesson_name, future in self.video_tasks:
-            result = future.result()
-            videos.append(result.get("video_info"))
-            telemetry.append(
-                {
-                    "lesson_name": lesson_name,
-                    "duration": result.get("duration"),
-                    "success": result.get("success"),
-                    "error": result.get("error"),
-                }
-            )
-        self.video_durations.extend(telemetry)
-        self.close()
-        return videos, telemetry
-
-    def close(self) -> None:
-        if self._executor:
-            self._executor.shutdown(wait=True)
-            self._executor = None
-        self.video_tasks.clear()
+    def collect_results(self) -> List[Dict[str, Any]]:
+        results: List[Dict[str, Any]] = []
+        for task_name, future in self._tasks:
+            data = future.result()
+            results.append(data)
+            self._task_log.append(data)
+        self._tasks.clear()
+        return results
 
     def summary(self) -> Dict[str, Any]:
-        success_count = sum(1 for entry in self.video_durations if entry.get("success"))
-        failure_count = len(self.video_durations) - success_count
-        queue_depth = self.queue_depth_history or [0]
+        success_count = sum(1 for task in self._task_log if task.get("success"))
+        failure_count = len(self._task_log) - success_count
+        depths = self._queue_depths or [0]
         return {
-            "queue_depth_max": max(queue_depth),
-            "queue_depth_avg": sum(queue_depth) / len(queue_depth),
-            "success_count": success_count,
-            "failure_count": failure_count,
-            "tasks": self.video_durations,
+            "tasks_recorded": len(self._task_log),
+            "successes": success_count,
+            "failures": failure_count,
+            "max_queue_depth": max(depths),
+            "avg_queue_depth": sum(depths) / len(depths),
+            "active_tasks": sum(1 for _, future in self._tasks if not future.done()),
+            "task_log": self._task_log[-10:],
         }
+
+    def shutdown(self) -> None:
+        for _, future in self._tasks:
+            future.cancel()
+        self._tasks.clear()
+        self._executor.shutdown(wait=True)

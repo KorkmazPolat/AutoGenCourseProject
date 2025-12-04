@@ -1786,6 +1786,7 @@ def create_full_course_agentic(
         "videos": result.get("videos") or [],
         "quizzes": result.get("quizzes") or [],
         "final_validation": result.get("final_validation") or {},
+        "telemetry": result.get("telemetry") or {},
     }
 
     return templates.TemplateResponse(
@@ -2027,6 +2028,7 @@ async def agentic_finalize_course(
             "course_id": saved_course.id,
             "modules_output": modules_output,
             "voice": voice or "alloy",
+            "telemetry": result.get("telemetry") or {},
         },
     )
 
