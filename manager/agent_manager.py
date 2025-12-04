@@ -35,6 +35,28 @@ class AgentManager:
         if self.feedback_monitor is not None:
             self.feedback_monitor.log_event(stage, success, metadata)
 
+    def _check_telemetry_triggers(self) -> str:
+        guidance = ""
+        if self.feedback_monitor:
+            # Check for >2 consecutive rejections in lesson review
+            consecutive_rejections = 0
+            # Iterate backwards
+            for event in reversed(self.feedback_monitor._events):
+                if event.stage == "review_agent.lesson":
+                    if not event.success:
+                        consecutive_rejections += 1
+                    else:
+                        break
+            
+            if consecutive_rejections > 2:
+                guidance = "Previous attempts failed due to quality issues. Please strictly adhere to learning outcomes and keep content concise."
+
+        if self.workload_manager:
+            if self.workload_manager.current_depth > 10:
+                logger.warning("ADMIN ALERT: High workload queue depth: %d", self.workload_manager.current_depth)
+        
+        return guidance
+
     def run(self, learning_outcomes: List[str], skip_video: bool = False, num_modules: int | None = None, num_lessons: int | None = None) -> Dict[str, Any]:
         self.feedback_monitor = FeedbackMonitor()
         self.performance_monitor = PerformanceMonitor()
@@ -121,12 +143,14 @@ class AgentManager:
                     logger.info("Generating lesson '%s'", lesson_name)
 
                     with self.performance_monitor.track("lesson_writer.generate"):
+                        guidance = self._check_telemetry_triggers()
                         lesson_json = self.lesson_writer.generate(
                             {
                                 "module_name": module.title,
                                 "lesson_name": lesson_name,
                                 "learning_outcomes": learning_outcomes,
-                                "research_context": research_result
+                                "research_context": research_result,
+                                "guidance_note": guidance
                             }
                         )
                     self._record_feedback("lesson_writer.generate", True, module=module.title, lesson=lesson_name)

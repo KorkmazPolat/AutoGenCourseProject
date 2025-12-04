@@ -161,3 +161,7 @@ class WorkloadManager:
             future.cancel()
         self._tasks.clear()
         self._executor.shutdown(wait=True)
+
+    @property
+    def current_depth(self) -> int:
+        return sum(1 for _, future in self._tasks if not future.done())

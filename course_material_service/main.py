@@ -1788,16 +1788,6 @@ def create_full_course_agentic(
         "final_validation": result.get("final_validation") or {},
         "telemetry": result.get("telemetry") or {},
     }
-
-    return templates.TemplateResponse(
-        "agentic_full_course.html",
-        page_context,
-    )
-
-
-@app.post("/agentic-finalize-course", response_class=HTMLResponse, tags=["web"])
-async def agentic_finalize_course(
-    request: Request,
     course_title: str = Form(...),
     learning_outcomes: Optional[str] = Form(None),
     learning_outcomes_json: Optional[str] = Form(None),

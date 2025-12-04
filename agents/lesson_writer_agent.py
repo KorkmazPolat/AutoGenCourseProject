@@ -105,6 +105,7 @@ class LessonWriterAgent(BaseAgent):
             module_name=writer_input.module_name,
             lesson_name=writer_input.lesson_name,
             learning_outcomes=writer_input.learning_outcomes,
+            guidance_note=writer_input.guidance_note,
         )
         llm_result = self.call_llm(prompt, response_format={"type": "json_object"})
 

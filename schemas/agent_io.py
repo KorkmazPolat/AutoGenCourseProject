@@ -17,6 +17,7 @@ class LessonWriterInput(BaseModel):
     module_name: str
     lesson_name: str
     learning_outcomes: List[str]
+    guidance_note: str | None = None
 
 
 class VideoScriptInput(BaseModel):
