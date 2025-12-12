@@ -123,20 +123,7 @@
             </div>
 
             <!-- Quick Skills / Suggestions -->
-            <div class="bg-gray-50 p-3 border-b border-gray-100 flex gap-2 overflow-x-auto no-scrollbar">
-                <button onclick="sendQuickAction('Explain this page')"
-                    class="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
-                    Explain Page
-                </button>
-                <button onclick="sendQuickAction('Suggest improvements')"
-                    class="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
-                    Suggest Ideas
-                </button>
-                <button onclick="sendQuickAction('Help me navigate')"
-                    class="whitespace-nowrap px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
-                    Navigation Help
-                </button>
-            </div>
+            <div id="quickActions" class="bg-gray-50 p-3 border-b border-gray-100 flex gap-2 overflow-x-auto no-scrollbar"></div>
 
             <div id="chatMessages" class="flex-1 p-4 overflow-y-auto bg-white space-y-4">
                 <!-- Messages -->
@@ -182,6 +169,7 @@
         const chatWindow = document.getElementById('chatWindow');
         const chatMessages = document.getElementById('chatMessages');
         const chatInput = document.getElementById('chatInput');
+        const quickActionsContainer = document.getElementById('quickActions');
 
         function toggleChat() {
             if (chatWindow.style.display === 'none') {
@@ -210,6 +198,38 @@
             sendChatMessage();
         }
 
+        function renderQuickActions() {
+            if (!quickActionsContainer) return;
+            const path = window.location.pathname || '';
+            const actions = [];
+
+            if (path.includes('/library')) {
+                actions.push('Which course should I improve?');
+                actions.push('Explain this library');
+            } else if (path.includes('/course-builder')) {
+                actions.push('Review this module');
+                actions.push('Suggest an outline');
+                actions.push('Check for missing outcomes');
+            } else if (path.includes('/enrolled-courses')) {
+                actions.push('How can I improve this course?');
+                actions.push('Is the lesson order logical?');
+            } else {
+                // Dashboard or default
+                actions.push('Improve my outcomes');
+                actions.push('Suggest an outline');
+                actions.push('Navigation help');
+            }
+
+            quickActionsContainer.innerHTML = '';
+            actions.forEach((label) => {
+                const btn = document.createElement('button');
+                btn.className = 'whitespace-nowrap px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors';
+                btn.textContent = label;
+                btn.addEventListener('click', () => sendQuickAction(label));
+                quickActionsContainer.appendChild(btn);
+            });
+        }
+
         async function sendChatMessage() {
             const msg = chatInput.value.trim();
             if (!msg) return;
@@ -222,12 +242,15 @@
             const loadingId = addChatMessage('Thinking...', 'system', true);
 
             try {
-                // Gather context
+                // Gather context (prefer normalized chat data if available)
+                const contextCourseData = (typeof courseDataForChat !== 'undefined')
+                    ? courseDataForChat
+                    : ((typeof courseData !== 'undefined') ? courseData : null);
+
                 const context = {
                     url: window.location.href,
                     title: document.title,
-                    // If courseData exists (on builder page), include it
-                    courseData: (typeof courseData !== 'undefined') ? courseData : null
+                    courseData: contextCourseData
                 };
 
                 const response = await fetch('/api/global-agent', {
@@ -244,35 +267,205 @@
                 const result = await response.json();
 
                 // Remove Loading
-                document.getElementById(loadingId).remove();
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) loadingEl.remove();
+
+                // Build inline actions (e.g., apply outline)
+                const actions = [];
+                if (result.course_outline) {
+                    actions.push({
+                        label: 'Apply outline (create course)',
+                        handler: () => applyOutline(result.course_outline)
+                    });
+                }
 
                 // Add AI Message
                 if (result.message) {
                     let formattedMsg = result.message
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/\n/g, '<br>');
-                    addChatMessage(formattedMsg, 'system');
+                    addChatMessage(formattedMsg, 'system', false, actions);
                 }
 
-                // Handle specific actions if needed (e.g. navigation)
-                if (result.action === 'navigate' && result.url) {
-                    window.location.href = result.url;
-                }
+                // Handle action/tool side effects
+                await handleAction(result);
 
             } catch (error) {
                 console.error(error);
-                document.getElementById(loadingId).innerText = 'Error: ' + error.message;
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) loadingEl.innerText = 'Error: ' + error.message;
             }
         }
 
-        function addChatMessage(text, sender, isLoading = false) {
+        async function handleAction(result) {
+            if (!result || !result.action) return;
+
+            if (result.action === 'navigate' && result.url) {
+                window.location.href = result.url;
+                return;
+            }
+
+            if (result.action === 'open_builder_with_outline') {
+                if (result.course_outline) {
+                    await applyOutline(result.course_outline);
+                } else if (result.url) {
+                    window.location.href = result.url;
+                } else {
+                    window.location.href = '/course-builder';
+                }
+                return;
+            }
+
+            if (result.action === 'attach_outcomes_to_existing_course') {
+                const targetId = result.target_course_id;
+                const outcomes = result.outcomes || (result.course_outline && result.course_outline.outcomes);
+                if (!targetId || !outcomes) {
+                    addChatMessage('attach_outcomes_to_existing_course requires target_course_id and outcomes.', 'system');
+                    return;
+                }
+                try {
+                    const toolRes = await callTool('attach_outcomes', { course_id: targetId, outcomes });
+                    if (toolRes && toolRes.status === 'ok') {
+                        addChatMessage('Outcomes attached successfully.', 'system');
+                    } else {
+                        addChatMessage('Failed to attach outcomes.', 'system');
+                    }
+                } catch (err) {
+                    addChatMessage(`Failed to attach outcomes: ${err.message}`, 'system');
+                }
+                return;
+            }
+
+            if (result.action === 'fetch_course_summary') {
+                const targetId = result.target_course_id;
+                if (!targetId) {
+                    addChatMessage('fetch_course_summary requires target_course_id.', 'system');
+                    return;
+                }
+                try {
+                    const toolRes = await callTool('course_summary', { course_id: targetId });
+                    if (toolRes && toolRes.status === 'ok') {
+                        const s = toolRes.summary;
+                        const msg = `Course: <strong>${s.title}</strong><br>Outcomes: ${(s.outcomes || []).length}<br>Modules: ${s.modules}<br>Lessons: ${s.lessons}`;
+                        addChatMessage(msg, 'system');
+                    } else {
+                        addChatMessage('Failed to fetch course summary.', 'system');
+                    }
+                } catch (err) {
+                    addChatMessage(`Failed to fetch course summary: ${err.message}`, 'system');
+                }
+                return;
+            }
+
+            if (result.action === 'quiz_quality_report') {
+                const targetId = result.target_course_id;
+                if (!targetId) {
+                    addChatMessage('quiz_quality_report requires target_course_id.', 'system');
+                    return;
+                }
+                try {
+                    const toolRes = await callTool('quiz_quality', { course_id: targetId });
+                    if (toolRes && toolRes.status === 'ok') {
+                        const msg = `Quiz quality:<br>- Quizzes: ${toolRes.quiz_count}<br>- Total questions: ${toolRes.total_questions}<br>- Lessons missing quiz: ${toolRes.lessons_missing_quiz}`;
+                        addChatMessage(msg, 'system');
+                    } else {
+                        addChatMessage('Failed to get quiz quality.', 'system');
+                    }
+                } catch (err) {
+                    addChatMessage(`Failed to get quiz quality: ${err.message}`, 'system');
+                }
+                return;
+            }
+
+            if (result.action === 'content_preview') {
+                const targetId = result.target_course_id;
+                if (!targetId) {
+                    addChatMessage('content_preview requires target_course_id.', 'system');
+                    return;
+                }
+                try {
+                    const toolRes = await callTool('content_preview', { course_id: targetId });
+                    if (toolRes && toolRes.status === 'ok') {
+                        const previews = toolRes.previews || [];
+                        if (!previews.length) {
+                            addChatMessage('No lesson content found for preview.', 'system');
+                        } else {
+                            const lines = previews.slice(0, 5).map(p => `<strong>${p.module_title} / ${p.lesson_title}</strong>: ${p.snippet || '(empty)'}`);
+                            addChatMessage(lines.join('<br><br>'), 'system');
+                        }
+                    } else {
+                        addChatMessage('Failed to get content preview.', 'system');
+                    }
+                } catch (err) {
+                    addChatMessage(`Failed to get content preview: ${err.message}`, 'system');
+                }
+                return;
+            }
+        }
+
+        async function callTool(action, params) {
+            const response = await fetch('/api/global-agent/tools', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, ...params })
+            });
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || 'Tool request failed');
+            }
+            return response.json();
+        }
+
+        async function applyOutline(outline) {
+            try {
+                // Normalize outline to CourseDesignRequest payload
+                const modules = (outline.modules || []).map((mod, modIdx) => ({
+                    id: mod.id || `mod-${modIdx + 1}`,
+                    title: mod.title || `Module ${modIdx + 1}`,
+                    items: (mod.lessons || []).map((lesson, lessonIdx) => ({
+                        id: lesson.id || `lesson-${modIdx + 1}-${lessonIdx + 1}`,
+                        type: lesson.type || 'lesson',
+                        title: lesson.title || `Lesson ${lessonIdx + 1}`,
+                        desc: lesson.summary || lesson.description || '',
+                        duration: lesson.duration_minutes || lesson.duration || null,
+                        questions: lesson.questions || null
+                    }))
+                }));
+
+                const payload = {
+                    course_title: outline.course_title || 'Generated Course',
+                    modules: modules
+                };
+
+                const res = await fetch('/save-course-design', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || 'Failed to apply outline');
+                }
+
+                const data = await res.json();
+                alert(`Course created with ID ${data.course_id}. Redirecting, please wait.`);
+                if (data.course_id) {
+                    window.location.href = `/course-builder?course_id=${data.course_id}`;
+                }
+            } catch (err) {
+                console.error('applyOutline error:', err);
+                alert('Failed to apply outline: ' + err.message);
+            }
+        }
+
+        function addChatMessage(text, sender, isLoading = false, actions = []) {
             const id = 'msg-' + Date.now();
             const div = document.createElement('div');
             div.id = id;
             div.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn mb-4`;
 
             const bubble = document.createElement('div');
-            // Added break-words and whitespace-pre-wrap for better text handling
             const baseClasses = "rounded-2xl p-3 text-sm shadow-sm max-w-[80%] break-words whitespace-pre-wrap";
 
             bubble.className = sender === 'user'
@@ -286,13 +479,29 @@
             }
 
             div.appendChild(bubble);
+
+            if (!isLoading && actions && actions.length && sender === 'system') {
+                const actionsRow = document.createElement('div');
+                actionsRow.className = 'flex gap-2 mt-2';
+                actions.forEach((action) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-xs font-medium hover:bg-indigo-100 transition-colors';
+                    btn.textContent = action.label;
+                    btn.addEventListener('click', action.handler);
+                    actionsRow.appendChild(btn);
+                });
+                div.appendChild(actionsRow);
+            }
+
             chatMessages.appendChild(div);
-            // Ensure we scroll to the very bottom
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 50);
             return id;
         }
+
+        // Initialize dynamic quick actions on load
+        renderQuickActions();
     </script>
     {% endblock %}
 </body>

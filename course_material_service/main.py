@@ -2206,50 +2206,209 @@ class GlobalAgentRequest(BaseModel):
     message: str
     context: Dict[str, Any]
 
+
+class GlobalAgentToolRequest(BaseModel):
+    action: str
+    course_id: Optional[int] = None
+    outcomes: Optional[List[str]] = None
+
 @app.post("/api/global-agent")
-async def global_agent_chat(request: GlobalAgentRequest):
+async def global_agent_chat(
+    payload: GlobalAgentRequest,
+    request: Request,
+    user_id: int = Depends(get_session_user),
+    db: AsyncSession = Depends(get_db),
+):
     """
     Handle chat messages for the global AI assistant.
     """
     try:
         # 1. System Prompt
-        system_prompt = """You are the AI Assistant for the "Course Generator" platform.
-Your goal is to help users create, manage, and understand their courses.
+        system_prompt = """
+You are the in-product AI Assistant for the "Course Generator" web application.
+Your primary goal is to help users create, improve, and understand their courses, and to help them use this platform effectively.
 
-RULES:
-1. You are visible on every page. Use the 'context' provided to understand where the user is.
-2. ONLY answer questions related to:
-   - Course creation and design.
-   - Using this platform (navigation, features).
-   - Educational theory or content structuring.
-   - The specific course content the user is working on (if provided in context).
-3. If a user asks about UNRELATED topics (e.g., sports, politics, general trivia not related to education), politely DECLINE to answer. Say something like: "I'm here to help with your course creation. I can't answer general questions about [topic]."
-4. If the user asks for navigation help (e.g., "Go to dashboard", "Where are my courses?"), you can suggest a navigation action.
+LANGUAGE
+- Always answer in the same language as the user's last message (e.g., Turkish vs English).
+- If the language is unclear, default to English.
 
-OUTPUT FORMAT:
-Return a JSON object with:
-- "message": The text response to show the user.
-- "action": (Optional) "navigate" if you want to redirect the user.
-- "url": (Optional) The URL to redirect to if action is "navigate".
+SCOPE – WHAT YOU MAY ANSWER
+You SHOULD answer questions that are clearly about one or more of these:
+- Course creation and design (learning outcomes, modules, lessons, quizzes, videos, assignments).
+- Using this platform (navigation, which page does what, common workflows, errors the user may see here).
+- Educational theory or content structuring (e.g., Bloom's taxonomy, scaffolding, pacing) as it relates to designing courses.
+- The specific course content or structure the user is working on, when it is provided in the `context.courseData` field.
 
-PAGES CONTEXT:
-- /dashboard or /: The main course creation form.
-- /library: List of created courses.
-- /enrolled-courses: List of courses the user is taking.
-- /course-builder: The interactive drag-and-drop builder.
+OUT OF SCOPE – WHAT YOU MUST DECLINE
+- General chat or entertainment (jokes, chit-chat not related to teaching or this app).
+- Unrelated domains such as politics, news, sports, stock tips, medical or legal advice.
+- Arbitrary programming help that is not clearly about using this Course Generator platform.
+If the user asks something out of scope, POLITELY decline and gently redirect back to course creation. For example:
+- "I’m here to help with your course creation and this platform. I can’t answer general questions about [topic], but I can help you turn that into a learning outcome or a course idea."
 
-Example JSON response:
+PAGE & CONTEXT AWARENESS
+You receive a `context` object with:
+- `url`: current page URL (e.g., "/dashboard", "/library").
+- `title`: current document title.
+- `courseData`: optional JSON representation of the course being edited (modules, lessons, outcomes), or null.
+You also receive an optional `workflow_context` object (server-side state) that may include previous steps and a proposed outline.
+Use these to adapt your answer:
+- If `url` contains "/library": focus on explaining existing courses, where to find things, or which course to edit.
+- If `url` contains "/course-builder": focus on module/lesson structure, what to add/remove, and how to improve structure.
+- If `url` contains "/enrolled-courses": focus on learner experience and how to take or improve an existing course.
+- If `courseData` is present: reference high-level elements (e.g., module titles, lesson counts, outcomes) instead of inventing structure. Never claim to see elements that are not in `courseData`.
+- If `workflow_context` has previous steps or a draft outline, continue the flow instead of restarting.
+
+INTERACTION STYLE
+- Be concise and practical. Prefer short paragraphs and numbered or bulleted lists for suggestions.
+- When the user asks a vague question, briefly ask 1–2 clarifying questions instead of guessing.
+- When suggesting changes (e.g., improve outcomes), give 2–5 concrete examples, not huge walls of text.
+- Do NOT expose raw JSON you receive from the backend unless the user explicitly asks for a technical view.
+
+WORKFLOW SUPPORT (MULTI-STEP DESIGN)
+- You can maintain a lightweight workflow across turns. If the user says “start a course on X”, you may propose outcomes first, then on confirmation propose modules/lessons, etc.
+- Use the optional `workflow_state` field in your JSON to return a summary of steps taken and any draft outline so the server can persist it.
+- If the user says “reset” or “start over”, set `workflow_state` to null or an empty object so the server clears stored state.
+
+COURSE OUTLINE PAYLOAD
+- When you have enough info, you MAY return a normalized outline in the optional `course_outline` field (alongside your `message`). Use this shape:
+  {
+    "course_title": "string",
+    "outcomes": ["..."],
+    "modules": [
+      {
+        "title": "string",
+        "summary": "string",
+        "lessons": [
+          {
+            "title": "string",
+            "summary": "string",
+            "type": "lesson" | "video" | "quiz" | "assignment",
+            "duration_minutes": number | null
+          }
+        ]
+      }
+    ]
+  }
+- Keep it concise; do not invent excessive detail.
+- Only include this when the user explicitly asks for a plan/outline or when continuing a design workflow.
+
+NAVIGATION ACTIONS
+You can optionally request a navigation action when it clearly helps the user.
+- Use `"action": "navigate"` and set `"url"` to one of the app routes, for example:
+  - "/dashboard" – main course creation / configuration page.
+  - "/library" – list of created courses.
+  - "/enrolled-courses" – list of courses the user is taking.
+  - "/course-builder" – interactive drag-and-drop course builder (when appropriate).
+- Only request navigation if the user explicitly asks for it or strongly implies it (e.g., "take me to my courses", "open the builder").
+Otherwise leave `"action": null` and `"url": null` or omit them.
+
+ACTION SET (ENHANCED)
+- "navigate": redirect to a page (requires "url").
+- "open_builder_with_outline": open the builder, optionally applying a provided "course_outline".
+- "attach_outcomes_to_existing_course": attach/overwrite outcomes on an existing course (provide "target_course_id" and "outcomes").
+- "fetch_course_summary": request a brief summary/stats for a course (provide "target_course_id").
+- "quiz_quality_report": request a quick quality/stats check for quizzes in a course (provide "target_course_id").
+- "content_preview": request lesson text snippets from a course (provide "target_course_id") so you can comment on coverage/gaps.
+Only use these when they clearly match the user request.
+
+OUTPUT FORMAT (VERY IMPORTANT)
+ You MUST return a single JSON object with these fields:
+ - "message": string – the text response to show the user. You may use simple Markdown-style formatting like **bold**, numbered lists, and bullet lists.
+ - "action": string or null – one of ["navigate", "open_builder_with_outline", "attach_outcomes_to_existing_course", "fetch_course_summary", "quiz_quality_report", "content_preview"] or null.
+ - "url": string or null – required only when "action" is "navigate". It must be a valid path in this application (e.g., "/library").
+ - "workflow_state": object or null (optional) – include if you want the server to persist your multi-step design state; omit to leave unchanged.
+ - "course_outline": object or null (optional) – include only if you are proposing a concrete outline as described above.
+ - "target_course_id": number or null (optional) – required when you need to operate on a specific course (e.g., attach outcomes, fetch summary, quiz reports, content previews).
+ - "outcomes": array of strings or null (optional) – use when action is "attach_outcomes_to_existing_course".
+
+EXAMPLES
+1) Navigation help
+User: "Go to my library."
+Assistant JSON:
 {
-  "message": "Sure! I can take you to your library.",
+  "message": "I’ll take you to your course library so you can see all the courses you’ve created.",
   "action": "navigate",
   "url": "/library"
+}
+
+2) Course design help
+User: "My learning outcome is: Understand AI. Can you improve it?"
+Assistant JSON:
+{
+  "message": "This outcome is a bit broad. Here are 3 clearer alternatives:\\n\\n1. **Explain the difference between rule-based systems and modern AI models.**\\n2. **Apply basic machine learning concepts (features, labels, training, evaluation) to a small dataset.**\\n3. **Compare strengths and limitations of at least two AI approaches for a real-world problem.**",
+  "action": null,
+  "url": null,
+  "workflow_state": null
+}
+
+3) Out-of-scope question
+User: "Who will win the football match tonight?"
+Assistant JSON:
+{
+  "message": "I’m focused on helping you design and manage courses in this platform. I can’t predict sports results, but if you’d like, I can help you design a short course or lesson about football analytics.",
+  "action": null,
+  "url": null,
+  "workflow_state": null
+}
+
+4) Outline proposal (when user asked for a plan)
+User: "Design a beginner Python course"
+Assistant JSON:
+{
+  "message": "Here’s a lean outline with outcomes and modules you can apply directly.",
+  "action": null,
+  "url": null,
+  "workflow_state": {
+    "previous_steps": ["proposed_outcomes", "draft_outline"]
+  },
+  "course_outline": {
+    "course_title": "Beginner Python",
+    "outcomes": [
+      "Write simple Python scripts with variables, conditionals, and loops",
+      "Work with lists and dictionaries to manage data",
+      "Read from files and handle basic errors"
+    ],
+    "modules": [
+      {
+        "title": "Python Basics",
+        "summary": "Setup, syntax, variables, and control flow",
+        "lessons": [
+          { "title": "Getting Started", "summary": "Install, run, Hello World", "type": "lesson", "duration_minutes": 15 },
+          { "title": "Control Flow", "summary": "if/else, loops", "type": "lesson", "duration_minutes": 20 }
+        ]
+      }
+    ]
+  }
+}
+
+5) Quiz quality report
+User: "Check quiz quality for course 42"
+Assistant JSON:
+{
+  "message": "I’ll fetch a quick quiz quality snapshot for course 42.",
+  "action": "quiz_quality_report",
+  "target_course_id": 42
+}
+
+6) Content preview for a course
+User: "Show me snippets from course 7"
+Assistant JSON:
+{
+  "message": "Here are short snippets from your course so we can spot gaps.",
+  "action": "content_preview",
+  "target_course_id": 7
 }
 """
 
         # 2. User Context
-        user_context_str = f"Current Page: {request.context.get('url')}\nPage Title: {request.context.get('title')}\n"
-        if request.context.get('courseData'):
-            user_context_str += f"Current Course Data: {json.dumps(request.context.get('courseData'))[:1000]}..." # Truncate if too long
+        workflow_context = request.session.get("global_agent_workflow", {})
+
+        user_context_str = f"Current Page: {payload.context.get('url')}\nPage Title: {payload.context.get('title')}\n"
+        if payload.context.get('courseData'):
+            user_context_str += f"Current Course Data: {json.dumps(payload.context.get('courseData'))[:1000]}..." # Truncate if too long
+        if workflow_context:
+            user_context_str += f"\nWorkflow Context: {json.dumps(workflow_context)[:1000]}"
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -2265,10 +2424,143 @@ Example JSON response:
         )
 
         response_text = completion.choices[0].message.content
-        return json.loads(response_text)
+        result = json.loads(response_text)
+
+        # Persist or clear workflow state if provided
+        if isinstance(result, dict) and "workflow_state" in result:
+            if result["workflow_state"]:
+                request.session["global_agent_workflow"] = result["workflow_state"]
+            else:
+                request.session.pop("global_agent_workflow", None)
+
+        return result
 
     except Exception as e:
         logger.error(f"Global agent error: {e}")
         return {"message": "I'm having trouble connecting right now. Please try again."}
 
 
+async def _get_course_for_user(db: AsyncSession, course_id: int, user_id: int):
+    result = await db.execute(select(models.Course).where(models.Course.id == course_id))
+    course = result.scalars().first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if course.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    return course
+
+
+@app.post("/api/global-agent/tools")
+async def global_agent_tools(
+    payload: GlobalAgentToolRequest,
+    user_id: int = Depends(get_session_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Lightweight tool endpoints the chatbot can call for DB-backed info.
+    Supported actions:
+    - course_summary: returns course title, outcomes, module/lesson counts
+    - attach_outcomes: overwrites learning_outcomes for a course
+    - quiz_quality: quick stats about quizzes in a course
+    - content_preview: short snippets of lesson text for a course
+    """
+    try:
+        if payload.action == "course_summary":
+            if not payload.course_id:
+                raise HTTPException(status_code=400, detail="course_id is required for course_summary")
+            course = await _get_course_for_user(db, payload.course_id, user_id)
+
+            result_mods = await db.execute(
+                select(models.CourseModule).where(models.CourseModule.course_id == course.id)
+            )
+            modules = result_mods.scalars().all()
+            module_count = len(modules)
+
+            lesson_count = 0
+            for module in modules:
+                result_lessons = await db.execute(
+                    select(models.Lesson).where(models.Lesson.module_id == module.id)
+                )
+                lesson_count += len(result_lessons.scalars().all())
+
+            summary = {
+                "course_id": course.id,
+                "title": course.title,
+                "outcomes": course.learning_outcomes or [],
+                "modules": module_count,
+                "lessons": lesson_count,
+            }
+            return {"status": "ok", "summary": summary}
+
+        if payload.action == "attach_outcomes":
+            if not payload.course_id:
+                raise HTTPException(status_code=400, detail="course_id is required for attach_outcomes")
+            if not payload.outcomes or not isinstance(payload.outcomes, list):
+                raise HTTPException(status_code=400, detail="outcomes list is required")
+            cleaned = [str(o).strip() for o in payload.outcomes if str(o).strip()]
+            if not cleaned:
+                raise HTTPException(status_code=400, detail="outcomes list cannot be empty")
+
+            course = await _get_course_for_user(db, payload.course_id, user_id)
+            course.learning_outcomes = cleaned
+            await db.commit()
+            return {"status": "ok", "updated_outcomes": cleaned}
+
+        if payload.action == "quiz_quality":
+            if not payload.course_id:
+                raise HTTPException(status_code=400, detail="course_id is required for quiz_quality")
+            course = await _get_course_for_user(db, payload.course_id, user_id)
+            result_mods = await db.execute(select(models.CourseModule).where(models.CourseModule.course_id == course.id))
+            modules = result_mods.scalars().all()
+            quiz_count = 0
+            total_questions = 0
+            lessons_missing_quiz = 0
+
+            for module in modules:
+                result_lessons = await db.execute(select(models.Lesson).where(models.Lesson.module_id == module.id))
+                lessons = result_lessons.scalars().all()
+                for lesson in lessons:
+                    result_assets = await db.execute(select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id))
+                    assets = result_assets.scalars().all()
+                    quiz_assets = [a for a in assets if a.asset_type == "quiz"]
+                    if not quiz_assets:
+                        lessons_missing_quiz += 1
+                    for qa in quiz_assets:
+                        quiz_count += 1
+                        if isinstance(qa.content, dict):
+                            total_questions += len(qa.content.get("questions", []))
+            return {
+                "status": "ok",
+                "quiz_count": quiz_count,
+                "total_questions": total_questions,
+                "lessons_missing_quiz": lessons_missing_quiz,
+            }
+
+        if payload.action == "content_preview":
+            if not payload.course_id:
+                raise HTTPException(status_code=400, detail="course_id is required for content_preview")
+            course = await _get_course_for_user(db, payload.course_id, user_id)
+            result_mods = await db.execute(select(models.CourseModule).where(models.CourseModule.course_id == course.id))
+            modules = result_mods.scalars().all()
+            previews = []
+            for module in modules:
+                result_lessons = await db.execute(select(models.Lesson).where(models.Lesson.module_id == module.id))
+                lessons = result_lessons.scalars().all()
+                for lesson in lessons:
+                    snippet = (lesson.content or "").strip()
+                    if len(snippet) > 400:
+                        snippet = snippet[:400] + "..."
+                    previews.append({
+                        "lesson_id": lesson.id,
+                        "lesson_title": lesson.title,
+                        "module_title": module.title,
+                        "snippet": snippet,
+                    })
+            return {"status": "ok", "previews": previews}
+
+        raise HTTPException(status_code=400, detail="Unsupported tool action")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"global_agent_tools error: {e}")
+        raise HTTPException(status_code=500, detail="Tool handler failed")

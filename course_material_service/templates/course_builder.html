@@ -609,12 +609,12 @@
     {{ super() }}
     <script>
         // State Management
-        // State Management
         let courseData = JSON.parse('{{ course_data | safe if course_data else "null" }}');
 
         if (!courseData) {
             courseData = {
                 title: 'My New Course',
+                outcomes: [],
                 modules: [
                     {
                         id: 'mod-1',
@@ -624,6 +624,27 @@
                 ]
             };
         }
+
+        // Provide a normalized view for the global chat assistant
+        function buildCourseDataForChat(data) {
+            const modules = (data.modules || []).map((mod, modIdx) => ({
+                id: mod.id || `mod-${modIdx + 1}`,
+                title: mod.title || `Module ${modIdx + 1}`,
+                lessons: (mod.items || []).map((item, lessonIdx) => ({
+                    id: item.id || `lesson-${modIdx + 1}-${lessonIdx + 1}`,
+                    title: item.title || `Lesson ${lessonIdx + 1}`,
+                    summary: item.desc || "",
+                    type: item.type || "lesson",
+                    duration_minutes: item.duration || item.duration_minutes || null
+                }))
+            }));
+            return {
+                title: data.title || "Untitled Course",
+                outcomes: data.outcomes || data.learning_outcomes || [],
+                modules: modules
+            };
+        }
+        window.courseDataForChat = buildCourseDataForChat(courseData);
 
         // Set initial title
         document.getElementById('courseTitleInput').value = courseData.title || "My New Course";
