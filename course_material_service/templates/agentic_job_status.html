@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Generating Course...{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+  <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 md:p-10">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <p class="text-sm font-semibold text-indigo-600 uppercase tracking-wide">Agentic pipeline</p>
+        <h1 class="text-3xl font-extrabold text-gray-900 mt-1">Generating your course</h1>
+        <p class="text-gray-500 mt-2" id="job-message">{{ initial_message or "Researching and planning your course." }}</p>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-500">
+        <span class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 font-semibold" id="job-step">
+          {{ initial_step or "queued" }}
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-14 h-14 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+      <div class="flex-1">
+        <div class="flex justify-between text-xs font-semibold text-gray-500 mb-1">
+          <span>Progress</span>
+          <span id="job-progress-text">{{ initial_progress or 0 }}%</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+          <div id="job-progress-bar" class="h-full bg-indigo-600 transition-all duration-500 ease-out" style="width: {{ initial_progress or 0 }}%;"></div>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">We keep quality intact while running research, planning, writing, quizzes, and videos.</p>
+      </div>
+    </div>
+
+    <div id="job-status-hint" class="text-sm text-gray-600">
+      This page will update automatically. You can keep browsing; we’ll redirect when ready.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  (() => {
+    const jobId = "{{ job_id }}";
+    const progressBar = document.getElementById("job-progress-bar");
+    const progressText = document.getElementById("job-progress-text");
+    const messageEl = document.getElementById("job-message");
+    const stepEl = document.getElementById("job-step");
+    const hintEl = document.getElementById("job-status-hint");
+
+    const updateUI = (data) => {
+      if (!data) return;
+      if (typeof data.progress === "number" && progressBar && progressText) {
+        progressBar.style.width = `${data.progress}%`;
+        progressText.textContent = `${data.progress}%`;
+      }
+      if (data.step && stepEl) stepEl.textContent = data.step;
+      if (data.message && messageEl) messageEl.textContent = data.message;
+      if (data.status === "completed" && data.result) {
+        hintEl.textContent = "Course ready. Redirecting to the full course view...";
+        setTimeout(() => {
+          window.location.href = `/agentic-jobs/${jobId}/view`;
+        }, 300);
+      }
+      if (data.status === "failed") {
+        hintEl.textContent = data.error || "Generation failed. Please retry.";
+        if (stepEl) stepEl.textContent = "failed";
+      }
+    };
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/agentic-jobs/${jobId}`, { headers: { "Accept": "application/json" } });
+        if (!res.ok) return;
+        const data = await res.json();
+        updateUI(data);
+        if (data.status === "completed" || data.status === "failed") return;
+      } catch (err) {
+        console.warn("Polling failed", err);
+      }
+      setTimeout(poll, 1000);
+    };
+
+    poll();
+  })();
+</script>
+{% endblock %}

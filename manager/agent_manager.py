@@ -57,12 +57,26 @@ class AgentManager:
         
         return guidance
 
-    def run(self, learning_outcomes: List[str], skip_video: bool = False, num_modules: int | None = None, num_lessons: int | None = None) -> Dict[str, Any]:
+    def run(
+        self,
+        learning_outcomes: List[str],
+        skip_video: bool = False,
+        num_modules: int | None = None,
+        num_lessons: int | None = None,
+        progress_cb=None,
+    ) -> Dict[str, Any]:
         self.feedback_monitor = FeedbackMonitor()
         self.performance_monitor = PerformanceMonitor()
         self.workload_manager = WorkloadManager()
 
         logger.info("Starting REAL agentic course generation pipeline.")
+
+        def update_progress(pct: int, step: str, message: str) -> None:
+            if progress_cb:
+                try:
+                    progress_cb(pct, step, message)
+                except Exception as exc:
+                    logger.debug("Progress callback failed: %s", exc)
 
         try:
             assert self.performance_monitor is not None
@@ -70,13 +84,16 @@ class AgentManager:
 
             # 1. Research Phase
             logger.info("Agent is researching the topic...")
+            update_progress(5, "research", "Researching key concepts")
             with self.performance_monitor.track("research.generate"):
                 research_result = self.research_agent.generate({"learning_outcomes": learning_outcomes})
             logger.info("Research complete. Key concepts: %s", research_result.get("key_concepts"))
             self._record_feedback("research.generate", bool(research_result.get("key_concepts")), key_concepts=research_result.get("key_concepts", []))
+            update_progress(15, "research", "Research complete")
 
             # 2. Planning Phase
             logger.info("Agent is planning the course...")
+            update_progress(18, "planning", "Drafting course plan")
             with self.performance_monitor.track("course_planner.generate"):
                 course_plan_json = self.course_planner.generate(
                     {
@@ -87,6 +104,7 @@ class AgentManager:
                     }
                 )
             self._record_feedback("course_planner.generate", bool(course_plan_json), num_modules=num_modules, num_lessons=num_lessons)
+            update_progress(25, "planning", "Plan drafted, reviewing")
 
             # 3. Plan Review & Refinement
             max_retries = 2
@@ -121,7 +139,7 @@ class AgentManager:
                                 "num_modules": num_modules,
                                 "num_lessons": num_lessons,
                                 "feedback": plan_review.get("feedback"),
-                                "previous_plan": course_plan_json
+                                "previous_plan": course_plan_json,
                             }
                         )
                 else:
@@ -131,17 +149,24 @@ class AgentManager:
                 plan_validation = self.validator.generate(course_plan_json)
             course_plan = CoursePlan.parse_obj(plan_validation["validated_content"])
             self._record_feedback("validator.course_plan", True, modules=len(course_plan.modules))
+            update_progress(35, "planning", "Plan validated")
 
             lessons: List[Dict[str, Any]] = []
             scripts: List[Dict[str, Any]] = []
             videos: List[Any] = []
             quizzes: List[Dict[str, Any]] = []
 
+            total_lessons = sum(len(m.lessons or []) for m in course_plan.modules)
+            lessons_seen = 0
+
             for module in course_plan.modules:
                 logger.info("Processing module '%s'", module.title)
                 for lesson_name in module.lessons:
                     logger.info("Generating lesson '%s'", lesson_name)
-
+                    lessons_seen += 1
+                    per_lesson_increment = 40 / max(1, total_lessons)
+                    current_pct = min(90, int(35 + lessons_seen * per_lesson_increment))
+                    update_progress(current_pct, "lesson", f"Writing lesson: {lesson_name}")
                     with self.performance_monitor.track("lesson_writer.generate"):
                         guidance = self._check_telemetry_triggers()
                         lesson_json = self.lesson_writer.generate(
@@ -201,14 +226,15 @@ class AgentManager:
                         quiz_validation = self.validator.generate(quiz_json)
                     validated_quiz = quiz_validation["validated_content"]
                     self._record_feedback("validator.quiz", True, module=module.title, lesson=lesson_name)
+                    update_progress(
+                        min(92, int(40 + per_lesson_increment)),
+                        "quiz",
+                        f"Quiz generated: {lesson_name}",
+                    )
 
                     if not skip_video:
                         logger.info("Queueing video generation for lesson '%s'", lesson_name)
-                        self.workload_manager.submit_task(
-                            task_name=lesson_name,
-                            func=self.video_generator.generate,
-                            script_payload=validated_script
-                        )
+                        self.workload_manager.submit_task(lesson_name, self.video_generator.generate, validated_script)
                         self._record_feedback("video_generation.queue", True, lesson=lesson_name)
                     else:
                         logger.info("Skipping video generation for lesson '%s'", lesson_name)
@@ -239,6 +265,7 @@ class AgentManager:
                     }
                 )
             self._record_feedback("validator.final_package", True, lessons=len(lessons), quizzes=len(quizzes), videos=len(videos))
+            update_progress(98, "finalizing", "Validating package")
 
             telemetry_payload: Dict[str, Any] = {
                 "feedback": self.feedback_monitor.summary(),
@@ -247,6 +274,7 @@ class AgentManager:
             }
 
             logger.info("Course generation pipeline finished.")
+            update_progress(100, "completed", "Course generation completed")
             return {
                 "course_plan": course_plan.to_json(),
                 "lessons": lessons,

@@ -226,61 +226,116 @@ function setupPdfUpload() {
 
 
 /**
- * Dashboard (index.html) sayfasındaki yükleme ekranı modülü
+ * Dashboard (index.html) yükleme ekranı modülü - AJAX + job polling on the same page.
  */
 function setupLoadingOverlay() {
     const form = document.getElementById("course-form");
-    // Bu form sayfada yoksa (örn. login sayfasındayız), hiçbir şey yapma.
     if (!form) return;
-    
+
     const overlay = document.getElementById("loading-overlay");
     const bar = document.getElementById("progress-bar");
     const pct = document.getElementById("progress-text");
     const hint = document.getElementById("progress-hint");
     const statusMessage = document.getElementById("document-status");
-    
-    const hintMessages = [
-        "Drafting plan…", "Outlining slides…", "Writing narration…",
-        "Rendering visuals…", "Finalizing output…",
-    ];
-    let formProgressTimer = null;
-    let uploadInFlight = (statusMessage && statusMessage.textContent.includes("Uploading"));
 
-    function startFormProgress() {
-        if (!overlay || formProgressTimer) return;
+    let submitting = false;
+    let uploadInFlight = statusMessage && statusMessage.textContent.includes("Uploading");
+
+    const showOverlay = (message = "Generating…") => {
+        if (!overlay) return;
         overlay.classList.remove("hidden");
-        let progress = 0;
-        let hintIndex = 0;
-        formProgressTimer = setInterval(() => {
-            progress = Math.min(progress + Math.max(1, Math.round((100 - progress) / 18)), 96);
-            if (bar) bar.style.width = `${progress}%`;
-            if (pct) pct.textContent = `${progress}%`;
-            if (hint && hintIndex < hintMessages.length) {
-                hint.textContent = hintMessages[hintIndex];
-                if (progress > (hintIndex + 1) * (100 / hintMessages.length)) {
-                    hintIndex += 1;
-                }
-            }
-        }, 250);
-    }
-    function stopFormProgress() {
-        if (formProgressTimer) {
-            clearInterval(formProgressTimer);
-            formProgressTimer = null;
-        }
-        if (bar) bar.style.width = "100%";
-        if (pct) pct.textContent = "100%";
-    }
+        overlay.style.display = "flex";
+        overlay.style.zIndex = "9999";
+        overlay.setAttribute("aria-hidden", "false");
+        if (bar) bar.style.width = "5%";
+        if (pct) pct.textContent = "0%";
+        if (hint) hint.textContent = message;
+    };
 
-    form.addEventListener("submit", (event) => {
-        if (uploadInFlight) { // Bu kontrolü PDF yükleme mantığından alıyoruz
-            event.preventDefault();
+    const updateOverlay = (progress, messageText) => {
+        if (bar && typeof progress === "number") bar.style.width = `${progress}%`;
+        if (pct && typeof progress === "number") pct.textContent = `${progress}%`;
+        if (hint && messageText) hint.textContent = messageText;
+    };
+
+    const hideOverlay = () => {
+        if (!overlay) return;
+        overlay.classList.add("hidden");
+        overlay.style.display = "none";
+        overlay.setAttribute("aria-hidden", "true");
+    };
+
+    const pollStatus = async (jobId) => {
+        try {
+            const res = await fetch(`/agentic-jobs/${jobId}`, { headers: { "Accept": "application/json" } });
+            if (!res.ok) throw new Error("Status fetch failed");
+            const data = await res.json();
+            updateOverlay(data.progress ?? 0, data.message || "Generating…");
+
+            if (data.status === "completed") {
+                window.location.href = `/agentic-jobs/${jobId}/view`;
+                return;
+            }
+            if (data.status === "failed") {
+                alert(data.error || "Generation failed. Please try again.");
+                hideOverlay();
+                submitting = false;
+                return;
+            }
+        } catch (err) {
+            console.warn("Polling error", err);
+        }
+        setTimeout(() => pollStatus(jobId), 700);
+    };
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (submitting) return;
+        if (uploadInFlight) {
             alert("Please wait for the PDF upload to finish before submitting.");
             return;
         }
-        startFormProgress();
+
+        submitting = true;
+        const startedAt = performance.now();
+        showOverlay("Agents are researching, planning, and writing content…");
+
+        const formData = new FormData(form);
+        let jobId = null;
+
+        try {
+            const res = await fetch(form.action || "/agentic-jobs/start", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+            if (!res.ok) throw new Error("Failed to start generation");
+            const payload = await res.json();
+            jobId = payload.job_id;
+        } catch (err) {
+            console.error("Start job failed", err);
+            alert("Could not start generation. Please try again.");
+            submitting = false;
+            hideOverlay();
+            return;
+        }
+
+        const elapsed = performance.now() - startedAt;
+        const minVisible = 300;
+        if (elapsed < minVisible) {
+            await new Promise((resolve) => setTimeout(resolve, minVisible - elapsed));
+        }
+
+        if (jobId) {
+            pollStatus(jobId);
+        } else {
+            hideOverlay();
+            submitting = false;
+        }
     });
-    window.addEventListener("beforeunload", stopFormProgress);
 }
 
 

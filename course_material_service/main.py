@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Callable
 from uuid import uuid4
 
 import yaml
@@ -30,6 +30,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from course_material_service.rag_ingest import IngestError, ingest_pdf_into_qdrant
 from course_material_service.rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
 from course_material_service.video_builder import VideoGenerationError, generate_video_from_script
+from course_material_service.job_manager import job_manager, Job
 from routes.generate_course import router as agent_course_router
 from manager.agent_manager import AgentManager
 import shutil
@@ -94,6 +95,17 @@ class MaterialResponse(PromptPreviewResponse):
     model: str
     content: Dict[str, Any]
     raw_text: str
+
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: str
+    progress: int
+    step: str
+    message: str
+    eta_seconds: Optional[int] = None
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
 
 
 @dataclass
@@ -1792,6 +1804,134 @@ def create_full_course_agentic(
         "agentic_full_course.html",
         page_context,
     )
+
+
+async def _run_agentic_job(job_id: str, payload: Dict[str, Any]) -> None:
+    """Run the agentic pipeline in the background and update job status."""
+    job_manager.start_job(job_id, step="initializing", message="Starting agentic pipeline")
+    outcomes = _parse_learning_outcomes(payload.get("learning_outcomes", ""))
+
+    def progress_cb(pct: int, step: str, message: str) -> None:
+        job_manager.set_progress(job_id, pct, step=step, message=message)
+
+    manager = AgentManager()
+    try:
+        result = await run_in_threadpool(
+            manager.run,
+            outcomes,
+            payload.get("skip_video", False),
+            payload.get("num_modules"),
+            payload.get("num_lessons"),
+            progress_cb,
+        )
+        course_plan = result.get("course_plan", {})
+        modules = course_plan.get("modules") or []
+        page_context = {
+            "request": None,  # will be injected at render time
+            "course_title": course_plan.get("title") or payload.get("course_title"),
+            "audience": payload.get("audience"),
+            "tone": payload.get("tone"),
+            "duration_minutes": payload.get("duration_minutes"),
+            "learning_outcomes": outcomes,
+            "course_plan": course_plan,
+            "modules": modules,
+            "lessons": result.get("lessons") or [],
+            "videos": result.get("videos") or [],
+            "quizzes": result.get("quizzes") or [],
+            "final_validation": result.get("final_validation") or {},
+            "telemetry": result.get("telemetry") or {},
+        }
+        job_manager.complete_job(job_id, {"page_context": page_context})
+    except Exception as exc:
+        job_manager.fail_job(job_id, f"{exc}")
+        logging.exception("Agentic job %s failed", job_id)
+
+
+@app.post("/agentic-jobs/start", response_class=HTMLResponse, tags=["web"])
+async def start_agentic_job(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    course_title: str = Form(...),
+    learning_outcomes: str = Form(...),
+    audience: Optional[str] = Form(None),
+    tone: Optional[str] = Form(None),
+    duration_minutes: Optional[str] = Form(None),
+    skip_video: bool = Form(False),
+    num_modules: Optional[int] = Form(None),
+    num_lessons: Optional[int] = Form(None),
+    user_id: int = Depends(get_session_user),
+) -> HTMLResponse:
+    """Start the agentic pipeline as a background job. Returns JSON for XHR; redirects otherwise."""
+    job = job_manager.create_job(step="queued", message="Queued for processing")
+    payload = {
+        "course_title": course_title,
+        "learning_outcomes": learning_outcomes,
+        "audience": audience,
+        "tone": tone,
+        "duration_minutes": duration_minutes,
+        "skip_video": skip_video,
+        "num_modules": num_modules,
+        "num_lessons": num_lessons,
+    }
+    background_tasks.add_task(_run_agentic_job, job.job_id, payload)
+
+    accept_header = request.headers.get("accept", "")
+    x_requested_with = request.headers.get("x-requested-with", "")
+    wants_json = "application/json" in accept_header or x_requested_with.lower() == "xmlhttprequest"
+    if wants_json:
+        return JSONResponse({"job_id": job.job_id})
+
+    return RedirectResponse(
+        url=f"/agentic-jobs/{job.job_id}/status",
+        status_code=303,
+    )
+
+
+@app.get("/agentic-jobs/{job_id}", response_model=JobStatusResponse, tags=["web"])
+async def get_agentic_job(job_id: str) -> JobStatusResponse:
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return JobStatusResponse(
+        job_id=job.job_id,
+        status=job.status,
+        progress=job.progress,
+        step=job.step,
+        message=job.message,
+        eta_seconds=job.eta_seconds,
+        result=job.result,
+        error=job.error,
+    )
+
+
+@app.get("/agentic-jobs/{job_id}/status", response_class=HTMLResponse, tags=["web"])
+async def agentic_job_status_page(request: Request, job_id: str) -> HTMLResponse:
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return templates.TemplateResponse(
+        "agentic_job_status.html",
+        {
+            "request": request,
+            "job_id": job_id,
+            "initial_status": job.status,
+            "initial_progress": job.progress,
+            "initial_step": job.step,
+            "initial_message": job.message,
+        },
+    )
+
+
+@app.get("/agentic-jobs/{job_id}/view", response_class=HTMLResponse, tags=["web"])
+async def agentic_job_view(request: Request, job_id: str) -> HTMLResponse:
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.status != "completed" or not job.result:
+        return RedirectResponse(url=f"/agentic-jobs/{job_id}/status", status_code=303)
+    context = job.result.get("page_context") or {}
+    context["request"] = request
+    return templates.TemplateResponse("agentic_full_course.html", context)
 
 
 @app.post("/agentic-finalize-course", response_class=HTMLResponse, tags=["web"])
