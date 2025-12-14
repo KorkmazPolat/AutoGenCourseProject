@@ -18,7 +18,7 @@ except ImportError:
 class VideoGeneratorAgent(BaseAgent):
     name = "video_generator"
 
-    def generate(self, input_json: Dict[str, Any], engine: str = "openai") -> Dict[str, Any]:
+    def generate(self, input_json: Dict[str, Any], engine: str = "openai", duration_minutes: int = 5) -> Dict[str, Any]:
         """
         Generates a video from the input script. 
         'engine' can be "openai" or "gemini".
@@ -37,26 +37,36 @@ class VideoGeneratorAgent(BaseAgent):
              return {"error": "Video generation requires an OpenAI client (LLM config)."}
 
         try:
-            from course_material_service.video_builder import generate_video_from_script
+            from course_material_service.video_builder import generate_slides_and_audio
             
             full_script_text = "\n".join([s.text for s in script.scenes])
             
+            # Calculate target slides based on 3 slides per minute rule
+            # Ensure a reasonable bounds (e.g. for 2 mins = 6 slides)
+            target_slides = max(3, duration_minutes * 3)
+            
             # IMPROVED DESIGN PROMPT
             design_prompt = f"""
-            You are a Hollywood-grade video presentation designer.
+            You are a Hollywood-grade video presentation designer using the advanced capabilities of Gemini 2.0.
             
             Input Script:
             "{full_script_text}"
             
-            GOAL: Create a VISUALLY DENSE, professional presentation.  
+            Target Duration: {duration_minutes} minutes.
+            MANDATORY CONSTRAINT: You MUST generate EXACTLY {target_slides} slides. No more, no less.
+            
+            GOAL: Create a VISUALLY DENSE, professional presentation with "amazing design".  
             
             RULES:
-            1. Title Slide: Create a specific first slide with `layout: "hero"` or simply a big Heading.
-            2. Visual Density: Do NOT create empty slides. Every slide must have rich `content_blocks`.
-            3. Structure: 
-               - Aim for 1 slide per 40-60 seconds of speech.
-               - Group related concepts.
-            4. Content Blocks:
+            1. Title Slide: Slide 1 MUST be the title.
+            2. Pacing: You have exactly {target_slides} slides to cover the entire script. 
+               - Do NOT cram too much text on one slide if it violates the pacing.
+               - Do NOT make 20 slides for a short script. Stick to {target_slides}.
+            3. Visual Density: Do NOT create empty slides. Every slide must have rich `content_blocks`.
+            4. Structure: 
+               - Distribute the script evenly across the {target_slides} slides.
+               - Ensure every slide has distinct narration segments.
+            5. Content Blocks:
                - Use 'key_takeaway' for main points (it renders as a glowing box).
                - Use 'subheading' to divide sections on a single slide.
                - Use 'diagram' placeholders for visual concepts.
@@ -91,21 +101,33 @@ class VideoGeneratorAgent(BaseAgent):
             
             # --- ENGINE SELECTION ---
             if engine == "gemini" and HAS_GEMINI:
-                api_key = os.getenv("GEMINI_API_KEY")
+                api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
                 if not api_key:
-                    print("Gemini API Key missing, falling back to OpenAI.")
+                    print("Gemini/Google API Key missing, falling back to OpenAI.")
                     # Fallback logic below
                 else:
                     try:
-                        genai.configure(api_key=api_key)
+                        # FORCE REST transport to avoid gRPC/DNS issues
+                        genai.configure(api_key=api_key, transport="rest")
                         model = genai.GenerativeModel("gemini-2.0-flash-exp") 
                         # Or 1.5-flash if 2.0 not available, user asked for 2.0 optimization before
                         
                         response = model.generate_content(
                             design_prompt,
-                            generation_config={"response_mime_type": "application/json"}
+                            generation_config=genai.types.GenerationConfig(
+                                candidate_count=1,
+                                max_output_tokens=8192,
+                                temperature=0.7
+                            )
                         )
-                        design_data = json.loads(response.text)
+                        text_content = response.text
+                        # Clean markdown if present
+                        if text_content.strip().startswith("```json"):
+                            text_content = text_content.strip()[7:-3]
+                        elif text_content.strip().startswith("```"):
+                            text_content = text_content.strip()[3:-3]
+                            
+                        design_data = json.loads(text_content)
                         segments = design_data.get("segments", [])
                         print("SUCCESS: Used Gemini for Video Design")
                     except Exception as e:
@@ -159,18 +181,26 @@ class VideoGeneratorAgent(BaseAgent):
                 "call_to_action": "End of Section"
             }
             
-            generate_video_from_script(
+            # --- SWITCH TO SLIDE + AUDIO GENERATION ---
+            # Create a directory for this lesson
+            lesson_id = uuid.uuid4().hex[:8]
+            lesson_dir = output_dir / f"lesson_{lesson_id}"
+            
+            result = generate_slides_and_audio(
                 video_payload=video_payload,
-                output_path=video_path,
+                output_dir=lesson_dir,
                 client=self._llm_client,
                 voice="alloy", 
-                tts_model="gpt-4o-mini-tts" 
+                tts_model="gpt-4o-mini-tts"
             )
             
+            # result structure: {"slides": [...], "base_dir": "lesson_..."}
+            
             return {
-                "video_file": str(video_path),
-                "captions_file": str(video_path.with_suffix(".vtt")),
-                "chapters_file": str(video_path.with_name(video_path.stem + ".chapters.vtt"))
+                "video_mode": "slideshow",
+                "slides_data": result,
+                # For compatibility, we can point video_file to index 1 or directory
+                "video_file": str(lesson_dir) 
             }
             
         except Exception as e:

@@ -42,7 +42,7 @@ class SlideSpec:
     content_blocks: Optional[List[Dict[str, Any]]] = None
 
 
-def _resolve_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
+def _resolve_font(size: int, bold: bool = False, family: str = None) -> ImageFont.FreeTypeFont:
     """Attempt to load a truetype font, falling back to the default bitmap font."""
     if bold:
         font_candidates: Sequence[str] = (
@@ -735,3 +735,83 @@ def generate_video_from_script(
             pass
 
     return output_path
+
+
+def generate_slides_and_audio(
+    *,
+    video_payload: Dict[str, Any],
+    output_dir: Path,
+    client: Any,
+    voice: str = "alloy",
+    tts_model: str = "gpt-4o-mini-tts",
+    course_title: Optional[str] = None,
+    theme: str = "dark",
+    logo_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Generates slide images and audio files individually to output_dir.
+    Returns a manifest of the generated content.
+    """
+    presentation = video_payload.get("presentation", [])
+    narration = video_payload.get("narration", [])
+    pairs = _pair_presentation_and_narration(presentation, narration)
+    
+    # Ensure output dir exists
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    slides_manifest = []
+    
+    # 1. Intro
+    intro_content = (video_payload.get("hook") or "").strip()
+    if intro_content:
+        # Create a virtual intro slide pair
+        pairs.insert(0, (
+            SlideSpec(page=0, heading=course_title or "Introduction", content=intro_content), 
+            intro_content
+        ))
+
+    # 2. Outro
+    cta = (video_payload.get("call_to_action") or "").strip()
+    if cta:
+         pairs.append((
+             SlideSpec(page=999, heading="Next Steps", content=cta),
+             cta
+         ))
+         
+    total_pages = len(pairs)
+    
+    print(f"DEBUG: Generating {total_pages} slides + audio (NO VIDEO RENDER)...")
+    
+    for index, (slide, script) in enumerate(pairs, start=1):
+        # filenames
+        img_name = f"slide_{index:02d}.png"
+        audio_name = f"audio_{index:02d}.mp3"
+        
+        slide_path = output_dir / img_name
+        audio_path = output_dir / audio_name
+        
+        # Generate Image
+        _create_slide_image(
+            slide,
+            slide_path,
+            page_total=total_pages,
+            course_title=course_title,
+            theme=theme,
+            logo_path=Path(logo_path) if logo_path else None
+        )
+        
+        # Generate Audio
+        _synthesize_audio_clip(client, script, audio_path, voice=voice, tts_model=tts_model)
+        
+        slides_manifest.append({
+            "index": index,
+            "image_file": img_name,
+            "audio_file": audio_name,
+            "script": script,
+            "heading": slide.heading
+        })
+
+    return {
+        "slides": slides_manifest,
+        "base_dir": str(output_dir.name) # essentially the lesson_ID folder
+    }

@@ -58,7 +58,7 @@
       {% for module in modules_output %}
       {% for lesson in module.lessons %}
       {% set info = lesson.info %}
-      {% set vpack = lesson.assets.get('video_script') or {} %}
+      {% set vpack = lesson.assets.get('video') or lesson.assets.get('video_script') or {} %}
       {% set video = vpack.get('content') %}
       {% set video_url = vpack.get('video_url') %}
       {% set captions_url = vpack.get('captions_url') %}
@@ -101,20 +101,103 @@
           <div id="subpage-video-{{ info.number }}" class="subpage-section mt-2 hidden" data-subpage="video"
             data-module="{{ info.number }}">
             <h3 class="text-lg font-semibold text-gray-900 mb-2">Video</h3>
-            {% if video_url %}
-            <div class="mb-4">
-              <video class="w-full rounded-lg shadow" controls preload="metadata">
-                <source src="{{ video_url }}" type="video/mp4" />
+            <div class="video-container" id="video-container-{{ lesson.info.id }}">
+              {% if video and video.get("player_mode") == "slideshow" %}
+              <!-- SLIDESHOW PLAYER -->
+              <div class="slideshow-player bg-black rounded-lg overflow-hidden relative" style="aspect-ratio: 16/9;">
+                <img id="slide-img-{{ lesson.info.id }}" class="w-full h-full object-contain" src="" alt="Slide">
+
+                <!-- Audio Player (Hidden or Minimal) -->
+                <audio id="slide-audio-{{ lesson.info.id }}" controls
+                  class="w-full absolute bottom-0 left-0 bg-white opacity-90"></audio>
+
+                <!-- Navigation Overlay -->
+                <div class="absolute inset-0 flex items-center justify-between px-4 pointer-events-none">
+                  <button onclick="prevSlide('{{ lesson.info.id }}')"
+                    class="pointer-events-auto bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition">←</button>
+                  <button onclick="nextSlide('{{ lesson.info.id }}')"
+                    class="pointer-events-auto bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition">→</button>
+                </div>
+
+                <!-- Slide Counter -->
+                <div class="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                  Slide <span id="slide-idx-{{ lesson.info.id }}">1</span> / <span
+                    id="slide-total-{{ lesson.info.id }}">?</span>
+                </div>
+              </div>
+
+              <script>
+                (function () {
+                  const lessonId = "{{ lesson.info.id }}";
+                  const slides = {{ video.get("slides_ready", []) | tojson
+                }};
+                let currentIndex = 0;
+
+                const imgEl = document.getElementById(`slide-img-${lessonId}`);
+                const audioEl = document.getElementById(`slide-audio-${lessonId}`);
+                const idxEl = document.getElementById(`slide-idx-${lessonId}`);
+                const totalEl = document.getElementById(`slide-total-${lessonId}`);
+
+                if (slides.length > 0) {
+                  document.getElementById(`slide-total-${lessonId}`).innerText = slides.length;
+                  loadSlide(0);
+                }
+
+                window.loadSlide = function (idx) {
+                  if (idx < 0 || idx >= slides.length) return;
+                  currentIndex = idx;
+                  const s = slides[idx];
+
+                  imgEl.src = s.image_url;
+                  audioEl.src = s.audio_url;
+                  idxEl.innerText = idx + 1;
+
+                  audioEl.play().catch(e => console.log("User interaction required for autoplay"));
+                }
+
+                window.nextSlide = function (lid) {
+                  if (lid !== lessonId) return;
+                  if (currentIndex < slides.length - 1) {
+                    loadSlide(currentIndex + 1);
+                  }
+                }
+
+                window.prevSlide = function (lid) {
+                  if (lid !== lessonId) return;
+                  if (currentIndex > 0) {
+                    loadSlide(currentIndex - 1);
+                  }
+                }
+
+                // Auto-advance
+                audioEl.addEventListener('ended', () => {
+                  window.nextSlide(lessonId);
+                });
+                }) ();
+              </script>
+
+              {% elif video_url %}
+              <video controls class="w-full rounded-lg shadow-lg aspect-video" preload="metadata">
+                <source src="{{ video_url }}" type="video/mp4">
                 {% if captions_url %}
-                <track kind="subtitles" src="{{ captions_url }}" srclang="en" label="English" default />
+                <track label="English" kind="subtitles" srclang="en" src="{{ captions_url }}" default>
                 {% endif %}
                 {% if chapters_url %}
-                <track kind="chapters" src="{{ chapters_url }}" srclang="en" label="Chapters" />
+                <track label="Chapters" kind="chapters" srclang="en" src="{{ chapters_url }}">
                 {% endif %}
+                Your browser does not support the video tag.
               </video>
-              <p class="text-gray-500 text-sm mt-1">Narration voice: {{ voice }}</p>
+              {% else %}
+              <div class="flex flex-col items-center justify-center bg-gray-100 rounded-lg aspect-video text-gray-500">
+                <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                  </path>
+                </svg>
+                <p>No video generated for this lesson.</p>
+              </div>
+              {% endif %}
             </div>
-            {% endif %}
             {% if video %}
             {% if video.hook %}<p class="text-gray-800"><strong>Hook:</strong> {{ video.hook }}</p>{% endif %}
             {% if video.outline %}

@@ -658,15 +658,75 @@ async def generate_course_content(
                 assets = result_assets.scalars().all()
                 should_gen_video = any(a.asset_type == "video" for a in assets)
                 
-                # Run Agent Bundle
-                bundle = await run_in_threadpool(
-                    manager.generate_lesson_bundle,
-                    module_title=module.title,
-                    lesson_title=lesson.title,
-                    lesson_desc=lesson.content if lesson.content != "Placeholder content" else f"Lesson about {lesson.title}",
-                    skip_video=not should_gen_video,
-                    video_engine=video_engine
-                )
+                # Prepare lesson context for agent
+                lesson_context = {
+                    "module_title": module.title,
+                    "lesson_title": lesson.title,
+                    "lesson_desc": lesson.content if lesson.content != "Placeholder content" else f"Lesson about {lesson.title}",
+                }
+
+                bundle = {} # Initialize bundle to collect results
+
+                # VIDEO GENERATION
+                video_res = {}
+                if should_gen_video:
+                    # Pass duration (default 5 if not set)
+                    # We can get duration from lesson, assuming it is set
+                    duration_mins = lesson.duration_minutes or 5
+                    
+                    try:
+                        print(f"DEBUG: Generating video content for lesson {lesson.id} with {duration_mins} mins...")
+                        # Pass unpacked lesson_context via run_in_threadpool
+                        video_res = await run_in_threadpool(
+                            manager.generate_lesson_bundle,
+                            **lesson_context,
+                            skip_video=False,
+                            video_engine=video_engine,
+                            duration_minutes=duration_mins
+                        )
+                        bundle["video"] = video_res.get("video", {})
+                        bundle["lesson"] = video_res.get("lesson", {})
+                        bundle["script"] = video_res.get("script", {})
+                        bundle["quiz"] = video_res.get("quiz", {})
+                    except Exception as e:
+                        print(f"Video generation error for lesson {lesson.id}: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        bundle["video"] = {"error": str(e)}
+                        # If video generation completely failed (e.g. at lesson generation step), 
+                        # we still need 'lesson' key to avoid crash below.
+                        # We will try to generate TEXT ONLY as fallback if not already present
+                        if "lesson" not in bundle or not bundle["lesson"]:
+                            try: 
+                                print("Attempting fallback text generation...")
+                                text_res = await run_in_threadpool(
+                                    manager.generate_lesson_bundle,
+                                    **lesson_context,
+                                    skip_video=True,
+                                    video_engine=video_engine,
+                                    duration_minutes=duration_mins
+                                )
+                                bundle["lesson"] = text_res.get("lesson", {})
+                                bundle["script"] = text_res.get("script", {})
+                                bundle["quiz"] = text_res.get("quiz", {})
+                            except Exception as ex:
+                                print(f"Fallback generation failed: {ex}")
+                                bundle["lesson"] = {"text": f"Generation failed: {ex}"}
+                                bundle["script"] = {}
+                                bundle["quiz"] = {}
+
+                else:
+                    # If no video, run agent for text/script/quiz only
+                    text_res = await run_in_threadpool(
+                        manager.generate_lesson_bundle,
+                        **lesson_context,
+                        skip_video=True,
+                        video_engine=video_engine,
+                        duration_minutes=lesson.duration_minutes or 5
+                    )
+                    bundle["lesson"] = text_res.get("lesson", {})
+                    bundle["script"] = text_res.get("script", {})
+                    bundle["quiz"] = text_res.get("quiz", {})
                 
                 # Update Lesson
                 lesson.content = bundle["lesson"].get("text") or bundle["lesson"].get("markdown") or bundle["lesson"].get("content")
@@ -674,13 +734,6 @@ async def generate_course_content(
                 
                 # Update Assets
                 script_asset = next((a for a in assets if a.asset_type == "script"), None)
-                if not script_asset and should_gen_video:
-                     # Only save script if we are making a video, or if it already exists
-                     # Actually, script is useful for the editor, but maybe we only want it if video is involved?
-                     # Let's keep script for now as it doesn't trigger a tab in the course view directly.
-                     # But to be safe and clean, let's only create it if we have a video asset or if it exists.
-                     pass 
-                
                 if not script_asset:
                      script_asset = models.LessonAsset(lesson_id=lesson.id, asset_type="script")
                 script_asset.content = bundle["script"]
@@ -691,14 +744,45 @@ async def generate_course_content(
                     quiz_asset.content = bundle["quiz"]
                     db.add(quiz_asset)
                 
-                if should_gen_video and bundle["video"]:
+                # Add logic to check for slideshow mode
+                if should_gen_video and bundle.get("video"):
+                    vid_data = bundle["video"]
                     video_asset = next((a for a in assets if a.asset_type == "video"), None)
-                    if video_asset:
-                        video_asset.content = bundle["video"]
-                        video_asset.file_path = bundle["video"].get("video_file")
-                        db.add(video_asset)
-                
-                await db.flush()
+                    if not video_asset:
+                         video_asset = models.LessonAsset(
+                            lesson_id=lesson.id,
+                            asset_type="video",
+                            content={}
+                        )
+                         db.add(video_asset)
+                    
+                    # Update content
+                    video_asset.content = vid_data
+                    video_asset.file_path = vid_data.get("video_file") # Will be directory path for slideshow
+                    
+                    # If slideshow mode, we should pre-process the URLs for the frontend
+                    if vid_data.get("video_mode") == "slideshow":
+                        slides_raw = vid_data.get("slides_data", {}).get("slides", [])
+                        base_dir_name = vid_data.get("slides_data", {}).get("base_dir", "")
+                        
+                        processed_slides = []
+                        for s in slides_raw:
+                            # Construct static URLs
+                            # Image: /static/videos/{base_dir_name}/{image_file}
+                            # Audio: /static/videos/{base_dir_name}/{audio_file}
+                            processed_slides.append({
+                                "image_url": f"/static/videos/{base_dir_name}/{s['image_file']}",
+                                "audio_url": f"/static/videos/{base_dir_name}/{s['audio_file']}",
+                                "script": s.get("script", ""),
+                                "heading": s.get("heading", "")
+                            })
+                        
+                        # Save this back to content so frontend can use it easily
+                        video_asset.content["slides_ready"] = processed_slides
+                        # Mark strict mode so template knows what to do
+                        video_asset.content["player_mode"] = "slideshow"
+
+                    await db.flush() # Changed from commit to flush to match original flow
                 processed_count += 1
                 progress = int((processed_count / total_lessons) * 100) if total_lessons > 0 else 100
                 yield f"data: {json.dumps({'message': f'Completed {lesson.title}', 'progress': progress})}\\n\\n"
@@ -851,174 +935,77 @@ async def get_course_view(
             "slides": slides
         })
 
-    # --- Standard Course Viewer ---
-
-    # Fetch Modules and Lessons with Assets
-    # We'll fetch all and structure them in python
+    # --- Standard Full Course View ---
+    
+    # 1. Fetch Modules
     result_mods = await db.execute(
         select(models.CourseModule).where(models.CourseModule.course_id == course_id).order_by(models.CourseModule.order_index)
     )
     modules = result_mods.scalars().all()
-
+    
     modules_output = []
     global_lesson_index = 1
     
     for module in modules:
+        # 2. Fetch Lessons for Module
         result_lessons = await db.execute(
             select(models.Lesson).where(models.Lesson.module_id == module.id).order_by(models.Lesson.order_index)
         )
         lessons = result_lessons.scalars().all()
         
-        module_data = {
-            "id": module.id,
-            "title": module.title,
-            "summary": module.summary,
-            "lessons": []
-        }
-
+        lessons_output = []
         for lesson in lessons:
+            # 3. Fetch Assets for Lesson
             result_assets = await db.execute(
                 select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id)
             )
-            assets = result_assets.scalars().all()
-
-            # Map Assets
-            video_script = {}
-            reading_material = {}
-            quiz_questions = {}
-
-            # 1. Video
-            video_script = None
-            video_asset = next((a for a in assets if a.asset_type == "video"), None)
-            if video_asset:
-                vid_data = video_asset.content
-                if isinstance(vid_data, str):
-                    try:
-                        vid_data = json.loads(vid_data)
-                    except:
-                        vid_data = {}
-                
-                # Script asset for narration text
-                script_asset = next((a for a in assets if a.asset_type == "script"), None)
-                narration = []
-                if script_asset and script_asset.content:
-                    s_data = script_asset.content
-                    if isinstance(s_data, str):
-                        try:
-                            s_data = json.loads(s_data)
-                        except:
-                            s_data = {}
-                    # Extract scenes
-                    scenes = s_data.get("scenes", [])
-                    for i, scene in enumerate(scenes, 1):
-                        narration.append({
-                            "section": f"Scene {i}",
-                            "summary": f"Duration: {scene.get('duration')}s",
-                            "script": scene.get("text", "")
-                        })
-
-                video_url = None
-                captions_url = None
-                chapters_url = None
-
-                if video_asset.file_path:
-                    filename = os.path.basename(video_asset.file_path)
-                    video_url = f"/static/videos/{filename}"
-                    
-                    base_path = os.path.splitext(video_asset.file_path)[0]
-                    if os.path.exists(base_path + ".vtt"):
-                        captions_url = f"/static/videos/{os.path.splitext(filename)[0]}.vtt"
-                    if os.path.exists(base_path + ".chapters.vtt"):
-                        chapters_url = f"/static/videos/{os.path.splitext(filename)[0]}.chapters.vtt"
-
-                video_script = {
-                    "content": {
-                        "hook": f"Video for {lesson.title}",
-                        "narration": narration,
-                        "recap": ""
-                    },
-                    "video_url": video_url,
-                    "captions_url": captions_url,
-                    "chapters_url": chapters_url
-                }
-            else:
-                video_script = None
-
-            # 2. Reading (Lesson Content)
-            # Only show reading if it's not the default placeholder AND it is a pure reading lesson (no video/quiz)
-            reading_material = {}
-            has_special_assets = any(a.asset_type in ["video", "quiz"] for a in assets)
+            assets_list = result_assets.scalars().all()
             
-            if not has_special_assets and lesson.content and lesson.content != "Placeholder content":
-                reading_material = {
-                    "content": {
-                        "text": lesson.content,
-                        "summary": lesson.title,
-                        "sections": []
-                    }
-                }
-
-            # 3. Quiz
-            quiz_questions = {}
-            quiz_asset = next((a for a in assets if a.asset_type == "quiz"), None)
-            if quiz_asset:
-                print(f"DEBUG: Found quiz asset for lesson {lesson.id}")
-                q_data = quiz_asset.content
-                if isinstance(q_data, str):
-                    try:
-                        q_data = json.loads(q_data)
-                    except:
-                        print(f"DEBUG: Failed to parse quiz JSON for lesson {lesson.id}")
-                        q_data = {}
+            # Convert assets to a dict keyed by type for the template
+            assets_dict = {}
+            for asset in assets_list:
+                content = asset.content or {}
+                # Special handling for Video Assets
+                if asset.asset_type == "video":
+                    # If content has video_file (absolute path), convert to static URL
+                    if isinstance(content, dict):
+                        vid_path = content.get("video_file")
+                        if vid_path and "static" in vid_path:
+                            # Naive conversion: find /static/ and take everything after
+                            parts = vid_path.split("/static/")
+                            if len(parts) > 1:
+                                content["video_url"] = "/static/" + parts[1]
+                                # Also handle captions
+                                if "captions_file" in content:
+                                    c_path = content["captions_file"]
+                                    if "/static/" in c_path:
+                                        content["captions_url"] = "/static/" + c_path.split("/static/")[1]
+                                if "chapters_file" in content:
+                                    ch_path = content["chapters_file"]
+                                    if "/static/" in ch_path:
+                                        content["chapters_url"] = "/static/" + ch_path.split("/static/")[1]
                 
-                print(f"DEBUG: Quiz data for lesson {lesson.id}: {q_data}")
+                # Update the dict
+                assets_dict[asset.asset_type] = content
 
-                questions = []
-                raw_qs = q_data.get("questions", [])
-                if raw_qs:
-                    labels = ["A", "B", "C", "D"]
-                    for q in raw_qs:
-                        choices = []
-                        for idx, opt in enumerate(q.get("options", [])):
-                            choices.append({
-                                "label": labels[idx] if idx < 4 else str(idx),
-                                "text": opt
-                            })
-                        
-                        correct_idx = q.get("correct_index", 0)
-                        correct_label = labels[correct_idx] if correct_idx < len(labels) else "A"
-
-                        questions.append({
-                            "stem": q.get("question"),
-                            "choices": choices,
-                            "answer": correct_label,
-                            "learning_outcome": None,
-                            "rationale": None
-                        })
-
-                # Always populate quiz_questions if asset exists, so tab shows up
-                quiz_questions = {
-                    "content": {
-                        "questions": questions,
-                        "remediation": q_data.get("remediation") or "No questions available."
-                    }
-                }
-
-            module_data["lessons"].append({
-                "info": {
-                    "number": global_lesson_index,
-                    "title": lesson.title,
-                    "summary": f"Lesson {global_lesson_index}"
-                },
-                "assets": {
-                    "video_script": video_script,
-                    "reading_material": reading_material,
-                    "quiz_questions": quiz_questions
-                }
+            # Wrap lesson with index
+            lesson_info = {
+                "id": lesson.id,
+                "number": global_lesson_index,
+                "title": lesson.title,
+                "summary": (lesson.content[:100] + "...") if lesson.content else ""
+            }
+            
+            lessons_output.append({
+                "info": lesson_info,
+                "assets": assets_dict
             })
             global_lesson_index += 1
-        
-        modules_output.append(module_data)
+            
+        modules_output.append({
+            "title": module.title,
+            "lessons": lessons_output
+        })
 
     return templates.TemplateResponse(
         "full_course.html",

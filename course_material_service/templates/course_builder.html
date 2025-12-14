@@ -435,6 +435,29 @@
         min-height: 120px;
         resize: vertical;
     }
+
+    /* Bottom Action Bar */
+    .bottom-actions-bar {
+        height: 80px;
+        background: white;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 40px;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        z-index: 50;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .bottom-actions-left,
+    .bottom-actions-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
 </style>
 {% endblock %}
 
@@ -498,16 +521,9 @@
                     class="text-2xl font-bold bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:ring-0 text-gray-800 w-full px-2 py-1 transition-colors"
                     placeholder="Course Title" onchange="updateCourseTitle(this.value)">
             </div>
+            <!-- Actions moved to bottom bar -->
             <div class="actions flex items-center gap-3">
-                <select id="video_engine_select"
-                    class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
-                    <option value="openai">OpenAI</option>
-                    <option value="gemini">Gemini 2.0</option>
-                </select>
-                <button class="action-btn btn-secondary" onclick="exportCourse()">Export JSON</button>
-                <button class="action-btn btn-primary" onclick="saveCourse()">Save Changes</button>
-                <button class="action-btn btn-primary" style="background: #10b981;" onclick="generateContent()"
-                    id="btnGenerate">Generate Content</button>
+                <!-- Placeholder to keep spacing if needed, or remove -->
             </div>
         </div>
 
@@ -519,6 +535,31 @@
             <div class="add-module-wrapper">
                 <button class="btn-add-module" onclick="addModule()">
                     + Add New Module
+                </button>
+            </div>
+        </div>
+        <!-- Bottom Actions Bar -->
+        <div class="bottom-actions-bar">
+            <div class="bottom-actions-left">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm font-semibold text-gray-600">AI Model:</label>
+                    <select id="video_engine_select"
+                        class="bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
+                        <option value="openai">OpenAI</option>
+                        <option value="gemini">Gemini 2.0</option>
+                    </select>
+                </div>
+            </div>
+            <div class="bottom-actions-right">
+                <button class="action-btn btn-secondary" onclick="exportCourse()">Export JSON</button>
+                <button class="action-btn btn-primary" onclick="saveCourse()">Save Changes</button>
+                <button class="action-btn btn-primary" style="background: #10b981;" onclick="generateContent()"
+                    id="btnGenerate">
+                    <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Generate Content
                 </button>
             </div>
         </div>
@@ -572,6 +613,8 @@
             </div>
         </div>
     </div>
+
+    <!-- FAB Removed -->
 
     <!-- Progress Modal -->
     <div id="progressModal"

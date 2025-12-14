@@ -294,7 +294,7 @@ class AgentManager:
         finally:
             if self.workload_manager is not None:
                 self.workload_manager.shutdown()
-    def generate_lesson_bundle(self, module_title: str, lesson_title: str, lesson_desc: str, skip_video: bool = False, video_engine: str = "openai") -> Dict[str, Any]:
+    def generate_lesson_bundle(self, module_title: str, lesson_title: str, lesson_desc: str, skip_video: bool = False, video_engine: str = "openai", duration_minutes: int = 5) -> Dict[str, Any]:
         """
         Generates content for a single lesson (text, script, quiz, video) based on title and description.
         """
@@ -327,7 +327,7 @@ class AgentManager:
         # 4. Generate Video
         video_info = None
         if not skip_video:
-            video_info = self.video_generator.generate(validated_script, engine=video_engine)
+            video_info = self.video_generator.generate(validated_script, engine=video_engine, duration_minutes=duration_minutes)
             
         return {
             "lesson": validated_lesson,
