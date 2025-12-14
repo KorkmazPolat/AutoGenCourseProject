@@ -454,20 +454,38 @@ def _synthesize_audio_clip(
     voice: str = "alloy",
     tts_model: str = "gpt-4o-mini-tts",
 ) -> Path:
-    """Create an audio narration file for the provided script using OpenAI TTS."""
+    """Create an audio narration file for the provided script using OpenAI TTS or Fallback."""
     cleaned_script = script.strip()
     if not cleaned_script:
-        raise VideoGenerationError("Narration script is empty; cannot synthesize audio.")
+        cleaned_script = " " # silence placeholder
 
     try:
+        if not client:
+             raise ValueError("No OpenAI client provided.")
+             
         with client.audio.speech.with_streaming_response.create(
             model=tts_model,
             voice=voice,
             input=cleaned_script,
         ) as response:
             response.stream_to_file(output_path)
-    except Exception as exc:  # pragma: no cover
-        raise VideoGenerationError(f"Text-to-speech synthesis failed: {exc}") from exc
+            
+    except Exception as exc:
+        print(f"Warning: OpenAI TTS failed ({exc}). Falling back to gTTS.")
+        try:
+            from gtts import gTTS
+            tts = gTTS(cleaned_script, lang='en')
+            tts.save(str(output_path))
+        except Exception as fallback_exc:
+            print(f"Fallback TTS failed ({fallback_exc}). Generating 1s silence.")
+            try:
+                # Generate 1s silence using moviepy
+                from moviepy.audio.AudioClip import AudioClip
+                # Minimal silent clip
+                silence = AudioClip(lambda t: [0], duration=1.0, fps=44100)
+                silence.write_audiofile(str(output_path), logger=None)
+            except Exception as final_exc: 
+                raise VideoGenerationError(f"All TTS attempts failed: {exc}") from exc
 
     return output_path
 

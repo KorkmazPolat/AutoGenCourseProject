@@ -40,43 +40,43 @@ class SlideGeneratorService:
             print(f"Warning: Failed to initialize Gemini model ({exc}). Using offline slides instead.")
             self.model = None
 
+
     def generate_slides(self, topic: str, audience: str, slide_count: int, style: str) -> dict:
         if not self.model:
-            return self._generate_offline_slides(topic, audience, slide_count, style)
+            raise ValueError("Gemini model not initialized. Check your GOOGLE_API_KEY.")
 
         user_content = get_user_prompt(topic, audience, slide_count, style)
         full_prompt = f"{SLIDE_SYSTEM_PROMPT}\n\n{user_content}"
 
+        # Request JSON output
+        response = self.model.generate_content(
+            full_prompt,
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        content_str = response.text
+        
+        # Basic cleanup if markdown backticks are present (even with mime type, sometimes it happens)
+        cleaned_str = content_str.strip()
+        if cleaned_str.startswith("```json"):
+            cleaned_str = cleaned_str[7:]
+        elif cleaned_str.startswith("```"):
+            cleaned_str = cleaned_str[3:]
+            
+        if cleaned_str.endswith("```"):
+            cleaned_str = cleaned_str[:-3]
+        
         try:
-            # Request JSON output
-            response = self.model.generate_content(
-                full_prompt
-            )
-            
-            content_str = response.text
-            
-            # Basic cleanup if markdown backticks are present
-            cleaned_str = content_str.strip()
-            if cleaned_str.startswith("```json"):
-                cleaned_str = cleaned_str[7:]
-            elif cleaned_str.startswith("```"):
-                cleaned_str = cleaned_str[3:]
-                
-            if cleaned_str.endswith("```"):
-                cleaned_str = cleaned_str[:-3]
-            
             data = json.loads(cleaned_str)
-            
-            # Validation / Sanity Check
-            self._validate_response(data)
-            
-            return data
-
-        except Exception as e:
-            print(f"Slide Generation Failed: {e}")
-            # Instead of bubbling the error to the UI, provide a deterministic offline deck so
-            # the slide experience keeps working even without external API access.
-            return self._generate_offline_slides(topic, audience, slide_count, style)
+        except json.JSONDecodeError as e:
+            print(f"JSON Parse Error: {e}")
+            print(f"Raw Response: {content_str}")
+            raise e
+        
+        # Validation / Sanity Check
+        self._validate_response(data)
+        
+        return data
 
     def _validate_response(self, data: dict):
         if "slides" not in data or not isinstance(data["slides"], list):
@@ -103,70 +103,3 @@ class SlideGeneratorService:
             if not slide.get("title"):
                 slide["title"] = f"Slide {i+1}"
 
-    def _generate_offline_slides(self, topic: str, audience: str, slide_count: int, style: str) -> dict:
-        """Fallback slide generator that keeps the UI functional when Gemini is unavailable."""
-        # Basic guard rails so we never create zero slides
-        total_slides = max(1, min(slide_count or 10, 25))
-
-        # Reusable talking points so offline decks still feel structured
-        section_templates = [
-            ("Kickoff", "Introduce why the topic matters right now."),
-            ("Core Concepts", "Highlight the three main ideas learners must remember."),
-            ("Deep Dive", "Connect the concept to a realistic scenario with concrete actions."),
-            ("Toolbox", "List frameworks, formulas, or tactics that make the idea actionable."),
-            ("Case Study", "Tell a short story that illustrates success or failure."),
-            ("Checklist", "Provide a repeatable process people can run on their own."),
-            ("Wrap-Up", "Summarize the momentum and give a clear next step.")
-        ]
-
-        slides = []
-        for index in range(total_slides):
-            section_title, guidance = section_templates[index % len(section_templates)]
-            readable_index = index + 1
-
-            content = dedent(f"""
-            ## {section_title}
-            - **Context**: {topic} for {audience or 'your audience'}.
-            - **Style Inspiration**: {style.title()} aesthetics with bold callouts.
-            - **What to Cover**: {guidance}
-
-            ### Mini Framework
-            1. Observation
-            2. Insight
-            3. Action
-
-            > "Great presentations mix clarity with pace." – Studio Assistant
-            """).strip()
-
-            if readable_index % 3 == 0:
-                table = dedent("""
-                | Signal | Description |
-                | --- | --- |
-                | Challenge | Where learners stumble today |
-                | Opportunity | How {topic} helps |
-                | Metric | How to measure improvement |
-                """).strip().format(topic=topic)
-                content = f"{content}\n\n{table}"
-
-            notes = (
-                f"Slide {readable_index}: walk the audience through the talking points, "
-                f"then ask a question to keep the session interactive."
-            )
-
-            slides.append({
-                "title": f"{topic} – {section_title}",
-                "layout": "full_content",
-                "content": content,
-                "notes": notes
-            })
-
-        description = (
-            f"A practical walkthrough of {topic} tailored for {audience or 'a general audience'}. "
-            "Generated offline to ensure the slide experience keeps working in restricted environments."
-        )
-
-        return {
-            "title": f"{topic} Slide Deck",
-            "description": description,
-            "slides": slides
-        }

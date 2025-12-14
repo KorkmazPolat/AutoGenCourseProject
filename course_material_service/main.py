@@ -750,6 +750,75 @@ async def render_full_course_db(
     )
     modules = result_mods.scalars().all()
 
+    # --- HANDLE SLIDES / PRESENTATION MODE ---
+    if course.course_type == 'slides':
+        # Flatten all lessons to find slide content
+        all_slides = []
+        for module in modules:
+            result_lessons = await db.execute(
+                select(models.Lesson).where(models.Lesson.module_id == module.id).order_by(models.Lesson.order_index)
+            )
+            lessons = result_lessons.scalars().all()
+            for lesson in lessons:
+                result_assets = await db.execute(
+                    select(models.LessonAsset).where(models.LessonAsset.lesson_id == lesson.id)
+                )
+                assets = result_assets.scalars().all()
+                
+                # Check for video asset with slideshow data (Image Slides)
+                video_asset = next((a for a in assets if a.asset_type == 'video'), None)
+                if video_asset and video_asset.content:
+                    # Parse content if string
+                    v_content = video_asset.content
+                    if isinstance(v_content, str):
+                        try:
+                            v_content = json.loads(v_content)
+                        except: pass
+                    
+                    if isinstance(v_content, dict):
+                         slides_data = v_content.get("slides_data")
+                         # Support both old "slides_ready" and new "slides_data"
+                         if slides_data and isinstance(slides_data, dict):
+                             # New Format: {base_dir: "...", slides: [...]}
+                             base_dir = slides_data.get("base_dir", "")
+                             for s in slides_data.get("slides", []):
+                                 img_url = f"/static/videos/{base_dir}/{s.get('image_file')}"
+                                 audio_url = f"/static/videos/{base_dir}/{s.get('audio_file')}" if s.get('audio_file') else None
+                                 # Create HTML slide wrapper
+                                 html_content = f'<div class="flex items-center justify-center h-full"><img src="{img_url}" class="max-h-full max-w-full object-contain rounded-lg shadow-lg"></div>'
+                                 all_slides.append({
+                                     "title": s.get("heading", lesson.title),
+                                     "content_html": html_content,
+                                     "notes": s.get("script", ""),
+                                     "audio_url": audio_url
+                                 })
+                         elif v_content.get("slides_ready"):
+                             # Legacy Format
+                             for s in v_content.get("slides_ready"):
+                                 img_url = s.get("image_url")
+                                 html_content = f'<div class="flex items-center justify-center h-full"><img src="{img_url}" class="max-h-full max-w-full object-contain rounded-lg shadow-lg"></div>'
+                                 all_slides.append({
+                                     "title": lesson.title,
+                                     "content_html": html_content,
+                                     "notes": s.get("audio_url", ""), # Legacy notes often empty, audio_url was separate
+                                     "audio_url": s.get("audio_url")
+                                 })
+                
+                # Check for text/markdown slides (HTML Slides)
+                # (If we implement a pure slide generator later)
+                
+        if all_slides:
+            return templates.TemplateResponse(
+                "viewers/view_slides.html",
+                {
+                    "request": request,
+                    "course": course,
+                    "slides": all_slides
+                }
+            )
+        # If no slides found, fall back to full course view but maybe warn?
+    
+    # --- STANDARD FULL COURSE VIEW ---
     modules_output = []
     for module in modules:
         # Fetch Lessons
@@ -771,9 +840,16 @@ async def render_full_course_db(
                 if asset.asset_type == "video":
                     # We might store script in asset.content or have a separate script asset
                     # For now, let's just pass the video URL if it exists
+                    # Ensure we handle dict content 
+                    content = asset.content
+                    if isinstance(content, str):
+                        try:
+                            content = json.loads(content)
+                        except: pass
+                        
                     asset_map["video_script"] = {
-                        "video_url": f"/static/videos/{Path(asset.file_path).name}" if asset.file_path else None,
-                        "content": asset.content # Script content
+                        "video_url": f"/videos/{Path(asset.file_path).name}" if asset.file_path else None,
+                        "content": content
                     }
                 elif asset.asset_type == "reading_material":
                     asset_map["reading_material"] = {"content": asset.content}

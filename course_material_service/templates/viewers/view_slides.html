@@ -19,16 +19,17 @@
         <div id="slideDeck"
             class="w-full max-w-5xl aspect-video bg-white rounded-xl shadow-2xl relative overflow-hidden transition-all duration-300">
             {% for slide in slides %}
-            <div id="slide-{{ loop.index0 }}"
+            <div id="slide-{{ loop.index0 }}" data-audio-url="{{ slide.audio_url or '' }}"
                 class="absolute inset-0 p-12 md:p-16 flex flex-col {{ 'hidden' if not loop.first else '' }} transition-opacity duration-300">
-                <div class="flex-1">
-                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-8">{{ slide.title }}</h2>
-                    <div class="prose prose-xl max-w-none text-gray-700 leading-snug">
+                <div class="flex-1 h-full flex flex-col">
+                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-8 flex-shrink-0">{{ slide.title }}</h2>
+                    <div class="prose prose-xl max-w-none text-gray-700 leading-snug flex-grow flex flex-col">
                         {{ slide.content_html | safe }}
                     </div>
                 </div>
                 <!-- Footer -->
-                <div class="mt-auto pt-8 border-t border-gray-100 flex justify-between text-sm text-gray-400">
+                <div
+                    class="mt-auto pt-8 border-t border-gray-100 flex justify-between text-sm text-gray-400 flex-shrink-0">
                     <span>{{ course.title }}</span>
                     <span>{{ loop.index }}</span>
                 </div>
@@ -43,6 +44,9 @@
             </div>
             {% endfor %}
         </div>
+
+        <!-- Hidden Audio Player -->
+        <audio id="slideAudio"></audio>
 
         <!-- Controls -->
         <button onclick="prevSlide()"
@@ -74,6 +78,7 @@
     let currentIndex = 0;
     const totalSlides = {{ slides| length }};
     const counter = document.getElementById('slideCounter');
+    const audioPlayer = document.getElementById('slideAudio');
 
     function showSlide(index) {
         // Hide current
@@ -86,11 +91,44 @@
         if (currentIndex >= totalSlides) currentIndex = totalSlides - 1;
 
         // Show new
-        document.getElementById(`slide-${currentIndex}`).classList.remove('hidden');
+        const slideEl = document.getElementById(`slide-${currentIndex}`);
+        slideEl.classList.remove('hidden');
         document.getElementById(`note-${currentIndex}`).classList.remove('hidden');
 
         counter.innerText = `Slide ${currentIndex + 1} / ${totalSlides}`;
+
+        // Play Audio
+        const audioUrl = slideEl.getAttribute('data-audio-url');
+        if (audioUrl) {
+            audioPlayer.src = audioUrl;
+            audioPlayer.play().catch(e => console.log("Audio play failed (user interaction needed):", e));
+        } else {
+            audioPlayer.pause();
+            audioPlayer.src = "";
+        }
     }
+
+    // Auto-advance audio
+    audioPlayer.addEventListener('ended', () => {
+        if (currentIndex < totalSlides - 1) {
+            nextSlide(); // Auto move to next slide when audio finishes
+        }
+    });
+
+    // Try to play first slide audio on load (might fail due to autoplay policy)
+    window.addEventListener('DOMContentLoaded', () => {
+        const firstSlide = document.getElementById('slide-0');
+        if (firstSlide) {
+            const audioUrl = firstSlide.getAttribute('data-audio-url');
+            if (audioUrl) {
+                audioPlayer.src = audioUrl;
+                // Don't auto-play immediately to avoid annoying user or getting blocked, 
+                // or maybe do? Use interaction. 
+                // Let's not auto-play on load, wait for user to click Next or a Play button.
+                // Actually, user likely expects it to start.
+            }
+        }
+    });
 
     function prevSlide() {
         if (currentIndex > 0) showSlide(currentIndex - 1);

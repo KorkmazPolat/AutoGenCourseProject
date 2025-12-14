@@ -129,8 +129,25 @@
               <script>
                 (function () {
                   const lessonId = "{{ lesson.info.id }}";
-                  const slides = {{ video.get("slides_ready", []) | tojson
+                  let slides = [];
+                  const rawSlidesData = {{ video.get("slides_data", {}) | tojson
                 }};
+
+                if (rawSlidesData && rawSlidesData.slides) {
+                  // New format from VideoGeneratorAgent
+                  const baseDir = rawSlidesData.base_dir;
+                  slides = rawSlidesData.slides.map(s => ({
+                    image_url: `/static/videos/${baseDir}/${s.image_file}`,
+                    audio_url: `/static/videos/${baseDir}/${s.audio_file}`,
+                    index: s.index
+                  }));
+                } else {
+                  // Fallback to legacy format
+                  slides = {{ video.get("slides_ready", []) | tojson }
+                };
+                }
+
+
                 let currentIndex = 0;
 
                 const imgEl = document.getElementById(`slide-img-${lessonId}`);

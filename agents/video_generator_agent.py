@@ -103,50 +103,44 @@ class VideoGeneratorAgent(BaseAgent):
             if engine == "gemini" and HAS_GEMINI:
                 api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
                 if not api_key:
-                    print("Gemini/Google API Key missing, falling back to OpenAI.")
-                    # Fallback logic below
-                else:
-                    try:
-                        # FORCE REST transport to avoid gRPC/DNS issues
-                        genai.configure(api_key=api_key, transport="rest")
-                        model = genai.GenerativeModel("gemini-2.0-flash-exp") 
-                        # Or 1.5-flash if 2.0 not available, user asked for 2.0 optimization before
-                        
-                        response = model.generate_content(
-                            design_prompt,
-                            generation_config=genai.types.GenerationConfig(
-                                candidate_count=1,
-                                max_output_tokens=8192,
-                                temperature=0.7
-                            )
-                        )
-                        text_content = response.text
-                        # Clean markdown if present
-                        if text_content.strip().startswith("```json"):
-                            text_content = text_content.strip()[7:-3]
-                        elif text_content.strip().startswith("```"):
-                            text_content = text_content.strip()[3:-3]
-                            
-                        design_data = json.loads(text_content)
-                        segments = design_data.get("segments", [])
-                        print("SUCCESS: Used Gemini for Video Design")
-                    except Exception as e:
-                        print(f"Gemini generation failed: {e}. Falling back to OpenAI.")
-            
-            # Fallback or Default to OpenAI
-            if not segments:
-                try:
-                    design_completion = self._llm_client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[{"role": "system", "content": design_prompt}],
-                        response_format={"type": "json_object"}
+                    raise ValueError("Gemini/Google API Key missing for Video Generator.")
+
+                # FORCE REST transport to avoid gRPC/DNS issues
+                genai.configure(api_key=api_key, transport="rest")
+                model = genai.GenerativeModel("gemini-2.0-flash-exp") 
+                
+                response = model.generate_content(
+                    design_prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        candidate_count=1,
+                        max_output_tokens=8192,
+                        temperature=0.7,
+                        response_mime_type="application/json"
                     )
-                    content = design_completion.choices[0].message.content
-                    design_data = json.loads(content)
-                    segments = design_data.get("segments", [])
-                except Exception as e:
-                    print(f"Slide design failed: {e}")
-                    segments = []
+                )
+                text_content = response.text
+                
+                # Basic cleanup
+                if text_content.strip().startswith("```json"):
+                    text_content = text_content.strip()[7:-3]
+                elif text_content.strip().startswith("```"):
+                    text_content = text_content.strip()[3:-3]
+                    
+                design_data = json.loads(text_content)
+                segments = design_data.get("segments", [])
+                print("SUCCESS: Used Gemini for Video Design")
+
+            else:
+                # Default to OpenAI
+                design_completion = self._llm_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "system", "content": design_prompt}],
+                    response_format={"type": "json_object"}
+                )
+                content = design_completion.choices[0].message.content
+                design_data = json.loads(content)
+                segments = design_data.get("segments", [])
+
 
             presentation = []
             narration = []

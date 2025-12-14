@@ -61,24 +61,63 @@ class BaseAgent(ABC):
         raise NotImplementedError
 
     def call_llm(self, prompt: str, **kwargs: Any) -> Dict[str, Any] | str:
+        # Check explicitly for "gemini" provider request
+        if self.llm_config.provider == "gemini":
+            return self._call_gemini(prompt)
+
         if self.llm_config.provider != "openai":
             raise NotImplementedError(f"LLM provider '{self.llm_config.provider}' is not supported.")
 
         if OpenAI is None or self._llm_client is None:
+            # If OpenAI is missing but we have Gemini key, try Gemini as backup
+            if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
+                logger.info("OpenAI client missing. Falling back to Gemini.")
+                return self._call_gemini(prompt)
+            
             raise RuntimeError(
                 "OpenAI client is not available. Install 'openai' and set AUTOGEN_API_KEY."
             )
 
         logger.info("Calling LLM provider=%s model=%s", self.llm_config.provider, self.llm_config.model)
 
-        completion = self._llm_client.chat.completions.create(
-            model=self.llm_config.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-            **kwargs
-        )
-        content = completion.choices[0].message.content or ""
-        return content
+        try:
+            completion = self._llm_client.chat.completions.create(
+                model=self.llm_config.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+                **kwargs
+            )
+            content = completion.choices[0].message.content or ""
+            return content
+        except Exception as e:
+            # Check for Rate Limit or Quota errors
+            error_str = str(e).lower()
+            if "rate limit" in error_str or "quota" in error_str or "429" in error_str:
+                logger.warning(f"OpenAI Quota/Rate Limit exceeded: {e}. Attempting fallback to Gemini.")
+                return self._call_gemini(prompt)
+            raise e
+
+    def _call_gemini(self, prompt: str) -> str:
+        """Helper to call Gemini API."""
+        try:
+            import google.generativeai as genai
+            
+            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                raise ValueError("No GEMINI_API_KEY or GOOGLE_API_KEY found for fallback.")
+
+            # Configure and call
+            genai.configure(api_key=api_key, transport="rest")
+            # Use a capable model
+            model = genai.GenerativeModel("gemini-2.0-flash-exp") 
+            
+            # Simple generation
+            response = model.generate_content(prompt)
+            return response.text
+        except ImportError:
+            raise RuntimeError("google-generativeai package not installed. Cannot use Gemini fallback.")
+        except Exception as e:
+            raise RuntimeError(f"Gemini generation failed: {e}")
 
     def load_template(self, name: str) -> Template:
         return self._template_env.get_template(name)
