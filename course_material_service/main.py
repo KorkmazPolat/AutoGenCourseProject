@@ -16,7 +16,7 @@ from sqlalchemy.future import select
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, File, FastAPI, Form, HTTPException, Request, UploadFile, Depends
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware 
@@ -106,6 +106,34 @@ class JobStatusResponse(BaseModel):
     eta_seconds: Optional[int] = None
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
+
+
+def _parse_outcomes_flexible(learning_outcomes: Optional[str], learning_outcomes_json: Optional[str]) -> List[str]:
+    """Parse outcomes from either JSON array or newline text."""
+    if learning_outcomes_json:
+        raw_json = (learning_outcomes_json or "").strip()
+        try:
+            parsed = json.loads(raw_json)
+        except json.JSONDecodeError as exc:
+            # If JSON fails but plain text exists, fallback
+            if learning_outcomes:
+                return _parse_learning_outcomes(learning_outcomes)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid learning_outcomes_json: {exc}",
+            ) from exc
+        if not isinstance(parsed, list):
+            raise HTTPException(
+                status_code=400,
+                detail="learning_outcomes_json must be a JSON array of strings.",
+            )
+        outcomes = [str(item).strip() for item in parsed if str(item).strip()]
+        if not outcomes:
+            raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+        return outcomes
+    if learning_outcomes is not None:
+        return _parse_learning_outcomes(learning_outcomes)
+    raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
 
 
 @dataclass
@@ -1847,6 +1875,98 @@ async def _run_agentic_job(job_id: str, payload: Dict[str, Any]) -> None:
         logging.exception("Agentic job %s failed", job_id)
 
 
+async def _run_finalize_job(job_id: str, payload: Dict[str, Any]) -> None:
+    """Finalize course generation in background and update job status."""
+    job_manager.start_job(job_id, step="finalize.start", message="Starting finalize pipeline")
+    outcomes = _parse_outcomes_flexible(payload.get("learning_outcomes"), payload.get("learning_outcomes_json"))
+
+    def progress_cb(pct: int, step: str, message: str) -> None:
+        job_manager.set_progress(job_id, pct, step=step, message=message)
+
+    manager = AgentManager()
+    try:
+        result = await run_in_threadpool(
+            manager.run,
+            outcomes,
+            payload.get("skip_video", False),
+            None,
+            None,
+            progress_cb,
+        )
+        # Save to DB
+        saved_course = await save_course_to_db(payload["db"], result, outcomes, payload["user_id"])
+        course_plan = result.get("course_plan", {}) or {}
+        modules = course_plan.get("modules") or []
+        lessons = result.get("lessons") or []
+        scripts = result.get("scripts") or []
+        videos = result.get("videos") or []
+        quizzes = result.get("quizzes") or []
+
+        # Build modules_output (legacy layout mapping)
+        modules_output: List[Dict[str, Any]] = []
+        lesson_index = 0
+
+        result_db_lessons = await payload["db"].execute(
+            select(models.Lesson)
+            .join(models.CourseModule)
+            .where(models.CourseModule.course_id == saved_course.id)
+            .order_by(models.CourseModule.order_index, models.Lesson.order_index)
+        )
+        db_lessons = result_db_lessons.scalars().all()
+        db_lesson_index = 0
+
+        for module in modules:
+            module_title = module.get("title") if isinstance(module, dict) else getattr(module, "title", None)
+            module_lessons_names = module.get("lessons") if isinstance(module, dict) else getattr(module, "lessons", [])
+            module_lessons_names = module_lessons_names or []
+            count = len(module_lessons_names)
+            module_lessons = lessons[lesson_index : lesson_index + count] if count else []
+            module_scripts = scripts[lesson_index : lesson_index + count] if count else []
+            module_videos = videos[lesson_index : lesson_index + count] if count else []
+            module_quizzes = quizzes[lesson_index : lesson_index + count] if count else []
+            module_db_lessons = db_lessons[db_lesson_index : db_lesson_index + count] if count else []
+
+            lesson_index += count
+            db_lesson_index += count
+
+            primary_lesson: Dict[str, Any] = module_lessons[0] if module_lessons else {}
+            primary_db_lesson = module_db_lessons[0] if module_db_lessons else None
+
+            module_output = {
+                "module_title": module_title or "Module",
+                "lesson_title": primary_lesson.get("title") or (module_lessons_names[0] if module_lessons_names else ""),
+                "lesson_summary": primary_lesson.get("summary") or primary_lesson.get("content"),
+                "lesson_text": primary_lesson,
+                "lesson_id": getattr(primary_db_lesson, "id", None),
+                "video": module_videos[0] if module_videos else None,
+                "quiz": module_quizzes[0] if module_quizzes else None,
+                "scripts": module_scripts,
+                "lessons": module_lessons,
+            }
+            modules_output.append(module_output)
+
+        page_context = {
+            "request": None,
+            "course_title": course_plan.get("title") or payload.get("course_title"),
+            "audience": payload.get("audience"),
+            "tone": payload.get("tone"),
+            "duration_minutes": payload.get("duration_minutes"),
+            "learning_outcomes": outcomes,
+            "course_plan": course_plan,
+            "modules": modules,
+            "lessons": lessons,
+            "videos": videos,
+            "quizzes": quizzes,
+            "modules_output": modules_output,
+            "final_validation": result.get("final_validation") or {},
+            "telemetry": result.get("telemetry") or {},
+        }
+        job_manager.complete_job(job_id, {"page_context": page_context})
+    except Exception as exc:
+        job_manager.fail_job(job_id, f"{exc}")
+        logging.exception("Finalize job %s failed", job_id)
+
+
 @app.post("/agentic-jobs/start", response_class=HTMLResponse, tags=["web"])
 async def start_agentic_job(
     request: Request,
@@ -1934,6 +2054,55 @@ async def agentic_job_view(request: Request, job_id: str) -> HTMLResponse:
     return templates.TemplateResponse("agentic_full_course.html", context)
 
 
+@app.post("/agentic-finalize/start", response_class=HTMLResponse, tags=["web"])
+async def agentic_finalize_start(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    course_title: str = Form(...),
+    learning_outcomes: Optional[str] = Form(None),
+    learning_outcomes_json: Optional[str] = Form(None),
+    audience: Optional[str] = Form(None),
+    tone: Optional[str] = Form(None),
+    duration_minutes: Optional[str] = Form(None),
+    voice: Optional[str] = Form(None),
+    tts_model: Optional[str] = Form(None),
+    theme: Optional[str] = Form(None),
+    logo_path: Optional[str] = Form(None),
+    skip_video: bool = Form(False),
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_session_user),
+) -> HTMLResponse:
+    """Start finalize pipeline as a background job. JSON for XHR; redirect otherwise."""
+    job = job_manager.create_job(step="queued", message="Queued finalize job")
+    payload = {
+        "course_title": course_title,
+        "learning_outcomes": learning_outcomes,
+        "learning_outcomes_json": learning_outcomes_json,
+        "audience": audience,
+        "tone": tone,
+        "duration_minutes": duration_minutes,
+        "voice": voice,
+        "tts_model": tts_model,
+        "theme": theme,
+        "logo_path": logo_path,
+        "skip_video": skip_video,
+        "db": db,
+        "user_id": user_id,
+    }
+    background_tasks.add_task(_run_finalize_job, job.job_id, payload)
+
+    accept_header = request.headers.get("accept", "")
+    x_requested_with = request.headers.get("x-requested-with", "")
+    wants_json = "application/json" in accept_header or x_requested_with.lower() == "xmlhttprequest"
+    if wants_json:
+        return JSONResponse({"job_id": job.job_id})
+
+    return RedirectResponse(
+        url=f"/agentic-jobs/{job.job_id}/status",
+        status_code=303,
+    )
+
+
 @app.post("/agentic-finalize-course", response_class=HTMLResponse, tags=["web"])
 async def agentic_finalize_course(
     request: Request,
@@ -1958,35 +2127,7 @@ async def agentic_finalize_course(
     older forms that only submit raw text continue to work.
     """
 
-    outcomes: List[str]
-
-    # Prefer JSON payload when present and valid
-    if learning_outcomes_json:
-        raw_json = (learning_outcomes_json or "").strip()
-        try:
-            parsed = json.loads(raw_json)
-        except json.JSONDecodeError as exc:
-            # If JSON fails but we still have the plain-text version, fall back
-            if learning_outcomes:
-                outcomes = _parse_learning_outcomes(learning_outcomes)
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid learning_outcomes_json: {exc}",
-                ) from exc
-        else:
-            if not isinstance(parsed, list):
-                raise HTTPException(
-                    status_code=400,
-                    detail="learning_outcomes_json must be a JSON array of strings.",
-                )
-            outcomes = [str(item).strip() for item in parsed if str(item).strip()]
-            if not outcomes:
-                raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
-    elif learning_outcomes is not None:
-        outcomes = _parse_learning_outcomes(learning_outcomes)
-    else:
-        raise HTTPException(status_code=400, detail="At least one learning outcome is required.")
+    outcomes = _parse_outcomes_flexible(learning_outcomes, learning_outcomes_json)
 
     # Use agentic plan as the source of truth for the structure (modules and
     # lessons), and adapt the generated lessons/quizzes into the data
