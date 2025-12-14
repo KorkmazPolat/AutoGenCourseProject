@@ -498,7 +498,12 @@
                     class="text-2xl font-bold bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:ring-0 text-gray-800 w-full px-2 py-1 transition-colors"
                     placeholder="Course Title" onchange="updateCourseTitle(this.value)">
             </div>
-            <div class="actions">
+            <div class="actions flex items-center gap-3">
+                <select id="video_engine_select"
+                    class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
+                    <option value="openai">OpenAI</option>
+                    <option value="gemini">Gemini 2.0</option>
+                </select>
                 <button class="action-btn btn-secondary" onclick="exportCourse()">Export JSON</button>
                 <button class="action-btn btn-primary" onclick="saveCourse()">Save Changes</button>
                 <button class="action-btn btn-primary" style="background: #10b981;" onclick="generateContent()"
@@ -1034,7 +1039,8 @@
             openProgressModal();
 
             try {
-                const response = await fetch(`/generate-course-content/${savedCourseId}`, {
+                const engine = document.getElementById('video_engine_select').value;
+                const response = await fetch(`/generate-course-content/${savedCourseId}?video_engine=${engine}`, {
                     method: 'POST'
                 });
 

@@ -168,8 +168,14 @@
 
             // Populate Quiz
             const quizAsset = currentAssets.find(a => a.type === 'quiz');
-            if (quizAsset && quizAsset.content && quizAsset.content.questions) {
-                renderQuizQuestions(quizAsset.content.questions);
+            if (quizAsset) {
+                if (Array.isArray(quizAsset.content)) {
+                    renderQuizQuestions(quizAsset.content);
+                } else if (quizAsset.content && quizAsset.content.questions) {
+                    renderQuizQuestions(quizAsset.content.questions);
+                } else {
+                    renderQuizQuestions([]);
+                }
             } else {
                 renderQuizQuestions([]);
             }
@@ -289,7 +295,7 @@
         if (quizAsset) {
             assetsUpdate.push({
                 id: quizAsset.id,
-                content: { ...quizAsset.content, questions: currentQuizQuestions }
+                content: currentQuizQuestions // Save directly as array
             });
         }
 

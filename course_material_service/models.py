@@ -31,6 +31,7 @@ class Course(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Nullable for migration safety, but should be populated
+    course_type = Column(String, default="course") # 'course', 'quiz', 'reading', 'slides'
 
     creator = relationship("User", back_populates="created_courses")
     modules = relationship("CourseModule", back_populates="course", cascade="all, delete-orphan")

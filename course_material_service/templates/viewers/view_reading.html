@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} - Reading{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8 animate-fadeIn">
+
+    <div class="bg-white rounded-t-3xl shadow-sm border border-b-0 border-gray-100 p-8 md:p-12 mb-0">
+        <span
+            class="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-emerald-800 uppercase bg-emerald-100 rounded-full">Article</span>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6">{{ course.title
+            }}</h1>
+        <p class="text-xl text-gray-500 leading-relaxed font-serif">{{ course.description }}</p>
+    </div>
+
+    <div
+        class="bg-white rounded-b-3xl shadow-xl border border-gray-100 p-8 md:p-16 prose prose-lg prose-slate mx-auto max-w-3xl font-serif text-justify prose-img:rounded-xl prose-img:shadow-lg prose-headings:font-sans prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-gray-900 prose-strong:text-indigo-900 prose-blockquote:border-l-4 prose-blockquote:border-indigo-500 prose-blockquote:bg-gray-50 prose-blockquote:px-6 prose-blockquote:py-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-li:marker:text-indigo-300">
+        <!-- Rendered Markdown Content -->
+        {{ content_html | safe }}
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-8 flex justify-center pb-10">
+        <a href="/library"
+            class="px-6 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition-colors shadow-sm">
+            ← Back into Library
+        </a>
+    </div>
+</div>
+{% endblock %}

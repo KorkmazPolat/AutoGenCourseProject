@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} - Quiz{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8 animate-fadeIn">
+    <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-indigo-100">
+        <!-- Header -->
+        <div class="bg-indigo-600 px-8 py-6 text-white flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">{{ course.title }}</h1>
+                <p class="text-indigo-200 text-sm mt-1">{{ course.description }}</p>
+            </div>
+            <span class="bg-white/20 px-3 py-1 rounded-full text-xs font-mono">{{ questions|length }} Questions</span>
+        </div>
+
+        <div id="quizContainer" class="p-8 md:p-12">
+            <!-- Questions rendered here by JS -->
+        </div>
+
+        <div id="resultsContainer" class="hidden p-8 md:p-12 text-center">
+            <div
+                class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Quiz Completed!</h2>
+            <p class="text-gray-500 text-lg mb-8">You scored <span id="scoreValue"
+                    class="font-bold text-indigo-600"></span> out of <span id="totalValue"></span></p>
+            <a href="/library"
+                class="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors">Return
+                to Library</a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const questions = {{ questions | tojson }};
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const container = document.getElementById('quizContainer');
+    const results = document.getElementById('resultsContainer');
+
+    function renderQuestion(index) {
+        if (index >= questions.length) {
+            showResults();
+            return;
+        }
+
+        const q = questions[index];
+        container.innerHTML = `
+            <div class="mb-8">
+                <div class="flex items-center text-sm font-bold text-gray-400 mb-4 uppercase tracking-wider">
+                    Question ${index + 1} of ${questions.length}
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">${q.question}</h2>
+                <div class="grid gap-3">
+                    ${q.options.map((opt, i) => `
+                        <button onclick="checkAnswer(${index}, '${opt.replace(/'/g, "\\'")}', this)" 
+                            class="text-left w-full px-6 py-4 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all font-medium text-gray-700 group">
+                            <span class="w-8 h-8 rounded-full border border-gray-300 inline-flex items-center justify-center mr-3 text-sm text-gray-500 group-hover:border-indigo-400 group-hover:text-indigo-600 bg-white">
+                                ${String.fromCharCode(65 + i)}
+                            </span>
+                            ${opt}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            <div id="feedback-${index}" class="hidden mt-6 p-4 rounded-xl bg-gray-50 border border-gray-100 animate-fadeIn"></div>
+             ${index < questions.length - 1 ?
+                `<button id="nextBtn-${index}" onclick="renderQuestion(${index + 1})" class="hidden mt-6 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Next Question →</button>` :
+                `<button id="nextBtn-${index}" onclick="showResults()" class="hidden mt-6 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Finish Quiz</button>`
+            }
+        `;
+    }
+
+    function checkAnswer(index, selected, btnElement) {
+        // Disable all buttons
+        const buttons = container.querySelectorAll('button');
+        // Filter out the finish/next buttons which might have been added in innerHTML but are separated
+        buttons.forEach(b => {
+            if (!b.id.startsWith('nextBtn-')) {
+                b.disabled = true;
+            }
+        });
+
+        const q = questions[index];
+        const isCorrect = selected === q.answer;
+
+        if (isCorrect) {
+            score++;
+            btnElement.classList.replace('border-gray-200', 'border-green-500');
+            btnElement.classList.replace('hover:border-indigo-300', 'bg-green-50');
+            btnElement.classList.add('ring-2', 'ring-green-500');
+        } else {
+            btnElement.classList.replace('border-gray-200', 'border-red-500');
+            btnElement.classList.replace('hover:border-indigo-300', 'bg-red-50');
+
+            // Highlight correct
+            // Simple search by text content might work if exact match
+        }
+
+        const feedback = document.getElementById(`feedback-${index}`);
+        feedback.classList.remove('hidden');
+        feedback.innerHTML = `
+            <div class="flex items-start gap-3">
+                <div class="${isCorrect ? 'text-green-600' : 'text-red-600'} flex-shrink-0 mt-0.5">
+                    ${isCorrect ?
+                '<svg class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke="currentColor" d="M5 13l4 4L19 7"></path></svg>' :
+                '<svg class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke="currentColor" d="M6 18L18 6M6 6l12 12"></path></svg>'}
+                </div>
+                <div>
+                    <h4 class="font-bold ${isCorrect ? 'text-green-800' : 'text-red-800'}">${isCorrect ? 'Correct!' : 'Incorrect'}</h4>
+                    <p class="text-gray-600 mt-1">${q.explanation}</p>
+                    ${!isCorrect ? `<p class="text-sm font-semibold mt-2">Correct Answer: ${q.answer}</p>` : ''}
+                </div>
+            </div>
+        `;
+
+        document.getElementById(`nextBtn-${index}`).classList.remove('hidden');
+    }
+
+    function showResults() {
+        container.classList.add('hidden');
+        results.classList.remove('hidden');
+        document.getElementById('scoreValue').innerText = score;
+        document.getElementById('totalValue').innerText = questions.length;
+    }
+
+    // Start
+    renderQuestion(0);
+</script>
+{% endblock %}

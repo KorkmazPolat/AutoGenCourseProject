@@ -412,6 +412,8 @@ app.include_router(agent_course_router)
 
 from course_material_service.admin import router as admin_router
 app.include_router(admin_router)
+from routes.tools import router as tools_router
+app.include_router(tools_router)
 
 from course_material_service.database import init_db, get_db
 from course_material_service import models # Register models

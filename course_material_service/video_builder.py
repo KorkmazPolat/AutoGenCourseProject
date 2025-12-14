@@ -270,6 +270,127 @@ def _create_slide_image(
             current_y += lh + 10
         current_y += 30
 
+    def draw_subheading(text: str):
+        nonlocal current_y
+        current_y += 15
+        draw.text((margin_x + 10, current_y), text.upper(), font=_resolve_font(32, bold=True), fill=accent_end)
+        w = draw.textlength(text.upper(), font=_resolve_font(32, bold=True))
+        draw.line([(margin_x + 10, current_y + 40), (margin_x + 10 + w + 20, current_y + 40)], fill=accent_start, width=3)
+        current_y += 60
+
+    def draw_key_takeaway(text: str):
+        nonlocal current_y
+        # Glowing box
+        wrapped = _wrap_text(draw, text, body_font, content_width - 60)
+        _, _, _, lh = draw.textbbox((0, 0), "A", font=body_font)
+        box_h = len(wrapped) * (lh + 8) + 70
+        
+        # Border
+        draw.rounded_rectangle(
+            [(margin_x, current_y), (W - margin_x, current_y + box_h)],
+            radius=20,
+            fill=(20, 25, 40, 200),
+            outline=accent_start,
+            width=3
+        )
+        
+        # Label
+        label_font = _resolve_font(24, bold=True)
+        draw.text((margin_x + 30, current_y + 20), "KEY TAKEAWAY", font=label_font, fill=accent_start)
+        
+        text_y = current_y + 60
+        for line in wrapped:
+            draw.text((margin_x + 30, text_y), line, font=body_font, fill=text_primary)
+            text_y += lh + 8
+        current_y += box_h + 30
+
+    def draw_diagram(caption: str):
+        nonlocal current_y
+        # Placeholder for diagram
+        box_h = 300
+        draw.rectangle(
+            [(margin_x + 40, current_y), (W - margin_x - 40, current_y + box_h)],
+            fill=(40, 40, 60, 255),
+            outline=text_secondary,
+            width=2
+        )
+        
+        # Icon
+        cx = W // 2
+        cy = current_y + box_h // 2
+        r = 60
+        draw.ellipse([(cx - r, cy - r), (cx + r, cy + r)], outline=accent_end, width=4)
+        draw.line([(cx - 40, cy), (cx + 40, cy)], fill=accent_end, width=4)
+        draw.line([(cx, cy - 40), (cx, cy + 40)], fill=accent_end, width=4)
+        
+        # Caption
+        if caption:
+            draw.text((margin_x + 60, current_y + box_h - 40), f"Diagram: {caption}", font=_resolve_font(24), fill=text_secondary)
+            
+        current_y += box_h + 40
+
+    def draw_code(code: str, language: str = "python"):
+        nonlocal current_y
+        code_font = _resolve_font(28, family="Courier New")
+        lines = code.split('\n')
+        # Limit lines
+        if len(lines) > 12:
+            lines = lines[:11] + ["..."]
+            
+        lh = 34
+        box_h = len(lines) * lh + 40
+        
+        # BG
+        draw.rectangle(
+            [(margin_x, current_y), (W - margin_x, current_y + box_h)],
+            fill=(10, 10, 15, 230),
+            outline=(100, 100, 100),
+            width=1
+        )
+        # Header
+        draw.rectangle([(margin_x, current_y), (W - margin_x, current_y + 30)], fill=(40, 40, 50))
+        draw.text((margin_x + 10, current_y+5), f" {language.upper()}", font=_resolve_font(18, bold=True), fill=text_secondary)
+        
+        ty = current_y + 40
+        for ln in lines:
+            draw.text((margin_x + 20, ty), ln, font=code_font, fill=(200, 200, 200))
+            ty += lh
+            
+        current_y += box_h + 30
+
+    def draw_table(headers: List[str], rows: List[List[str]]):
+        nonlocal current_y
+        # Simple table
+        cols = max(len(headers), max(len(r) for r in rows) if rows else 0)
+        if cols == 0: return
+        
+        col_w = (content_width - 20) // cols
+        row_h = 50
+        
+        # Header
+        for i, h in enumerate(headers):
+            draw.rectangle(
+                [(margin_x + i*col_w, current_y), (margin_x + (i+1)*col_w, current_y + row_h)],
+                fill=accent_start, outline=bg_start
+            )
+            draw.text((margin_x + i*col_w + 10, current_y+10), str(h), font=_resolve_font(24, bold=True), fill=text_primary)
+            
+        current_y += row_h
+        
+        # Rows
+        for r_idx, row in enumerate(rows):
+            fill = (255, 255, 255, 20) if r_idx % 2 == 0 else (0, 0, 0, 20)
+            for i, val in enumerate(row):
+                 if i < cols:
+                    draw.rectangle(
+                        [(margin_x + i*col_w, current_y), (margin_x + (i+1)*col_w, current_y + row_h)],
+                        fill=fill
+                    )
+                    draw.text((margin_x + i*col_w + 10, current_y+10), str(val), font=_resolve_font(24), fill=text_primary)
+            current_y += row_h
+            
+        current_y += 30
+
     # Render Blocks
     blocks = slide.content_blocks or []
     if blocks:
@@ -281,11 +402,21 @@ def _create_slide_image(
                 for item in block.get("items", []):
                     draw_bullet(str(item))
             elif btype == "callout":
-                draw_callout(str(block.get("text", "")))
+                draw_callout(str(block.get("text", "")), block.get("style", "info"))
             elif btype == "quote":
                 draw_quote(str(block.get("text", "")))
             elif btype == "example":
                 draw_callout(f"Example: {block.get('text', '')}")
+            elif btype == "subheading":
+                draw_subheading(str(block.get("text", "")))
+            elif btype == "key_takeaway":
+                draw_key_takeaway(str(block.get("text", "")))
+            elif btype == "diagram":
+                draw_diagram(str(block.get("caption", "")))
+            elif btype == "code":
+                draw_code(str(block.get("code", "")), str(block.get("language", "text")))
+            elif btype == "table":
+                draw_table(block.get("headers", []), block.get("rows", []))
     else:
         # Fallback parsing
         raw = (slide.content or "").strip()

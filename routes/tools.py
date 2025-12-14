@@ -1,0 +1,225 @@
+from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
+import os
+import json
+from openai import OpenAI
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from course_material_service.dependencies import get_session_user
+from course_material_service.database import get_db
+from course_material_service import models
+from course_material_service.slide_engine.service import SlideGeneratorService
+
+router = APIRouter()
+templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "course_material_service" / "templates"))
+
+def get_openai_client():
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API Key not set")
+    return OpenAI(api_key=api_key)
+
+@router.get("/tools/quiz", response_class=HTMLResponse)
+async def tool_quiz_page(request: Request, user_id: int = Depends(get_session_user)):
+    return templates.TemplateResponse("tools/quiz_generator.html", {"request": request})
+
+@router.post("/tools/generate/quiz")
+async def generate_quiz(
+    topic: str = Form(...),
+    difficulty: str = Form("intermediate"),
+    count: int = Form(10),
+    user_id: int = Depends(get_session_user),
+    db: AsyncSession = Depends(get_db)
+):
+    client = get_openai_client()
+    prompt = f"""
+    Create a {count}-question {difficulty} level quiz about: {topic}.
+    Return JSON format:
+    {{
+        "title": "Creative Quiz Title",
+        "description": "Short description of what this quiz covers.",
+        "questions": [
+            {{
+                "question": "Question text",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "answer": "Correct Option Text",
+                "explanation": "Why this is correct"
+            }}
+        ]
+    }}
+    """
+    
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": "You are a professional quiz generator. Output valid JSON."},
+                      {"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = json.loads(completion.choices[0].message.content)
+        
+        # Save to DB
+        # 1. Create Course (Type=Quiz)
+        course = models.Course(
+            title=content['title'],
+            description=content['description'],
+            user_id=user_id,
+            learning_outcomes=[],
+            course_type="quiz",
+            is_published=True
+        )
+        db.add(course)
+        await db.flush()
+        
+        # 2. Module & Lesson
+        module = models.CourseModule(course_id=course.id, title="Quiz Module", order_index=1)
+        db.add(module)
+        await db.flush()
+        
+        lesson = models.Lesson(module_id=module.id, title="Quiz Assessment", content="Take this quiz to test your knowledge.", order_index=1)
+        db.add(lesson)
+        await db.flush()
+        
+        # 3. Asset
+        asset = models.LessonAsset(
+            lesson_id=lesson.id,
+            asset_type="quiz",
+            content=content['questions']
+        )
+        db.add(asset)
+        await db.commit()
+        
+        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library"})
+        
+    except Exception as e:
+        print(f"Quiz Gen Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tools/readings", response_class=HTMLResponse)
+async def tool_reading_page(request: Request, user_id: int = Depends(get_session_user)):
+    return templates.TemplateResponse("tools/reading_generator.html", {"request": request})
+
+@router.post("/tools/generate/reading")
+async def generate_reading(
+    topic: str = Form(...),
+    tone: str = Form("conversational"),
+    length: str = Form("medium"),
+    audience: str = Form("general audience"),
+    user_id: int = Depends(get_session_user),
+    db: AsyncSession = Depends(get_db)
+):
+    client = get_openai_client()
+    length_prompt = "around 400 words" if length == "short" else "around 1000 words" if length == "medium" else "over 2000 words"
+    
+    prompt = f"""
+    Write a comprehensive reading article about: {topic}.
+    Target Audience: {audience}.
+    Tone: {tone}.
+    Length: {length_prompt}.
+    
+    Return JSON format:
+    {{
+        "title": "Engaging Article Title",
+        "description": "Short summary (2-3 sentences).",
+        "content_markdown": "# Title\\n\\n## Introduction\\n\\nIntroductory text with **bold** key terms.\\n\\n## Section 1\\n\\nDetailed content here.\\n\\n* Bullet point 1\\n* Bullet point 2\\n"
+    }}
+    IMPORTANT: The 'content_markdown' MUST be rich markdown with headers, lists, and bold text. Do not just return a flat text block.
+    """
+    
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": "You are an expert article writer. Output valid JSON."},
+                      {"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = json.loads(completion.choices[0].message.content)
+        
+        # Save to DB
+        course = models.Course(
+            title=content['title'],
+            description=content['description'],
+            user_id=user_id,
+            learning_outcomes=[],
+            course_type="reading",
+            is_published=True
+        )
+        db.add(course)
+        await db.flush()
+        
+        module = models.CourseModule(course_id=course.id, title="Reading Material", order_index=1)
+        db.add(module)
+        await db.flush()
+        
+        lesson = models.Lesson(module_id=module.id, title=content['title'], content=content['content_markdown'], order_index=1)
+        db.add(lesson)
+        await db.commit()
+        
+        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library"})
+    except Exception as e:
+        print(f"Reading Gen Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/tools/slides", response_class=HTMLResponse)
+async def tool_slides_page(request: Request, user_id: int = Depends(get_session_user)):
+    return templates.TemplateResponse("tools/slide_generator.html", {"request": request})
+
+@router.post("/tools/generate/slides")
+async def generate_slides(
+    topic: str = Form(...),
+    style: str = Form("modern"),
+    slide_count: int = Form(10),
+    audience: str = Form("general audience"),
+    user_id: int = Depends(get_session_user),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        service = SlideGeneratorService()
+        content = service.generate_slides(topic, audience, slide_count, style)
+        
+        # Save to DB
+        course = models.Course(
+            title=content['title'],
+            description=content['description'],
+            user_id=user_id,
+            learning_outcomes=[],
+            course_type="slides",
+            is_published=True
+        )
+        db.add(course)
+        await db.flush()
+        
+        module = models.CourseModule(course_id=course.id, title="Presentation", order_index=1)
+        db.add(module)
+        await db.flush()
+        
+        # Save slides as an asset, but also put main content in lesson for fallback
+        lesson_content = f"# {content['title']}\n\n"
+        for slide in content.get('slides', []):
+            lesson_content += f"## {slide.get('title')}\n{slide.get('content')}\n\n*Note: {slide.get('notes')}*\n\n---\n\n"
+
+        lesson = models.Lesson(module_id=module.id, title="Slide Deck", content=lesson_content, order_index=1)
+        db.add(lesson)
+        await db.flush()
+        
+        # Save structured data as asset
+        asset = models.LessonAsset(
+            lesson_id=lesson.id,
+            asset_type="script", # reusing script type for slides
+            content=content
+        )
+        db.add(asset)
+        await db.commit()
+        
+        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library"})
+    except Exception as e:
+        print(f"Slide Gen Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        print(f"Slide Gen Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

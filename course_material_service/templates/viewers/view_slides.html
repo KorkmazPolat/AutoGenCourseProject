@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} - Slides{% endblock %}
+
+{% block content %}
+<div class="h-[calc(100vh-6rem)] flex flex-col bg-gray-900 overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gray-800 border-b border-gray-700 px-6 py-3 flex justify-between items-center flex-shrink-0">
+        <h1 class="text-white font-bold text-lg truncate">{{ course.title }}</h1>
+        <div class="flex items-center gap-4 text-sm text-gray-400">
+            <span id="slideCounter">Slide 1 / {{ slides|length }}</span>
+            <a href="/library" class="hover:text-white transition-colors">Exit</a>
+        </div>
+    </div>
+
+    <!-- Slide Area -->
+    <div class="flex-1 relative flex items-center justify-center p-8 bg-gray-900">
+        <!-- Slides Container -->
+        <div id="slideDeck"
+            class="w-full max-w-5xl aspect-video bg-white rounded-xl shadow-2xl relative overflow-hidden transition-all duration-300">
+            {% for slide in slides %}
+            <div id="slide-{{ loop.index0 }}"
+                class="absolute inset-0 p-12 md:p-16 flex flex-col {{ 'hidden' if not loop.first else '' }} transition-opacity duration-300">
+                <div class="flex-1">
+                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-8">{{ slide.title }}</h2>
+                    <div class="prose prose-xl max-w-none text-gray-700 leading-snug">
+                        {{ slide.content_html | safe }}
+                    </div>
+                </div>
+                <!-- Footer -->
+                <div class="mt-auto pt-8 border-t border-gray-100 flex justify-between text-sm text-gray-400">
+                    <span>{{ course.title }}</span>
+                    <span>{{ loop.index }}</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
+                <p class="text-xl font-medium">No slides available.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Controls -->
+        <button onclick="prevSlide()"
+            class="absolute left-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all shadow-lg">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        <button onclick="nextSlide()"
+            class="absolute right-8 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-sm transition-all shadow-lg">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Notes Panel (Collapsible) -->
+    <div class="h-48 bg-gray-800 border-t border-gray-700 p-6 overflow-y-auto flex-shrink-0">
+        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Speaker Notes</h3>
+        {% for slide in slides %}
+        <p id="note-{{ loop.index0 }}" class="text-gray-300 text-lg {{ 'hidden' if not loop.first else '' }}">
+            {{ slide.notes }}
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    let currentIndex = 0;
+    const totalSlides = {{ slides| length }};
+    const counter = document.getElementById('slideCounter');
+
+    function showSlide(index) {
+        // Hide current
+        document.getElementById(`slide-${currentIndex}`).classList.add('hidden');
+        document.getElementById(`note-${currentIndex}`).classList.add('hidden');
+
+        // Update index
+        currentIndex = index;
+        if (currentIndex < 0) currentIndex = 0;
+        if (currentIndex >= totalSlides) currentIndex = totalSlides - 1;
+
+        // Show new
+        document.getElementById(`slide-${currentIndex}`).classList.remove('hidden');
+        document.getElementById(`note-${currentIndex}`).classList.remove('hidden');
+
+        counter.innerText = `Slide ${currentIndex + 1} / ${totalSlides}`;
+    }
+
+    function prevSlide() {
+        if (currentIndex > 0) showSlide(currentIndex - 1);
+    }
+
+    function nextSlide() {
+        if (currentIndex < totalSlides - 1) showSlide(currentIndex + 1);
+    }
+
+    // Keyboard nav
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') prevSlide();
+        if (e.key === 'ArrowRight') nextSlide();
+    });
+</script>
+{% endblock %}

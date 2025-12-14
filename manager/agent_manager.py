@@ -63,6 +63,7 @@ class AgentManager:
         skip_video: bool = False,
         num_modules: int | None = None,
         num_lessons: int | None = None,
+        video_engine: str = "openai",
         progress_cb=None,
     ) -> Dict[str, Any]:
         self.feedback_monitor = FeedbackMonitor()
@@ -234,7 +235,12 @@ class AgentManager:
 
                     if not skip_video:
                         logger.info("Queueing video generation for lesson '%s'", lesson_name)
-                        self.workload_manager.submit_task(lesson_name, self.video_generator.generate, validated_script)
+                        self.workload_manager.submit_task(
+                            task_name=lesson_name,
+                            func=self.video_generator.generate,
+                            input_json=validated_script,
+                            engine=video_engine
+                        )
                         self._record_feedback("video_generation.queue", True, lesson=lesson_name)
                     else:
                         logger.info("Skipping video generation for lesson '%s'", lesson_name)
@@ -288,7 +294,7 @@ class AgentManager:
         finally:
             if self.workload_manager is not None:
                 self.workload_manager.shutdown()
-    def generate_lesson_bundle(self, module_title: str, lesson_title: str, lesson_desc: str, skip_video: bool = False) -> Dict[str, Any]:
+    def generate_lesson_bundle(self, module_title: str, lesson_title: str, lesson_desc: str, skip_video: bool = False, video_engine: str = "openai") -> Dict[str, Any]:
         """
         Generates content for a single lesson (text, script, quiz, video) based on title and description.
         """
@@ -321,7 +327,7 @@ class AgentManager:
         # 4. Generate Video
         video_info = None
         if not skip_video:
-            video_info = self.video_generator.generate(validated_script)
+            video_info = self.video_generator.generate(validated_script, engine=video_engine)
             
         return {
             "lesson": validated_lesson,

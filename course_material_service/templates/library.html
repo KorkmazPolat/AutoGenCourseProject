@@ -3,97 +3,249 @@
 {% block title %}My Library - ALPHA{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto p-8 animate-fadeIn">
+<div class="max-w-7xl mx-auto px-4 py-8 animate-fadeIn">
 
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">My Library</h1>
-            <p class="text-gray-600 text-lg mt-2">Manage and edit your created courses.</p>
+    <!-- Header Section -->
+    <div class="relative bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-8 mb-10 overflow-hidden shadow-2xl">
+        <div class="absolute inset-0 bg-white/5 opacity-20"></div>
+        <div class="absolute -right-20 -top-20 w-80 h-80 bg-indigo-500 rounded-full blur-3xl opacity-20"></div>
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h1 class="text-4xl font-extrabold text-white tracking-tight">My Universe</h1>
+                <p class="text-gray-300 text-lg mt-2">Manage your educational courses and assets.</p>
+            </div>
+            <a href="/dashboard"
+                class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-indigo-600 font-pj rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 hover:bg-indigo-700 shadow-xl">
+                <span class="mr-2 text-xl">+</span> New Course
+            </a>
         </div>
-        <a href="/dashboard"
-            class="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Create New Course
-        </a>
     </div>
 
     {% if courses %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {% for course in courses %}
+        {% if course.course_type == 'quiz' %}
+        <!-- QUIZ CARD -->
         <div
-            class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col h-full">
-            <div class="flex justify-between items-start mb-4">
-                <div class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
-                    Course
-                </div>
-                {% if course.is_published %}
-                <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center">
-                    <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span> Published
-                </span>
-                {% else %}
-                <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">Draft</span>
-                {% endif %}
+            class="group relative bg-white border-2 border-purple-100 rounded-2xl shadow-sm hover:shadow-xl hover:border-purple-300 transition-all duration-300 flex flex-col h-full overflow-hidden hover:-translate-y-1">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg class="w-24 h-24 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
             </div>
-
-            <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ course.title }}</h3>
-            <p class="text-sm text-gray-500 mb-4 line-clamp-3 flex-grow">{{ course.description or 'No description
-                available.' }}</p>
-
-            <div class="text-xs text-gray-400 mb-4">
-                Last updated: {{ course.updated_at.strftime('%Y-%m-%d') if course.updated_at else 'N/A' }}
-            </div>
-
-            <div class="flex flex-col gap-2 mt-auto">
-                <div class="grid grid-cols-2 gap-2">
-                    <a href="/edit-course-content/{{ course.id }}"
-                        class="text-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm">
-                        Edit in Studio
-                    </a>
-                    <a href="/course/{{ course.id }}"
-                        class="text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm">
-                        View Content
-                    </a>
+            <div class="p-6 flex-grow flex flex-col relative z-10">
+                <div class="flex justify-between items-start mb-4">
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 uppercase tracking-wide">
+                        QUIZ
+                    </span>
+                    {% if course.is_published %}
+                    <span class="w-2 h-2 bg-green-500 rounded-full" title="Published"></span>
+                    {% endif %}
                 </div>
-                <a href="/course/{{ course.id }}/dashboard"
-                    class="text-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm">
-                    Manage Students & Stats
-                </a>
+                <h3
+                    class="text-xl font-extrabold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors line-clamp-2">
+                    {{ course.title }}</h3>
+                <p class="text-sm text-gray-500 mb-6 line-clamp-3">{{ course.description or 'Test your knowledge.' }}
+                </p>
 
-                <div class="flex gap-2">
-                    <button onclick="togglePublish({{ course.id }}, this)"
-                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors">
-                        {{ 'Unpublish' if course.is_published else 'Publish' }}
-                    </button>
-                    <button onclick="copyLink({{ course.id }})"
-                        class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors"
-                        title="Copy Link">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                    </button>
-                    <button onclick="deleteCourse({{ course.id }})"
-                        class="px-3 py-2 border border-gray-300 rounded-lg text-red-600 hover:bg-red-50 text-sm font-medium transition-colors"
-                        title="Delete Course">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                            </path>
-                        </svg>
-                    </button>
+                <div class="mt-auto pt-4 border-t border-purple-50 flex justify-between items-center">
+                    <span class="text-xs text-gray-400 font-medium">{{ course.created_at.strftime('%b %d') if
+                        course.created_at else '' }}</span>
+                    <div class="flex gap-2">
+                        <a href="/edit-course-content/{{ course.id }}"
+                            class="px-3 py-2 bg-gray-50 text-purple-700 text-sm font-bold rounded-lg hover:bg-purple-50 border border-purple-100 transition-colors">
+                            Studio
+                        </a>
+                        <a href="/course/{{ course.id }}"
+                            class="px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">
+                            Solve
+                        </a>
+                        <button onclick="deleteCourse({{ course.id }})"
+                            class="p-2 text-gray-400 hover:text-red-500 transition-colors"><svg class="w-4 h-4"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                </path>
+                            </svg></button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        {% elif course.course_type == 'reading' %}
+        <!-- READING CARD -->
+        <div
+            class="group relative bg-white border-2 border-emerald-100 rounded-2xl shadow-sm hover:shadow-xl hover:border-emerald-300 transition-all duration-300 flex flex-col h-full overflow-hidden hover:-translate-y-1">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg class="w-24 h-24 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
+                    </path>
+                </svg>
+            </div>
+            <div class="p-6 flex-grow flex flex-col relative z-10">
+                <div class="flex justify-between items-start mb-4">
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 uppercase tracking-wide">
+                        READING
+                    </span>
+                    {% if course.is_published %}
+                    <span class="w-2 h-2 bg-green-500 rounded-full" title="Published"></span>
+                    {% endif %}
+                </div>
+                <h3
+                    class="text-xl font-extrabold text-gray-900 mb-2 group-hover:text-emerald-700 transition-colors line-clamp-2">
+                    {{ course.title }}</h3>
+                <p class="text-sm text-gray-500 mb-6 line-clamp-3">{{ course.description or 'A comprehensive reading.'
+                    }}</p>
+
+                <div class="mt-auto pt-4 border-t border-emerald-50 flex justify-between items-center">
+                    <span class="text-xs text-gray-400 font-medium">{{ course.created_at.strftime('%b %d') if
+                        course.created_at else '' }}</span>
+                    <div class="flex gap-2">
+                        <a href="/course/{{ course.id }}"
+                            class="px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200">
+                            Read
+                        </a>
+                        <button onclick="deleteCourse({{ course.id }})"
+                            class="p-2 text-gray-400 hover:text-red-500 transition-colors"><svg class="w-4 h-4"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                </path>
+                            </svg></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% elif course.course_type == 'slides' %}
+        <!-- SLIDES CARD -->
+        <div
+            class="group relative bg-white border-2 border-pink-100 rounded-2xl shadow-sm hover:shadow-xl hover:border-pink-300 transition-all duration-300 flex flex-col h-full overflow-hidden hover:-translate-y-1">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg class="w-24 h-24 text-pink-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                </svg>
+            </div>
+            <div class="p-6 flex-grow flex flex-col relative z-10">
+                <div class="flex justify-between items-start mb-4">
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-pink-100 text-pink-700 uppercase tracking-wide">
+                        SLIDES
+                    </span>
+                    {% if course.is_published %}
+                    <span class="w-2 h-2 bg-green-500 rounded-full" title="Published"></span>
+                    {% endif %}
+                </div>
+                <h3
+                    class="text-xl font-extrabold text-gray-900 mb-2 group-hover:text-pink-700 transition-colors line-clamp-2">
+                    {{ course.title }}</h3>
+                <p class="text-sm text-gray-500 mb-6 line-clamp-3">{{ course.description or 'Visual presentation deck.'
+                    }}</p>
+
+                <div class="mt-auto pt-4 border-t border-pink-50 flex justify-between items-center">
+                    <span class="text-xs text-gray-400 font-medium">{{ course.created_at.strftime('%b %d') if
+                        course.created_at else '' }}</span>
+                    <div class="flex gap-2">
+                        <a href="/course/{{ course.id }}"
+                            class="px-4 py-2 bg-pink-600 text-white text-sm font-bold rounded-lg hover:bg-pink-700 transition-colors shadow-lg shadow-pink-200">
+                            Present
+                        </a>
+                        <button onclick="deleteCourse({{ course.id }})"
+                            class="p-2 text-gray-400 hover:text-red-500 transition-colors"><svg class="w-4 h-4"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                </path>
+                            </svg></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- FULL COURSE CARD -->
+        <div
+            class="group relative bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-2xl hover:border-indigo-300 transition-all duration-300 flex flex-col h-full overflow-hidden hover:-translate-y-1">
+            <!-- Image Header -->
+            <div class="h-32 bg-gray-100 relative overflow-hidden">
+                {% if course.thumbnail_url %}
+                <img src="{{ course.thumbnail_url }}" alt=""
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                {% else %}
+                <div class="w-full h-full bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center">
+                    <svg class="w-12 h-12 text-indigo-200" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                        <path
+                            d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z">
+                        </path>
+                    </svg>
+                </div>
+                {% endif %}
+
+                <div class="absolute top-4 left-4">
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white/90 backdrop-blur text-indigo-700 uppercase tracking-wide shadow-sm">
+                        COURSE
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-6 flex-grow flex flex-col">
+                <h3
+                    class="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                    {{ course.title }}</h3>
+                <p class="text-sm text-gray-500 mb-6 line-clamp-3">{{ course.description or 'Complete learning path.' }}
+                </p>
+
+                <div class="mt-auto flex justify-between items-center pt-4 border-t border-gray-100">
+                    <div class="flex gap-2">
+                        <a href="/course/{{ course.id }}"
+                            class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-md">
+                            View
+                        </a>
+                        <a href="/edit-course-content/{{ course.id }}"
+                            class="p-2 text-gray-400 hover:text-indigo-600 transition-colors" title="Edit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                </path>
+                            </svg>
+                        </a>
+                    </div>
+                    <button onclick="deleteCourse({{ course.id }})"
+                        class="p-2 text-gray-400 hover:text-red-500 transition-colors"><svg class="w-4 h-4" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg></button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-        <p class="text-gray-500">You haven't created any courses yet.</p>
-        <a href="/dashboard" class="text-indigo-600 font-semibold hover:underline mt-2 inline-block">Create your first
-            course</a>
+    <div class="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-300 shadow-sm">
+        <div class="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.523 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.523 18.246 18 16.5 18s-3.332.477-4.5 1.253">
+                </path>
+            </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Start your journey</h3>
+        <p class="text-gray-500 max-w-sm mx-auto mb-8">You haven't created any courses yet. Transform your knowledge
+            into an engaging curriculum today.</p>
+        <a href="/dashboard"
+            class="inline-flex items-center justify-center px-6 py-3 font-semibold text-white transition-all duration-200 bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-lg hover:shadow-indigo-200">
+            Create First Course
+        </a>
     </div>
     {% endif %}
 </div>

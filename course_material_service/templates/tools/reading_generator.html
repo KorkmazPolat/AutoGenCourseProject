@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Reading Generator - ALPHA{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto animate-fadeIn">
+    <!-- Header -->
+    <div class="relative bg-green-600 rounded-3xl p-10 overflow-hidden shadow-2xl mb-10 text-white">
+        <div
+            class="absolute inset-0 bg-white/10 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/notebook.png')] mix-blend-overlay">
+        </div>
+        <div class="relative z-10">
+            <h1 class="text-4xl font-extrabold tracking-tight mb-4 text-white">Reading Generator</h1>
+            <p class="text-green-50 text-lg max-w-2xl">Compose comprehensive reading materials, articles, and lesson
+                notes tailored to your audience's needs.</p>
+        </div>
+    </div>
+
+    <!-- Generator Card -->
+    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+        <div class="p-8 md:p-12">
+            <form id="readingForm" class="space-y-8">
+                <!-- Topic -->
+                <div>
+                    <label for="topic"
+                        class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Topic /
+                        Title</label>
+                    <input type="text" id="topic" name="topic" required
+                        placeholder="e.g. The impact of AI on Healthcare"
+                        class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-lg placeholder-gray-400">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Tone -->
+                    <div>
+                        <label for="tone"
+                            class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Tone</label>
+                        <select id="tone" name="tone"
+                            class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all">
+                            <option value="academic">Academic / Formal</option>
+                            <option value="conversational" selected>Conversational / Engaging</option>
+                            <option value="simplified">Simplified (Beginner)</option>
+                            <option value="professional">Professional / Corporate</option>
+                        </select>
+                    </div>
+
+                    <!-- Length -->
+                    <div>
+                        <label for="length"
+                            class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Approximate
+                            Length</label>
+                        <select id="length" name="length"
+                            class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all">
+                            <option value="short">Short Button (300-500 words)</option>
+                            <option value="medium" selected>Standard Article (800-1200 words)</option>
+                            <option value="long">Deep Dive (2000+ words)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Audience -->
+                <div>
+                    <label for="audience"
+                        class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Target
+                        Audience</label>
+                    <input type="text" id="audience" name="audience"
+                        placeholder="e.g. High School Students, Medical Professionals"
+                        class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all">
+                </div>
+
+                <!-- Submit -->
+                <button type="submit"
+                    class="w-full py-5 bg-green-600 hover:bg-green-700 text-white text-xl font-bold rounded-2xl shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center">
+                    <span>Generate Reading</span>
+                    <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay"
+            class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-20">
+            <div class="text-center">
+                <div
+                    class="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-4">
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">Writing Content...</h3>
+                <p class="text-gray-500">Composing your article based on the parameters.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('readingForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.classList.remove('hidden');
+
+        const formData = new FormData(e.target);
+
+        try {
+            const response = await fetch('/tools/generate/reading', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || "Failed to generate reading");
+            }
+
+            const data = await response.json();
+            if (data.status === 'success' && data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert("Something went wrong, please try again.");
+                overlay.classList.add('hidden');
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error: " + error.message);
+            overlay.classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}
