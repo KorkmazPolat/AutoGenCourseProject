@@ -29,13 +29,30 @@ async def tool_quiz_page(request: Request, user_id: int = Depends(get_session_us
 async def generate_quiz(
     topic: str = Form(...),
     difficulty: str = Form("intermediate"),
+    question_type: str = Form("multiple_choice"),
     count: int = Form(10),
     user_id: int = Depends(get_session_user),
     db: AsyncSession = Depends(get_db)
 ):
     client = get_openai_client()
+    
+    # Customize prompt based on question type
+    type_instructions = ""
+    if question_type == "true_false":
+        type_instructions = "All questions MUST be True/False questions. The 'options' array must contain strictly ['True', 'False']."
+    elif question_type == "multiple_choice":
+        type_instructions = "All questions MUST be Multiple Choice with 4 options."
+    elif question_type == "short_answer":
+        type_instructions = "All questions MUST be Short Answer questions. The 'options' array must be empty []."
+    elif question_type == "mixed":
+        type_instructions = "Generate a mix of True/False, Multiple Choice, and Short Answer questions."
+
     prompt = f"""
     Create a {count}-question {difficulty} level quiz about: {topic}.
+    
+    INSTRUCTIONS:
+    {type_instructions}
+    
     Return JSON format:
     {{
         "title": "Creative Quiz Title",
@@ -44,7 +61,7 @@ async def generate_quiz(
             {{
                 "question": "Question text",
                 "options": ["Option A", "Option B", "Option C", "Option D"],
-                "answer": "Correct Option Text",
+                "answer": "Correct Option Text or Answer",
                 "explanation": "Why this is correct"
             }}
         ]
@@ -227,7 +244,5 @@ async def generate_slides(
     except Exception as e:
         print(f"Slide Gen Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    except Exception as e:
-        print(f"Slide Gen Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
 

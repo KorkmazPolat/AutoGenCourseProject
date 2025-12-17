@@ -805,7 +805,26 @@ async def render_full_course_db(
                                  })
                 
                 # Check for text/markdown slides (HTML Slides)
-                # (If we implement a pure slide generator later)
+                script_asset = next((a for a in assets if a.asset_type == 'script'), None)
+                if script_asset and script_asset.content:
+                    s_content = script_asset.content
+                    if isinstance(s_content, str):
+                        try: s_content = json.loads(s_content)
+                        except: pass
+                    
+                    if isinstance(s_content, dict) and "slides" in s_content:
+                        import markdown
+                        for s in s_content.get("slides", []):
+                            md_text = s.get("content", "")
+                            # Convert markdown to basic HTML
+                            html_content = markdown.markdown(md_text)
+                            print(f"DEBUG: Processed slide '{s.get('title')}'")
+                            all_slides.append({
+                                "title": s.get("title", lesson.title),
+                                "content_html": html_content,
+                                "notes": s.get("notes", ""),
+                                "audio_url": None
+                            })
                 
         if all_slides:
             return templates.TemplateResponse(

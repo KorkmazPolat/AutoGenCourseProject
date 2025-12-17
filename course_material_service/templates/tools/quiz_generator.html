@@ -31,35 +31,35 @@
                         class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg placeholder-gray-400">
                 </div>
 
+                <!-- Question Type -->
+                <div>
+                    <label for="question_type"
+                        class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Question
+                        Type</label>
+                    <select id="question_type" name="question_type"
+                        class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 hover:border-indigo-300 transition-all text-lg cursor-pointer">
+                        <option value="multiple_choice" selected>Multiple Choice</option>
+                        <option value="true_false">True / False</option>
+                        <option value="short_answer">Short Answer</option>
+                        <option value="mixed">Mixed</option>
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Difficulty -->
                     <div>
                         <label
                             class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Difficulty
                             Level</label>
-                        <div class="grid grid-cols-3 gap-3">
-                            <label class="cursor-pointer">
-                                <input type="radio" name="difficulty" value="beginner" class="peer sr-only" checked>
-                                <div
-                                    class="text-center px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 peer-checked:bg-green-100 peer-checked:text-green-700 peer-checked:border-green-300 transition-all font-medium">
-                                    Easy
-                                </div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="difficulty" value="intermediate" class="peer sr-only">
-                                <div
-                                    class="text-center px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 peer-checked:bg-yellow-100 peer-checked:text-yellow-700 peer-checked:border-yellow-300 transition-all font-medium">
-                                    Medium
-                                </div>
-                            </label>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="difficulty" value="advanced" class="peer sr-only">
-                                <div
-                                    class="text-center px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 peer-checked:bg-red-100 peer-checked:text-red-700 peer-checked:border-red-300 transition-all font-medium">
-                                    Hard
-                                </div>
-                            </label>
-                        </div>
+                        <label for="difficulty"
+                            class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Difficulty
+                            Level</label>
+                        <select id="difficulty" name="difficulty"
+                            class="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 hover:border-indigo-300 transition-all text-lg cursor-pointer">
+                            <option value="beginner" selected>Easy</option>
+                            <option value="intermediate">Medium</option>
+                            <option value="advanced">Hard</option>
+                        </select>
                     </div>
 
                     <!-- Question Count -->
@@ -190,18 +190,29 @@
         data.questions.forEach((q, index) => {
             const qEl = document.createElement('div');
             qEl.className = 'bg-gray-50 rounded-2xl p-6 border border-gray-200';
+            qEl.id = `question-${index}`;
 
             let optionsHtml = '';
             // Handle both options array or potentially other formats if ever needed
-            if (q.options && Array.isArray(q.options)) {
+            if (q.options && Array.isArray(q.options) && q.options.length > 0) {
+                // Determine which option is the answer (simple string matching)
+                // We'll trust the user to click the text that matches.
+
                 optionsHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
                     ${q.options.map((opt, i) => `
-                        <div class="p-3 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium hover:border-indigo-300 transition-colors">
-                            <span class="inline-block w-6 h-6 bg-gray-100 rounded-full text-center text-sm leading-6 mr-2 text-gray-500 shadow-sm">${String.fromCharCode(65 + i)}</span>
-                            ${opt}
-                        </div>
+                        <button onclick="checkAnswer(${index}, '${i}', '${opt.replace(/'/g, "\\'")}', '${q.answer.replace(/'/g, "\\'")}')" 
+                            id="opt-${index}-${i}"
+                            class="w-full text-left p-3 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium hover:border-indigo-300 transition-all flex items-center group active:scale-[0.98]">
+                            <span id="badge-${index}-${i}" class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-sm font-bold mr-3 text-gray-500 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">${String.fromCharCode(65 + i)}</span>
+                            <span>${opt}</span>
+                        </button>
                     `).join('')}
                 </div>`;
+            } else if (!q.options || q.options.length === 0) {
+                // Short Answer - show a placeholder
+                optionsHtml = `<div class="mt-4 p-4 bg-white border border-gray-200 rounded-lg text-gray-400 italic">
+                    (Short Answer Question - Check "See Answer" to verify)
+                 </div>`;
             }
 
             qEl.innerHTML = `
@@ -213,6 +224,9 @@
                         <h3 class="text-lg font-bold text-gray-900 mb-2">${q.question}</h3>
                         ${optionsHtml}
                         
+                        <!-- Feedback Area -->
+                        <div id="feedback-${index}" class="hidden mt-3 font-semibold"></div>
+
                         <div class="mt-4 pt-4 border-t border-gray-200/50">
                             <details class="group">
                                 <summary class="flex items-center cursor-pointer text-sm font-semibold text-indigo-600 hover:text-indigo-700">
@@ -230,6 +244,46 @@
             `;
             container.appendChild(qEl);
         });
+    }
+
+    function checkAnswer(qIndex, optIndex, optText, correctText) {
+        // Simple normalization for comparison
+        const cleanOpt = optText.trim().toLowerCase();
+        const cleanCorrect = correctText.trim().toLowerCase();
+
+        // Check if correct (either precise match or contains)
+        // Note: AI often returns "Option A" or just the text. We check if the option text IS the answer.
+        const isCorrect = cleanOpt === cleanCorrect || cleanCorrect.includes(cleanOpt) || (cleanCorrect.length < 5 && cleanCorrect.includes(String.fromCharCode(65 + parseInt(optIndex)).toLowerCase()));
+
+        const btn = document.getElementById(`opt-${qIndex}-${optIndex}`);
+        const badge = document.getElementById(`badge-${qIndex}-${optIndex}`);
+        const feedback = document.getElementById(`feedback-${qIndex}`);
+
+        // Reset all buttons in this question
+        const allBtns = document.querySelectorAll(`[id^='opt-${qIndex}-']`);
+        allBtns.forEach(b => {
+            b.classList.remove('ring-2', 'ring-green-500', 'ring-red-500', 'bg-green-50', 'bg-red-50', 'border-green-500', 'border-red-500');
+            b.classList.add('bg-white', 'border-gray-200');
+        });
+
+        // Apply style
+        if (isCorrect) {
+            btn.classList.remove('bg-white', 'border-gray-200');
+            btn.classList.add('bg-green-50', 'border-green-500', 'ring-1', 'ring-green-500');
+            badge.classList.add('bg-green-200', 'text-green-800');
+
+            feedback.textContent = "Correct! 🎉";
+            feedback.className = "mt-3 font-bold text-green-600 animate-fadeIn";
+            feedback.classList.remove('hidden');
+        } else {
+            btn.classList.remove('bg-white', 'border-gray-200');
+            btn.classList.add('bg-red-50', 'border-red-500', 'ring-1', 'ring-red-500');
+            badge.classList.add('bg-red-200', 'text-red-800');
+
+            feedback.textContent = "Incorrect. Try again!";
+            feedback.className = "mt-3 font-bold text-red-600 animate-fadeIn";
+            feedback.classList.remove('hidden');
+        }
     }
 </script>
 {% endblock %}
