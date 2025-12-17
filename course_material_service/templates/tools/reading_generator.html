@@ -93,13 +93,187 @@
             </div>
         </div>
     </div>
+
+    <!-- Results Section -->
+    <div id="resultSection" class="hidden mt-8 animate-fadeIn">
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="p-8 md:p-12">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <h2 id="readingTitle" class="text-3xl font-bold text-gray-900 mb-2"></h2>
+                        <p id="readingDesc" class="text-gray-600 text-lg"></p>
+                    </div>
+                </div>
+
+                <article id="readingContent" class="prose prose-lg prose-emerald max-w-none text-gray-700">
+                    <!-- Markdown content will be injected here -->
+                </article>
+
+                <div class="mt-8 pt-8 border-t border-gray-100 text-center">
+                    <a href="/library"
+                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors">
+                        View in Library
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    /* Custom "Prose" Styles for Reading Content */
+    #readingContent h1 {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 2rem;
+        line-height: 1.2;
+    }
+
+    #readingContent h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-top: 3rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    #readingContent h3 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: #374151;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    #readingContent p {
+        font-size: 1.125rem;
+        line-height: 1.8;
+        color: #374151;
+        margin-bottom: 1.5rem;
+    }
+
+    #readingContent ul,
+    #readingContent ol {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+
+    #readingContent li {
+        margin-bottom: 0.5rem;
+        font-size: 1.125rem;
+        color: #374151;
+    }
+
+    #readingContent ul {
+        list-style-type: disc;
+    }
+
+    #readingContent ol {
+        list-style-type: decimal;
+    }
+
+    #readingContent blockquote {
+        border-left: 5px solid #059669;
+        background-color: #f0fdf4;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin: 2rem 0;
+        font-style: italic;
+        color: #166534;
+        position: relative;
+    }
+
+    #readingContent blockquote p {
+        margin-bottom: 0;
+    }
+
+    #readingContent table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2rem 0;
+        font-size: 1rem;
+        background: white;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    #readingContent th {
+        background-color: #10b981;
+        color: white;
+        font-weight: 600;
+        text-align: left;
+        padding: 1rem;
+    }
+
+    #readingContent td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1rem;
+        color: #4b5563;
+    }
+
+    #readingContent tr:last-child td {
+        border-bottom: none;
+    }
+
+    #readingContent tr:nth-child(even) {
+        background-color: #f9fafb;
+    }
+
+    #readingContent code {
+        background-color: #f3f4f6;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-family: monospace;
+        font-size: 0.9em;
+        color: #ef4444;
+    }
+
+    #readingContent pre {
+        background: #1f2937 !important;
+        /* One Dark background usually */
+        color: white;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        overflow-x: auto;
+        margin: 2rem 0;
+    }
+
+    #readingContent pre code {
+        background-color: transparent;
+        color: inherit;
+        padding: 0;
+        border-radius: 0;
+        font-size: 0.95em;
+    }
+
+    #readingContent strong {
+        font-weight: 700;
+        color: #111827;
+    }
+
+    #readingContent a {
+        color: #059669;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+</style>
 
 <script>
     document.getElementById('readingForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const overlay = document.getElementById('loadingOverlay');
+        const resultSection = document.getElementById('resultSection');
+
         overlay.classList.remove('hidden');
+        resultSection.classList.add('hidden');
 
         const formData = new FormData(e.target);
 
@@ -114,12 +288,23 @@
                 throw new Error(text || "Failed to generate reading");
             }
 
-            const data = await response.json();
-            if (data.status === 'success' && data.redirect_url) {
-                window.location.href = data.redirect_url;
-            } else {
-                alert("Something went wrong, please try again.");
+            const res = await response.json();
+
+            if (res.status === 'success' && res.data) {
+                // Render Results
+                displayReading(res.data);
                 overlay.classList.add('hidden');
+                resultSection.classList.remove('hidden');
+
+                // Scroll to results
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                if (res.redirect_url) {
+                    window.location.href = res.redirect_url;
+                } else {
+                    alert("Something went wrong, please try again.");
+                    overlay.classList.add('hidden');
+                }
             }
         } catch (error) {
             console.error(error);
@@ -127,5 +312,25 @@
             overlay.classList.add('hidden');
         }
     });
+
+    function displayReading(data) {
+        document.getElementById('readingTitle').textContent = data.title;
+        document.getElementById('readingDesc').textContent = data.description;
+
+        const contentEl = document.getElementById('readingContent');
+        if (typeof marked !== 'undefined') {
+            contentEl.innerHTML = marked.parse(data.content_markdown);
+
+            // Apply Highlight.js
+            if (typeof hljs !== 'undefined') {
+                contentEl.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+        } else {
+            // Fallback if marked is missing (though base.html has it)
+            contentEl.innerText = data.content_markdown;
+        }
+    }
 </script>
 {% endblock %}

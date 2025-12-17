@@ -95,13 +95,45 @@
             </div>
         </div>
     </div>
+
+    <!-- Results Section -->
+    <div id="resultSection" class="hidden mt-8 animate-fadeIn">
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="p-8 md:p-12">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <h2 id="slideTitle" class="text-3xl font-bold text-gray-900 mb-2"></h2>
+                        <p id="slideDesc" class="text-gray-600 text-lg"></p>
+                    </div>
+                </div>
+
+                <div id="slidesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Slides injected here -->
+                </div>
+
+                <div class="mt-8 pt-8 border-t border-gray-100 text-center">
+                    <a href="/library"
+                        class="inline-flex items-center px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl transition-colors">
+                        View in Library
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     document.getElementById('slideForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const overlay = document.getElementById('loadingOverlay');
+        const resultSection = document.getElementById('resultSection');
+
         overlay.classList.remove('hidden');
+        resultSection.classList.add('hidden');
 
         const formData = new FormData(e.target);
 
@@ -116,12 +148,23 @@
                 throw new Error(text || "Failed to generate slides");
             }
 
-            const data = await response.json();
-            if (data.status === 'success' && data.redirect_url) {
-                window.location.href = data.redirect_url;
-            } else {
-                alert("Something went wrong, please try again.");
+            const res = await response.json();
+
+            if (res.status === 'success' && res.data) {
+                // Render Results
+                displaySlides(res.data);
                 overlay.classList.add('hidden');
+                resultSection.classList.remove('hidden');
+
+                // Scroll to results
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                if (res.redirect_url) {
+                    window.location.href = res.redirect_url;
+                } else {
+                    alert("Something went wrong, please try again.");
+                    overlay.classList.add('hidden');
+                }
             }
         } catch (error) {
             console.error(error);
@@ -129,5 +172,49 @@
             overlay.classList.add('hidden');
         }
     });
+
+    function displaySlides(data) {
+        document.getElementById('slideTitle').textContent = data.title;
+        document.getElementById('slideDesc').textContent = data.description;
+
+        const container = document.getElementById('slidesContainer');
+        container.innerHTML = '';
+
+        if (data.slides && Array.isArray(data.slides)) {
+            data.slides.forEach((slide, index) => {
+                const slideEl = document.createElement('div');
+                slideEl.className = 'border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow bg-white flex flex-col';
+
+                // Handle content - if it's bullet points, format it
+                let contentHtml = slide.content || '';
+                if (typeof contentHtml === 'string') {
+                    // Simple formatting: newlines to breaks or list items if starts with - or *
+                    if (contentHtml.trim().startsWith('-') || contentHtml.trim().startsWith('*')) {
+                        const items = contentHtml.split('\n').filter(line => line.trim().length > 0);
+                        contentHtml = `<ul class="list-disc pl-5 mt-2 space-y-1 text-gray-600">${items.map(i => `<li>${i.replace(/^[-*]\s*/, '')}</li>`).join('')}</ul>`;
+                    } else {
+                        contentHtml = `<p class="text-gray-600 mt-2 whitespace-pre-wrap">${contentHtml}</p>`;
+                    }
+                }
+
+                slideEl.innerHTML = `
+                    <div class="bg-gray-900 text-white p-6 h-32 flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-gradient-to-br from-pink-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                         <span class="absolute top-2 left-3 text-xs font-mono text-gray-400">#${index + 1}</span>
+                        <h3 class="font-bold text-xl relative z-10">${slide.title}</h3>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <div class="flex-1">
+                            ${contentHtml}
+                        </div>
+                        <div class="text-xs text-gray-400 border-t border-gray-100 pt-3 mt-4 italic">
+                            <span class="font-semibold text-gray-500 not-italic">Speaker Notes:</span> ${slide.notes || 'No notes provided.'}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(slideEl);
+            });
+        }
+    }
 </script>
 {% endblock %}

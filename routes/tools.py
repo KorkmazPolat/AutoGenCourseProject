@@ -91,7 +91,7 @@ async def generate_quiz(
         db.add(asset)
         await db.commit()
         
-        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library"})
+        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library", "data": content})
         
     except Exception as e:
         print(f"Quiz Gen Error: {e}")
@@ -115,18 +115,26 @@ async def generate_reading(
     length_prompt = "around 400 words" if length == "short" else "around 1000 words" if length == "medium" else "over 2000 words"
     
     prompt = f"""
-    Write a comprehensive reading article about: {topic}.
+    Write a highly engaging, visually structured, and comprehensive reading article about: {topic}.
     Target Audience: {audience}.
     Tone: {tone}.
     Length: {length_prompt}.
     
+    You MUST include the following elements to make the reading "awesome" and high-quality:
+    1. **Clear Hierarchy**: Use H2 (##) for main sections and H3 (###) for subsections.
+    2. **Rich Formatting**: Use **bold** for key concepts and *italics* for emphasis.
+    3. **Code Snippets**: If the topic allows (even remotely), include at least one relevant code block (python, sql, javascript, etc) or a structured data example.
+    4. **Data Table**: Include at least one Markdown table comparing concepts, showing stats, or listing pros/cons.
+    5. **Key Takeaways/Callouts**: Use blockquotes (>) to highlight "Key Takeaways" or "Fun Facts".
+    6. **Lists**: Use bullet points and numbered lists frequently to break up text.
+
     Return JSON format:
     {{
-        "title": "Engaging Article Title",
-        "description": "Short summary (2-3 sentences).",
-        "content_markdown": "# Title\\n\\n## Introduction\\n\\nIntroductory text with **bold** key terms.\\n\\n## Section 1\\n\\nDetailed content here.\\n\\n* Bullet point 1\\n* Bullet point 2\\n"
+        "title": "Catchy & Professional Title",
+        "description": "Compelling summary (2-3 sentences).",
+        "content_markdown": "# Title\\n\\n## Introduction\\n\\nEngaging intro...\\n\\n> **Key Takeaway:** Summary...\\n\\n## Main Concept\\n\\nText...\\n\\n### Comparison\\n\\n| Feature | Value |\\n|---|---|\\n...\\n\\n## Implementation\\n\\n```python\\nprint('Hello')\\n```\\n"
     }}
-    IMPORTANT: The 'content_markdown' MUST be rich markdown with headers, lists, and bold text. Do not just return a flat text block.
+    IMPORTANT: The 'content_markdown' MUST be rich and structured. Do not output walls of text.
     """
     
     try:
@@ -158,7 +166,7 @@ async def generate_reading(
         db.add(lesson)
         await db.commit()
         
-        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library"})
+        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library", "data": content})
     except Exception as e:
         print(f"Reading Gen Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -215,7 +223,7 @@ async def generate_slides(
         db.add(asset)
         await db.commit()
         
-        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library"})
+        return JSONResponse({"status": "success", "course_id": course.id, "redirect_url": "/library", "data": content})
     except Exception as e:
         print(f"Slide Gen Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
