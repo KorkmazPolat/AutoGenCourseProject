@@ -199,12 +199,14 @@ async def generate_slides(
     style: str = Form("modern"),
     slide_count: int = Form(10),
     audience: str = Form("general audience"),
+    tone: str = Form("Professional"),
+    detail_level: str = Form("Standard"),
     user_id: int = Depends(get_session_user),
     db: AsyncSession = Depends(get_db)
 ):
     try:
         service = SlideGeneratorService()
-        content = service.generate_slides(topic, audience, slide_count, style)
+        content = service.generate_slides(topic, audience, slide_count, style, tone, detail_level)
         
         # Save to DB
         course = models.Course(

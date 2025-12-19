@@ -179,6 +179,20 @@
         <div class="flex items-center gap-6 text-sm font-medium">
             <span class="text-gray-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">{{ slides|length }}
                 Slides</span>
+
+            <!-- Presentation Mode Button -->
+            <button onclick="startPresentation()"
+                class="hidden md:flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white px-4 py-2 rounded-full shadow-lg shadow-pink-900/20 hover:shadow-pink-600/30 transition-all transform hover:-translate-y-0.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Present
+            </button>
+
             <a href="/library"
                 class="text-gray-300 hover:text-white hover:underline decoration-pink-500 decoration-2 underline-offset-4 transition-all">Exit
                 Presentation</a>
@@ -289,5 +303,149 @@
             hljs.highlightElement(block);
         });
     });
+
+    // Presentation Mode Logic
+    const presentationOverlay = document.getElementById('presentationOverlay');
+    const slideContainer = document.getElementById('currentSlideContent');
+    const slides = document.querySelectorAll('.group.relative.perspective-1000'); // Select all slide cards
+    let currentSlideIndex = 0;
+
+    function startPresentation() {
+        if (slides.length === 0) return;
+        currentSlideIndex = 0;
+        showSlide(currentSlideIndex);
+        presentationOverlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+        // Request Full Screen
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(e => console.log(e));
+        }
+    }
+
+    function exitPresentation() {
+        presentationOverlay.classList.add('hidden');
+        document.body.style.overflow = '';
+
+        if (document.exitFullscreen && document.fullscreenElement) {
+            document.exitFullscreen().catch(e => console.log(e));
+        }
+    }
+
+    function showSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= slides.length) index = slides.length - 1;
+        currentSlideIndex = index;
+
+        // Get content from the card
+        // We clone the inner content of the slide card
+        const originalSlide = slides[index].querySelector('.relative.bg-white');
+        if (originalSlide) {
+            // Clone the node
+            const clone = originalSlide.cloneNode(true);
+
+            // Adjust styles for full screen
+            clone.classList.remove('transform', 'hover:-translate-y-1', 'hover:shadow-pink-500/10', 'shadow-2xl');
+            clone.classList.add('h-full', 'w-full', 'shadow-none', 'rounded-none', 'border-0');
+
+            // Ensure sidebar and content stretch
+            const flexContainer = clone.querySelector('.flex.flex-col.md\\:flex-row');
+            if (flexContainer) {
+                flexContainer.classList.add('h-full');
+                flexContainer.classList.remove('min-h-[500px]');
+            }
+
+            slideContainer.innerHTML = '';
+            slideContainer.appendChild(clone);
+
+            // Re-highlight code if any
+            slideContainer.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+
+        // Update progress
+        document.getElementById('slideCounter').innerText = `${currentSlideIndex + 1} / ${slides.length}`;
+
+        // Update progress bar
+        const progress = ((currentSlideIndex + 1) / slides.length) * 100;
+        document.getElementById('progressBar').style.width = `${progress}%`;
+    }
+
+    function nextSlide() {
+        if (currentSlideIndex < slides.length - 1) {
+            showSlide(currentSlideIndex + 1);
+        }
+    }
+
+    function prevSlide() {
+        if (currentSlideIndex > 0) {
+            showSlide(currentSlideIndex - 1);
+        }
+    }
+
+    // Event Listeners
+    document.addEventListener('keydown', (e) => {
+        if (presentationOverlay.classList.contains('hidden')) return;
+
+        if (e.key === 'ArrowRight' || e.key === 'Space') {
+            nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+            prevSlide();
+        } else if (e.key === 'Escape') {
+            exitPresentation();
+        }
+    });
+
+    // Close on click outside (optional, maybe just button)
+    // presentationOverlay.addEventListener('click', (e) => {
+    //    if (e.target === presentationOverlay) exitPresentation();
+    // });
+
 </script>
+
+<!-- Presentation Mode Overlay -->
+<div id="presentationOverlay" class="hidden fixed inset-0 z-[100] bg-black text-white flex flex-col h-screen w-screen">
+    <!-- Toolbar -->
+    <div class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6 shrink-0">
+        <div class="font-bold text-gray-300">{{ course.title }}</div>
+
+        <!-- Controls -->
+        <div class="flex items-center gap-4">
+            <span id="slideCounter" class="text-xs font-mono text-gray-400">1 / 10</span>
+            <div class="flex gap-1 bg-gray-800 rounded-lg p-1">
+                <button onclick="prevSlide()"
+                    class="p-2 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                </button>
+                <button onclick="nextSlide()"
+                    class="p-2 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+            <button onclick="exitPresentation()"
+                class="ml-4 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-full border border-red-500/20 transition-all">
+                Exit Mode
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="h-1 bg-gray-800 w-full shrink-0">
+        <div id="progressBar" class="h-full bg-pink-500 transition-all duration-300" style="width: 0%"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-hidden relative bg-black flex items-center justify-center p-4">
+        <div id="currentSlideContent"
+            class="w-full max-w-7xl aspect-video bg-white shadow-2xl overflow-hidden rounded-xl">
+            <!-- Slide content clones go here -->
+        </div>
+    </div>
+</div>
 {% endblock %}

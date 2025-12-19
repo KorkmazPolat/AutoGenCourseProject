@@ -40,12 +40,16 @@ You must return valid JSON matching exactly this structure:
 - INTENTIONALLY include at least one Table and one Quote in the deck if the topic permits.
 """
 
-def get_user_prompt(topic: str, audience: str, slide_count: int, style: str) -> str:
+def get_user_prompt(topic: str, audience: str, slide_count: int, style: str, tone: str = "Professional", detail_level: str = "Standard") -> str:
     return f"""
     Topic: {topic}
     Target Audience: {audience}
     Desired Slide Count: {slide_count}
     Visual Style: {style}
+    Tone: {tone}
+    Detail Level: {detail_level}
 
     Please generate the slide deck now. Ensure you include a mix of content types (text, list, table, code, quote).
+    If Detail Level is 'Detailed', ensure speaker notes are extensive and content is deep.
+    If Tone is 'Witty', include some light humor or clever analogies.
     """

@@ -41,11 +41,11 @@ class SlideGeneratorService:
             self.model = None
 
 
-    def generate_slides(self, topic: str, audience: str, slide_count: int, style: str) -> dict:
+    def generate_slides(self, topic: str, audience: str, slide_count: int, style: str, tone: str = "Professional", detail_level: str = "Standard") -> dict:
         if not self.model:
             raise ValueError("Gemini model not initialized. Check your GOOGLE_API_KEY.")
 
-        user_content = get_user_prompt(topic, audience, slide_count, style)
+        user_content = get_user_prompt(topic, audience, slide_count, style, tone, detail_level)
         full_prompt = f"{SLIDE_SYSTEM_PROMPT}\n\n{user_content}"
 
         # Request JSON output
