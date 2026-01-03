@@ -19,9 +19,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire project
 COPY . .
 
-# Create directory for generated videos and ensure it's writable
+# Create directories for generated content and ensure they're writable
 RUN mkdir -p course_material_service/generated_videos && \
-    chmod 777 course_material_service/generated_videos
+    mkdir -p course_material_service/exports && \
+    mkdir -p course_material_service/data && \
+    mkdir -p course_material_service/uploads && \
+    chmod -R 777 course_material_service/generated_videos course_material_service/exports course_material_service/data course_material_service/uploads
 
 # Set environment variables
 ENV PORT=8080

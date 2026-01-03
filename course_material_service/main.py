@@ -407,6 +407,8 @@ app.add_middleware(
     secret_key=os.getenv("SECRET_KEY", "default_fallback_secret_key_if_not_set")
 )
 app.mount("/static", StaticFiles(directory=str(Path(__file__).resolve().parent / "static")), name="static")
+# Ensure exports directory exists before mounting
+EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/exports-files", StaticFiles(directory=str(EXPORTS_DIR)), name="exports_files")
 app.include_router(agent_course_router)
 

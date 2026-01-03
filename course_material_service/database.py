@@ -5,10 +5,15 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 load_dotenv()
 
-# Default to SQLite, but allow override via env var
+# Default to SQLite if DATABASE_URL is not set (for simpler deployments)
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+    # Use SQLite for development/simple deployments
+    import pathlib
+    db_path = pathlib.Path(__file__).parent / "data" / "app.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    DATABASE_URL = f"sqlite+aiosqlite:///{db_path}"
+    print(f"Warning: DATABASE_URL not set, using SQLite: {DATABASE_URL}")
 
 # Ensure we use the async driver for Postgres
 if DATABASE_URL.startswith("postgresql://"):
