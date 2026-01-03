@@ -41,3 +41,5 @@ course_material_service/static/videos/*
 tmp/
 temp/
 
+
+db_password.txt
