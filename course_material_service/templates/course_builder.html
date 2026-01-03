@@ -30,7 +30,8 @@
 
     .builder-container {
         display: flex;
-        height: 100vh;
+        height: calc(100vh - 64px);
+        /* Account for base header height (h-16 = 64px) */
         width: 100%;
         background-color: var(--bg-canvas);
     }
