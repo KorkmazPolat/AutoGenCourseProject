@@ -19,7 +19,9 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware 
+from starlette.middleware.sessions import SessionMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
 from jinja2 import Template
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
@@ -402,10 +404,14 @@ app = FastAPI(
     description="FastAPI service providing course content prompts plus a simple web UI for generating narrated videos.",
     version="0.2.0",
 )
+# Add ProxyHeadersMiddleware to handle X-Forwarded-Proto from Cloud Run's load balancer
+# This ensures url_for() generates HTTPS URLs when running behind HTTPS termination
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SECRET_KEY", "default_fallback_secret_key_if_not_set")
 )
+
 app.mount("/static", StaticFiles(directory=str(Path(__file__).resolve().parent / "static")), name="static")
 # Ensure exports directory exists before mounting
 EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
