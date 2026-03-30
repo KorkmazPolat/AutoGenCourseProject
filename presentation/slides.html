@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoGen Course Generator - Detailed Presentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e5e5e5;
+        }
+
+        .slide-container {
+            width: 1280px;
+            height: 720px;
+            background-color: #F8F9FA;
+            margin: 40px auto;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #4F46E5 0%, #9333EA 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #4F46E5 0%, #9333EA 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 1rem;
+        }
+
+        .browser-window {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            border: 1px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .browser-toolbar {
+            background-color: #F1F5F9;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .browser-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .top-nav {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid #E5E7EB;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body class="py-10">
+
+    <!-- 1. Start Page -->
+    <div class="slide-container p-16 justify-between">
+        <div
+            class="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full blur-3xl opacity-60 -translate-y-1/2 translate-x-1/4 z-0">
+        </div>
+
+        <div class="z-10 flex justify-between items-start">
+            <div class="flex flex-col gap-2">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/82/MEF_University_logo.svg/1200px-MEF_University_logo.svg.png"
+                    alt="MEF Logo" class="h-16 w-auto mb-4">
+                <div class="h-1 w-20 gradient-bg rounded-full"></div>
+            </div>
+            <div class="text-right">
+                <div class="text-slate-900 font-bold text-lg">Senior Design Project II</div>
+                <div class="text-slate-500">2026 Academic Year</div>
+            </div>
+        </div>
+
+        <div class="z-10 mt-12">
+            <h1 class="text-7xl font-black text-[#0F172A] leading-tight tracking-tight mb-6">
+                AutoGen<br>
+                <span class="gradient-text">Course Generator</span>
+            </h1>
+            <p class="text-2xl text-slate-600 font-light max-w-3xl leading-relaxed border-l-4 border-indigo-500 pl-6">
+                An Automated AI-Powered Educational Content Creation Platform<br>
+                that orchestrates <span class="font-semibold text-slate-800">Multi-Agent Systems</span> to convert
+                simple prompts into full video courses.
+            </p>
+        </div>
+
+        <div class="z-10 mt-auto flex justify-between items-end border-t border-slate-200 pt-8">
+            <div class="flex gap-8">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-12 h-12 rounded-full gradient-bg flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                        PK</div>
+                    <div>
+                        <div class="text-[#0F172A] font-bold text-lg">Polat Korkmaz</div>
+                        <div class="text-slate-500 text-sm">Developer & Researcher</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                        MK</div>
+                    <div>
+                        <div class="text-[#0F172A] font-bold text-lg">Mert Kırtı</div>
+                        <div class="text-slate-500 text-sm">Backend Developer</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                        SÖ</div>
+                    <div>
+                        <div class="text-[#0F172A] font-bold text-lg">Sinem Özbey</div>
+                        <div class="text-slate-500 text-sm">Frontend Developer</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <span
+                    class="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-mono text-sm border border-indigo-100">Python
+                    / FastAPI</span>
+                <span
+                    class="bg-purple-50 text-purple-700 px-4 py-2 rounded-lg font-mono text-sm border border-purple-100">Microsoft
+                    AutoGen</span>
+                <span
+                    class="bg-teal-50 text-teal-700 px-4 py-2 rounded-lg font-mono text-sm border border-teal-100">Google
+                    Gemini</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Purpose of the Project -->
+    <div class="slide-container p-16 bg-white">
+        <h2 class="text-4xl font-bold text-[#0F172A] mb-8">Purpose of the Project</h2>
+
+        <div class="grid grid-cols-2 gap-12 h-full pb-16">
+            <div class="flex flex-col justify-center space-y-8">
+                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                    <h3 class="text-xl font-bold text-blue-900 mb-3"><i
+                            class="fa-solid fa-graduation-cap mr-2"></i>Democratizing Education</h3>
+                    <ul class="text-slate-700 leading-relaxed list-disc list-inside">
+                        <li>Remove technical barriers for educators.</li>
+                        <li>Create professional courses without video editing skills.</li>
+                    </ul>
+                </div>
+                <div class="bg-purple-50 p-6 rounded-2xl border border-purple-100">
+                    <h3 class="text-xl font-bold text-purple-900 mb-3"><i
+                            class="fa-solid fa-clock-rotate-left mr-2"></i>Accelerating Production</h3>
+                    <ul class="text-slate-700 leading-relaxed list-disc list-inside">
+                        <li>Reduce time-to-market from weeks to minutes.</li>
+                        <li>Automate repetitive tasks using autonomous agents.</li>
+                    </ul>
+                </div>
+                <div class="bg-teal-50 p-6 rounded-2xl border border-teal-100">
+                    <h3 class="text-xl font-bold text-teal-900 mb-3"><i
+                            class="fa-solid fa-microchip mr-2"></i>Showcasing Agentic AI</h3>
+                    <ul class="text-slate-700 leading-relaxed list-disc list-inside">
+                        <li>Demonstrate Multi-Agent Systems capability.</li>
+                        <li>Solve complex, multi-step creative workflows autonomously.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="flex items-center justify-center relative">
+                <div
+                    class="absolute inset-0 bg-gradient-to-tr from-blue-100 to-purple-100 rounded-full blur-3xl opacity-50">
+                </div>
+                <div class="relative z-10 text-center">
+                    <span class="text-9xl font-black text-slate-900/10 block mb-4">AI</span>
+                    <h3 class="text-3xl font-bold text-slate-800">Bridging the Gap</h3>
+                    <p class="text-slate-500 mt-2">Between Expert Knowledge and Digital Content</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. The EdTech Bottleneck -->
+    <div class="slide-container p-16">
+        <div class="flex items-center gap-4 mb-12">
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-red-600 text-xl"><i
+                    class="fa-solid fa-triangle-exclamation"></i></div>
+            <h2 class="text-4xl font-bold text-[#0F172A]">The EdTech Bottleneck</h2>
+        </div>
+
+        <div class="grid grid-cols-2 gap-16 flex-1">
+            <div class="flex flex-col justify-center space-y-6">
+                <ul class="text-xl text-slate-600 leading-relaxed list-disc list-inside space-y-2">
+                    <li>Massive shift to <span class="font-bold text-slate-800">digital learning</span>.</li>
+                    <li>Production pipeline remains <span class="font-bold text-red-600">archaic</span>.</li>
+                    <li>High-quality video = coordinated team of experts.</li>
+                </ul>
+                <div class="glass-card p-6 border-l-4 border-red-500 shadow-md">
+                    <h3 class="text-red-700 font-bold mb-2">The Golden Ratio of Production</h3>
+                    <p class="text-3xl font-black text-[#0F172A]">50 : 1</p>
+                    <p class="text-slate-500 mt-2">It takes <span class="font-bold">50 hours</span> of labor to produce
+                        <span class="font-bold">1 hour</span> of finished courseware.
+                    </p>
+                </div>
+            </div>
+            <div class="space-y-6 relative">
+                <div class="absolute inset-0 bg-slate-100 rounded-2xl transform rotate-3 -z-10"></div>
+                <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 z-10">
+                    <h3 class="font-bold text-slate-800 mb-6 uppercase tracking-wider text-sm border-b pb-2">Manual
+                        Workflow Cost Costs</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded bg-orange-100 flex items-center justify-center text-orange-600">
+                                    <i class="fa-solid fa-pen-nib"></i>
+                                </div>
+                                <span class="font-medium">Scriptwriter</span>
+                            </div>
+                            <span class="font-mono text-slate-500">$50/hr</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded bg-purple-100 flex items-center justify-center text-purple-600">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                                <span class="font-medium">Subject Researcher</span>
+                            </div>
+                            <span class="font-mono text-slate-500">$40/hr</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded bg-green-100 flex items-center justify-center text-green-600">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </div>
+                                <span class="font-medium">Voice Actor</span>
+                            </div>
+                            <span class="font-mono text-slate-500">$100/hr</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <i class="fa-solid fa-film"></i>
+                                </div>
+                                <span class="font-medium">Video Editor</span>
+                            </div>
+                            <span class="font-mono text-slate-500">$60/hr</span>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg mt-4 border border-slate-200">
+                            <div class="flex justify-between items-center font-bold text-lg">
+                                <span>Total Cost Per Course</span>
+                                <span class="text-red-600">$5,000+</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 3.5 Literature Review -->
+    <div class="slide-container p-16">
+        <h2 class="text-4xl font-bold text-[#0F172A] mb-8">Existing Solutions & Literature</h2>
+
+        <div class="grid grid-cols-2 gap-8 h-full pb-8">
+            <!-- Left: Current Approaches -->
+            <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                    <i class="fa-solid fa-robot text-slate-400"></i> Standard LLMs
+                </h3>
+                <div class="space-y-6">
+                    <div>
+                        <div class="font-bold text-slate-700 mb-1">Method:</div>
+                        <p class="text-slate-600 text-sm">Direct prompting (ChatGPT/Claude) for script generation.</p>
+                    </div>
+                    <div>
+                        <div class="font-bold text-red-600 mb-1">Limitations:</div>
+                        <ul class="list-disc list-inside text-slate-600 text-sm space-y-1">
+                            <li><span class="font-semibold">Hallucination:</span> No integrated fact-checking.</li>
+                            <li><span class="font-semibold">Single-turn:</span> Lacks iterative refinement.</li>
+                            <li><span class="font-semibold">Text-only:</span> Cannot produce actual video files.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Template Tools -->
+            <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                    <i class="fa-solid fa-layer-group text-slate-400"></i> Template Video Tools
+                </h3>
+                <div class="space-y-6">
+                    <div>
+                        <div class="font-bold text-slate-700 mb-1">Method (e.g., Canva/Vyond):</div>
+                        <p class="text-slate-600 text-sm">Manual drag-and-drop on pre-made timelines.</p>
+                    </div>
+                    <div>
+                        <div class="font-bold text-red-600 mb-1">Limitations:</div>
+                        <ul class="list-disc list-inside text-slate-600 text-sm space-y-1">
+                            <li><span class="font-semibold">Human-Intensive:</span> Still requires hours of manual
+                                labor.</li>
+                            <li><span class="font-semibold">Static (Cost):</span> Hard to update content dynamically.
+                            </li>
+                            <li><span class="font-semibold">No Logic:</span> System doesn't "understand" the content.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom: Our Approach -->
+            <div
+                class="col-span-2 bg-indigo-50 p-6 rounded-xl border border-indigo-100 flex items-center justify-between">
+                <div>
+                    <span class="font-bold text-indigo-900 block mb-1">Our Novel Approach: Agentic Orchestration</span>
+                    <span class="text-indigo-700 text-sm">Combining LLM reasoning with code execution & RAG for
+                        autonomous production.</span>
+                </div>
+                <div class="flex gap-2">
+                    <span
+                        class="bg-white px-3 py-1 rounded text-xs font-bold text-indigo-600 border border-indigo-200">Autonomous</span>
+                    <span
+                        class="bg-white px-3 py-1 rounded text-xs font-bold text-indigo-600 border border-indigo-200">Verifiable</span>
+                    <span
+                        class="bg-white px-3 py-1 rounded text-xs font-bold text-indigo-600 border border-indigo-200">End-to-End</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Infrastructure Overview -->
+    <div class="slide-container p-16">
+        <div class="flex flex-col mb-12">
+            <div class="flex items-center gap-3 mb-2">
+                <span
+                    class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wide">Infrastructure</span>
+                <div class="h-px bg-indigo-100 flex-1"></div>
+            </div>
+            <h2 class="text-4xl font-bold text-[#0F172A]">Cloud-Native Architecture</h2>
+            <p class="text-slate-500 mt-2 max-w-2xl">Built on Google Cloud Platform for high scalability and zero server
+                management.</p>
+        </div>
+
+        <div class="flex-1 grid grid-cols-4 gap-6">
+            <!-- Cloud Run -->
+            <div
+                class="glass-card p-6 flex flex-col justify-between neo-shadow group hover:border-indigo-500 transition-colors">
+                <div>
+                    <div
+                        class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 text-2xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-brands fa-google"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-2">Cloud Run</h3>
+                    <p class="text-sm text-slate-500 leading-relaxed">Serverless container execution. Scales
+                        automatically with traffic.</p>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-100">
+                <div class="text-[10px] font-bold text-blue-600 uppercase mb-1">Why Selected?</div>
+                <div class="text-xs text-slate-500">Zero server management cost. Scales to 0 when idle.</div>
+            </div>
+        </div>
+
+        <!-- FastAPI -->
+        <div
+            class="glass-card p-6 flex flex-col justify-between neo-shadow group hover:border-teal-500 transition-colors">
+            <div>
+                <div
+                    class="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600 text-2xl mb-4 group-hover:scale-110 transition">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-lg mb-2">FastAPI</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">Async Python backend running the Agent
+                    Orchestrator.</p>
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100">
+            <div class="text-[10px] font-bold text-teal-600 uppercase mb-1">Why Selected?</div>
+            <div class="text-xs text-slate-500">Native async support for concurrent agent operations.</div>
+        </div>
+    </div>
+
+    <!-- Qdrant -->
+    <div class="glass-card p-6 flex flex-col justify-between neo-shadow group hover:border-red-500 transition-colors">
+        <div>
+            <div
+                class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center text-red-600 text-2xl mb-4 group-hover:scale-110 transition">
+                <i class="fa-solid fa-database"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-lg mb-2">Qdrant Vector DB</h3>
+            <p class="text-sm text-slate-500 leading-relaxed">Knowledge retrieval (RAG) for accurate agent
+                responses.</p>
+        </div>
+    </div>
+    <div class="mt-4 pt-4 border-t border-slate-100">
+        <div class="text-[10px] font-bold text-red-600 uppercase mb-1">Why Selected?</div>
+        <div class="text-xs text-slate-500">High-performance vector search for semantic RAG.</div>
+    </div>
+    </div>
+
+    <!-- Cloud Storage -->
+    <div
+        class="glass-card p-6 flex flex-col justify-between neo-shadow group hover:border-yellow-500 transition-colors">
+        <div>
+            <div
+                class="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center text-yellow-600 text-2xl mb-4 group-hover:scale-110 transition">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-lg mb-2">GCS Buckets</h3>
+            <p class="text-sm text-slate-500 leading-relaxed">Object storage for generated assets (Videos, MP3,
+                Images).</p>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100 font-mono text-xs text-slate-400">Signed URLs</div>
+    </div>
+    </div>
+    </div>
+
+    <!-- 4.1 Hybrid Database Design -->
+    <div class="slide-container p-16">
+        <div class="flex flex-col mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span
+                    class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wide">Infrastructure</span>
+                <div class="h-px bg-indigo-100 flex-1"></div>
+            </div>
+            <h2 class="text-4xl font-bold text-[#0F172A]">Hybrid Database Design</h2>
+            <p class="text-slate-500 mt-2 max-w-2xl">Combining structured relational data with high-dimensional vector
+                embeddings.</p>
+        </div>
+
+        <div class="flex gap-12 h-full pb-8">
+            <!-- Relational (PostgreSQL) -->
+            <div class="w-1/2 bg-blue-50 border border-blue-200 rounded-2xl p-6 relative">
+                <div
+                    class="absolute -top-4 left-6 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+                    Cloud SQL (PostgreSQL)</div>
+
+                <!-- Schema Visualization -->
+                <div class="mt-4 space-y-4">
+                    <!-- User Table -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                        <div class="text-xs font-bold text-blue-800 uppercase mb-1">Users Table</div>
+                        <div class="space-y-1 font-mono text-[10px] text-slate-600">
+                            <div class="flex justify-between"><span>id</span> <span class="text-slate-400">UUID
+                                    (PK)</span></div>
+                            <div class="flex justify-between"><span>email</span> <span
+                                    class="text-slate-400">VARCHAR</span></div>
+                            <div class="flex justify-between"><span>credits</span> <span
+                                    class="text-slate-400">INT</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Connectors -->
+                    <div class="flex justify-center text-blue-300"><i class="fa-solid fa-link"></i></div>
+
+                    <!-- Course Table -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                        <div class="text-xs font-bold text-blue-800 uppercase mb-1">Courses Table</div>
+                        <div class="space-y-1 font-mono text-[10px] text-slate-600">
+                            <div class="flex justify-between"><span>id</span> <span class="text-slate-400">UUID
+                                    (PK)</span></div>
+                            <div class="flex justify-between"><span>user_id</span> <span class="text-slate-400">UUID
+                                    (FK)</span></div>
+                            <div class="flex justify-between"><span>title</span> <span
+                                    class="text-slate-400">VARCHAR</span></div>
+                            <div class="flex justify-between"><span>status</span> <span
+                                    class="text-slate-400">ENUM</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Connectors -->
+                    <div class="flex justify-center text-blue-300"><i class="fa-solid fa-link"></i></div>
+
+                    <!-- Module/Content Table -->
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                        <div class="text-xs font-bold text-blue-800 uppercase mb-1">Content Table</div>
+                        <div class="space-y-1 font-mono text-[10px] text-slate-600">
+                            <div class="flex justify-between"><span>id</span> <span class="text-slate-400">UUID
+                                    (PK)</span></div>
+                            <div class="flex justify-between"><span>course_id</span> <span class="text-slate-400">UUID
+                                    (FK)</span></div>
+                            <div class="flex justify-between"><span>type</span> <span
+                                    class="text-slate-400">video/quiz</span></div>
+                            <div class="flex justify-between"><span>data</span> <span
+                                    class="text-slate-400">JSONB</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flex flex-col justify-center items-center text-slate-300">
+                <i class="fa-solid fa-arrow-right-arrow-left text-2xl"></i>
+                <span class="text-xs font-bold mt-1 uppercase tracking-wider">Sync</span>
+            </div>
+
+            <!-- Vector (Qdrant) -->
+            <div class="w-1/2 bg-red-50 border border-red-200 rounded-2xl p-6 relative">
+                <div
+                    class="absolute -top-4 right-6 bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+                    Qdrant (Vector DB)</div>
+
+                <div class="mt-4 flex flex-col justify-between h-[85%]">
+                    <!-- Collection -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-red-100 mb-4">
+                        <div class="text-xs font-bold text-red-800 uppercase mb-2">Knowledge_Base Collection</div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-red-400 to-orange-400 w-3/4"></div>
+                            </div>
+                            <span class="text-[10px] font-mono text-slate-500">1536 dim</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 italic">Stores embeddings of textbooks, academic papers,
+                            and course transcripts.</p>
+                    </div>
+
+                    <!-- Point Structure -->
+                    <div
+                        class="bg-[#1E293B] p-4 rounded-lg shadow-lg border border-slate-700 font-mono text-[10px] text-green-400">
+                        <div>{</div>
+                        <div class="pl-2"><span class="text-purple-400">"id"</span>: <span
+                                class="text-yellow-300">"8a1..."</span>,</div>
+                        <div class="pl-2"><span class="text-purple-400">"vector"</span>: [0.012, -0.93, ...],</div>
+                        <div class="pl-2"><span class="text-purple-400">"payload"</span>: {</div>
+                        <div class="pl-4"><span class="text-blue-300">"source"</span>: "MIT_OCW.pdf",</div>
+                        <div class="pl-4"><span class="text-blue-300">"page"</span>: 42,</div>
+                        <div class="pl-4"><span class="text-blue-300">"topic"</span>: "System Design"</div>
+                        <div class="pl-2">}</div>
+                        <div>}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Deep Dive: Agentic Workflow -->
+    <div class="slide-container p-16">
+        <div class="flex flex-col mb-10">
+            <div class="flex items-center gap-3 mb-2">
+                <span
+                    class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold uppercase tracking-wide">Deep
+                    Dive: Phase 1</span>
+                <div class="h-px bg-purple-100 flex-1"></div>
+            </div>
+            <h2 class="text-4xl font-bold text-[#0F172A]">Microsoft AutoGen Workflow</h2>
+            <p class="text-slate-500 mt-2 max-w-2xl">A "Group Chat" implementation where agents converse to solve tasks.
+            </p>
+        </div>
+
+        <div class="flex-1 flex gap-16 items-center">
+            <!-- User Proxy Side -->
+            <div class="w-1/3 flex flex-col items-center">
+                <div
+                    class="w-40 h-40 rounded-full bg-slate-800 flex items-center justify-center text-white text-4xl shadow-2xl relative z-10 border-8 border-slate-100">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="h-20 w-1 bg-slate-300 -mt-10 mb-4 z-0"></div>
+                <div class="bg-white border border-slate-200 p-6 rounded-xl shadow-lg w-full text-center relative">
+                    <div
+                        class="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-100 px-3 py-1 rounded-full text-xs font-bold text-slate-600 uppercase">
+                        User Proxy Agent</div>
+                    <p class="text-slate-700 italic">"Create a 10-minute course on Photosynthesis for high schoolers."
+                    </p>
+                </div>
+            </div>
+
+            <!-- Interaction Arrows -->
+            <div class="w-20 text-center text-slate-300">
+                <div class="border-t-2 border-dashed border-slate-300 my-4 relative">
+                    <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#F8F9FA] px-2 text-xs">Task</span>
+                </div>
+                <i class="fa-solid fa-arrow-right-arrow-left text-2xl"></i>
+                <div class="border-t-2 border-dashed border-slate-300 my-4 relative">
+                    <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#F8F9FA] px-2 text-xs">Result</span>
+                </div>
+            </div>
+
+            <!-- Group Chat Side -->
+            <div class="flex-1 bg-white border border-slate-200 rounded-2xl p-8 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                <h3 class="font-bold text-slate-800 mb-6 flex items-center gap-2"><i
+                        class="fa-solid fa-comments text-indigo-500"></i> GroupChatManager</h3>
+
+                <div class="space-y-4">
+                    <div class="flex gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">
+                            P</div>
+                        <div class="bg-blue-50 p-3 rounded-lg rounded-tl-none text-sm text-blue-900 w-3/4">
+                            <strong>Planner:</strong> I'll outline 4 modules focusing on Light Reaction and Calvin
+                            Cycle.
+                        </div>
+                    </div>
+                    <div class="flex gap-3 flex-row-reverse">
+                        <div
+                            class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 text-xs font-bold">
+                            R</div>
+                        <div class="bg-teal-50 p-3 rounded-lg rounded-tr-none text-sm text-teal-900 w-3/4">
+                            <strong>Researcher:</strong> Retrieved 5 diagrams and recent papers on Chloroplast
+                            efficiency...
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs font-bold">
+                            W</div>
+                        <div class="bg-pink-50 p-3 rounded-lg rounded-tl-none text-sm text-pink-900 w-3/4">
+                            <strong>Writer:</strong> Drafting script: "Imagine the leaf as a solar panel..."
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Deep Dive: Agent Personas -->
+    <div class="slide-container p-12">
+        <div class="flex flex-col mb-4">
+            <div class="flex items-center gap-3 mb-2">
+                <span
+                    class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold uppercase tracking-wide">Deep
+                    Dive: Phase 2</span>
+                <div class="h-px bg-purple-100 flex-1"></div>
+            </div>
+            <h2 class="text-3xl font-bold text-[#0F172A]">The Agent Squad</h2>
+            <p class="text-slate-500 text-sm mt-1 max-w-2xl">Key "System Messages" that define the personality and
+                responsibility of each agent.</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 h-full pb-4">
+            <!-- Planner -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                <div
+                    class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-lg mb-2">
+                    <i class="fa-solid fa-list-ol"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base">Course Planner</h3>
+                <p class="text-[10px] text-slate-500 mt-0.5 mb-2 font-mono">Role: Architect</p>
+                <div class="text-xs text-slate-600 leading-snug bg-slate-50 p-2 rounded border border-slate-100 flex-1">
+                    "You are an expert curriculum designer. Given a topic, you must output a structured JSON of modules,
+                    lessons, and learning outcomes. Ensure logical flow."
+                </div>
+            </div>
+
+            <!-- Researcher -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                <div
+                    class="w-10 h-10 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center text-lg mb-2">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base">Researcher</h3>
+                <p class="text-[10px] text-slate-500 mt-0.5 mb-2 font-mono">Role: Fact Checker</p>
+                <div class="text-xs text-slate-600 leading-snug bg-slate-50 p-2 rounded border border-slate-100 flex-1">
+                    "You have access to the Qdrant Vector Store. Validate every claim the writer makes. Provide academic
+                    citations and source URLs for all content."
+                </div>
+            </div>
+
+            <!-- Writer -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                <div
+                    class="w-10 h-10 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-lg mb-2">
+                    <i class="fa-solid fa-pen-fancy"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base">Script Writer</h3>
+                <p class="text-[10px] text-slate-500 mt-0.5 mb-2 font-mono">Role: Storyteller</p>
+                <div class="text-xs text-slate-600 leading-snug bg-slate-50 p-2 rounded border border-slate-100 flex-1">
+                    "Create engaging, conversational video scripts. Use helpful analogies. Mark visual cues in brackets
+                    [Show Diagram] for the Video Producer."
+                </div>
+            </div>
+
+            <!-- Critic -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                <div
+                    class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-lg mb-2">
+                    <i class="fa-solid fa-glasses"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-base">The Critic</h3>
+                <p class="text-[10px] text-slate-500 mt-0.5 mb-2 font-mono">Role: Quality Control</p>
+                <div class="text-xs text-slate-600 leading-snug bg-slate-50 p-2 rounded border border-slate-100 flex-1">
+                    "Review the script for length and tone. If it's too boring or too long, reject it and ask the Writer
+                    to revise. Ensure strict formatting."
+                </div>
+            </div>
+
+            <!-- Producer -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col col-span-2">
+                <div class="flex items-start gap-4 h-full">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-lg mb-2 shrink-0">
+                        <i class="fa-solid fa-video"></i>
+                    </div>
+                    <div class="flex-1 flex flex-col h-full">
+                        <h3 class="font-bold text-slate-800 text-base">Video Producer</h3>
+                        <p class="text-[10px] text-slate-500 mt-0.5 mb-2 font-mono">Role: Engineer</p>
+                        <div
+                            class="text-xs text-slate-600 leading-snug bg-slate-50 p-2 rounded border border-slate-100 flex-1">
+                            "Convert the final script into a MoviePy-compatible JSON. Select stock footage, define
+                            timings, and synchronization points for the TTS audio."
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Deep Dive: RAG Implementation -->
+    <div class="slide-container p-16">
+        <div class="flex flex-col mb-10">
+            <div class="flex items-center gap-3 mb-2">
+                <span
+                    class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold uppercase tracking-wide">Deep
+                    Dive: Phase 3</span>
+                <div class="h-px bg-red-100 flex-1"></div>
+            </div>
+            <h2 class="text-4xl font-bold text-[#0F172A] mb-2">Knowledge Engine (RAG)</h2>
+            <p class="text-slate-500 max-w-2xl">How we ensure the content is accurate and hallucination-free.</p>
+        </div>
+
+        <div class="flex items-center justify-between gap-8 h-full pb-16">
+            <!-- Source -->
+            <div class="w-1/4 text-center">
+                <div
+                    class="bg-white p-6 rounded-xl shadow border border-slate-200 mb-4 h-48 flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-file-pdf text-4xl text-red-500 mb-4"></i>
+                    <div class="text-sm font-bold text-slate-700">Source Docs</div>
+                    <div class="text-xs text-slate-400 mt-2">PDFs, Wikipedia, Books</div>
+                </div>
+            </div>
+
+            <i class="fa-solid fa-arrow-right text-2xl text-slate-300"></i>
+
+            <!-- Embedding -->
+            <div class="w-1/4 text-center">
+                <div
+                    class="bg-white p-6 rounded-xl shadow border border-slate-200 mb-4 h-48 flex flex-col items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-teal-50 to-white -z-10"></div>
+                    <div class="font-mono text-xs text-teal-600 bg-teal-100 px-2 py-1 rounded mb-4">text-embedding-004
+                    </div>
+                    <div class="text-[10px] font-mono text-slate-400 break-all w-full leading-tight">
+                        [0.12, -0.45, 0.88, ...]
+                    </div>
+                    <div class="text-sm font-bold text-teal-800 mt-4">Vector Embeddings</div>
+                </div>
+            </div>
+
+            <i class="fa-solid fa-arrow-right text-2xl text-slate-300"></i>
+
+            <!-- Vector DB -->
+            <div class="w-1/4 text-center">
+                <div
+                    class="bg-white p-6 rounded-xl shadow border border-slate-200 mb-4 h-48 flex flex-col items-center justify-center border-l-4 border-red-500">
+                    <h3 class="font-bold text-2xl text-slate-800 mb-1">Qdrant</h3>
+                    <div class="text-xs text-slate-500 mb-4">Vector Database</div>
+                    <div class="w-full bg-slate-100 rounded-full h-8 flex items-center px-4 text-xs text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Retrieval...
+                    </div>
+                </div>
+            </div>
+
+            <i class="fa-solid fa-arrow-right text-2xl text-slate-300"></i>
+
+            <!-- Context -->
+            <div class="w-1/4 text-center">
+                <div
+                    class="bg-yellow-50 p-6 rounded-xl shadow border border-yellow-200 mb-4 h-48 flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-lightbulb text-4xl text-yellow-500 mb-4"></i>
+                    <div class="text-sm font-bold text-yellow-900">Context Window</div>
+                    <div class="text-xs text-yellow-700 mt-2">Fed to Researcher Agent</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. How It Works (Video Engine) -->
+    <div class="slide-container p-16">
+        <div class="flex flex-col mb-12">
+            <h2 class="text-4xl font-bold text-[#0F172A] mb-2">How it Works: The Video Engine</h2>
+            <div class="text-slate-500 max-w-2xl">
+                The core innovation (Phase 4): Converting text scripts into binary MPEG-4 video files using code, not
+                cameras.
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col justify-center space-y-8">
+            <!-- Pipeline Map -->
+            <div class="flex items-center justify-between relative">
+                <div class="absolute top-1/2 left-0 w-full h-1 bg-slate-100 -z-10"></div>
+
+                <!-- Step 1 -->
+                <div class="flex flex-col items-center">
+                    <div
+                        class="w-16 h-16 bg-white border-2 border-slate-300 rounded-lg flex items-center justify-center shadow-lg font-mono text-xs text-slate-500">
+                        JSON
+                    </div>
+                    <div class="mt-4 font-bold text-slate-700">Script Input</div>
+                </div>
+                <div class="text-slate-300"><i class="fa-solid fa-arrow-right"></i></div>
+                <!-- Step 2 -->
+                <div class="flex flex-col items-center">
+                    <div
+                        class="w-16 h-16 bg-blue-600 border-2 border-blue-600 rounded-full flex items-center justify-center shadow-lg text-white">
+                        <i class="fa-solid fa-wave-square"></i>
+                    </div>
+                    <div class="mt-4 font-bold text-blue-700">TTS Audio</div>
+                    <div class="text-xs text-slate-400">OpenAI Audio</div>
+                </div>
+                <div class="text-slate-300"><i class="fa-solid fa-arrow-right"></i></div>
+                <!-- Step 3 -->
+                <div class="flex flex-col items-center">
+                    <div
+                        class="w-16 h-16 bg-yellow-400 border-2 border-yellow-500 rounded-full flex items-center justify-center shadow-lg text-slate-900">
+                        <i class="fa-brands fa-python text-2xl"></i>
+                    </div>
+                    <div class="mt-4 font-bold text-slate-800">Composition</div>
+                    <div class="text-xs text-slate-400">MoviePy</div>
+                </div>
+                <div class="text-slate-300"><i class="fa-solid fa-arrow-right"></i></div>
+                <!-- Step 4 -->
+                <div class="flex flex-col items-center">
+                    <div
+                        class="w-16 h-16 bg-slate-800 border-2 border-slate-900 rounded-full flex items-center justify-center shadow-lg text-white">
+                        <i class="fa-solid fa-gears"></i>
+                    </div>
+                    <div class="mt-4 font-bold text-slate-800">Rendering</div>
+                    <div class="text-xs text-slate-400">FFMPEG H.264</div>
+                </div>
+                <div class="text-slate-300"><i class="fa-solid fa-arrow-right"></i></div>
+                <!-- Step 5 -->
+                <div class="flex flex-col items-center">
+                    <div
+                        class="w-16 h-16 bg-white border-2 border-green-500 rounded-lg flex items-center justify-center shadow-lg text-green-600 text-2xl">
+                        .mp4
+                    </div>
+                    <div class="mt-4 font-bold text-green-700">Cloud Storage</div>
+                </div>
+            </div>
+
+            <!-- Code Snippet -->
+            <div
+                class="bg-[#1E293B] p-6 rounded-xl font-mono text-sm shadow-xl text-blue-100 flex gap-8 mt-8 border border-slate-700">
+                <div class="opacity-50 select-none text-right border-r border-slate-700 pr-4">
+                    1<br>2<br>3<br>4
+                </div>
+                <div>
+                    <span class="text-pink-400">def</span> <span class="text-yellow-300">render_scene</span>(narration,
+                    image_path):<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;audio_clip = <span class="text-blue-300">AudioFileClip</span>(narration)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;visual_clip = <span
+                        class="text-blue-300">ImageClip</span>(image_path).set_duration(audio_clip.duration)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-pink-400">return</span> visual_clip.set_audio(audio_clip)
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 9. DEMO: Course Generator Form (Course Builder) -->
+    <div class="slide-container p-12 bg-slate-50">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <div class="text-sm font-bold text-blue-600 tracking-wider mb-1 uppercase">Live Demo 1</div>
+                <h2 class="text-3xl font-bold text-[#0F172A]">The Course Generator Form</h2>
+            </div>
+            <div class="bg-white px-4 py-2 rounded shadow-sm text-sm font-mono text-slate-500">/courses/create</div>
+        </div>
+
+        <div class="flex-1 browser-window shadow-2xl">
+            <div class="browser-toolbar">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                </div>
+                <div
+                    class="flex-1 bg-white border border-slate-200 rounded px-3 py-1 text-xs text-slate-400 text-center font-mono">
+                    localhost:8000/courses/create
+                </div>
+            </div>
+
+            <div class="browser-content bg-white p-12 flex justify-center">
+                <div class="w-full max-w-2xl">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl font-bold text-slate-900 mb-2">What do you want to teach?</h1>
+                        <p class="text-slate-500">Our AI agents will handle the research, planning, and production.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Course Topic</label>
+                            <input type="text" value="System Design for Beginners"
+                                class="w-full p-4 border border-slate-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Target Audience</label>
+                                <select class="w-full p-3 border border-slate-300 rounded-lg bg-white">
+                                    <option>University Students</option>
+                                    <option>Professionals</option>
+                                    <option>Children</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Difficulty</label>
+                                <select class="w-full p-3 border border-slate-300 rounded-lg bg-white">
+                                    <option>Beginner</option>
+                                    <option>Intermediate</option>
+                                    <option>Advanced</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-4">
+                            <div
+                                class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-blue-900">Agent Status: Ready</div>
+                                <div class="text-sm text-blue-700">Course Planner, Researcher, and Writer agents are
+                                    standing by.</div>
+                            </div>
+                        </div>
+
+                        <button
+                            class="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-slate-800 transition shadow-lg">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-2 text-yellow-400"></i> Generate Course Outline
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 10. DEMO: Course Builder (Drag and Drop) -->
+    <div class="slide-container p-12 bg-slate-50">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <div class="text-sm font-bold text-indigo-600 tracking-wider mb-1 uppercase">Live Demo 2</div>
+                <h2 class="text-3xl font-bold text-[#0F172A]">Drag & Drop Course Builder</h2>
+            </div>
+            <div class="bg-white px-4 py-2 rounded shadow-sm text-sm font-mono text-slate-500">/courses/builder/102
+            </div>
+        </div>
+
+        <div class="flex-1 browser-window shadow-2xl">
+            <div class="browser-toolbar">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                </div>
+                <div
+                    class="flex-1 bg-white border border-slate-200 rounded px-3 py-1 text-xs text-slate-400 text-center font-mono">
+                    localhost:8000/courses/builder/102
+                </div>
+            </div>
+
+            <div class="browser-content bg-gray-50 flex h-full">
+                <!-- Sidebar (Available Modules) -->
+                <div class="w-72 bg-white border-r border-gray-200 p-4 flex flex-col">
+                    <h3 class="font-bold text-gray-700 mb-4 text-sm uppercase tracking-wide">AI Suggestions</h3>
+                    <div class="space-y-3">
+                        <div
+                            class="p-3 bg-blue-50 border border-blue-200 rounded cursor-grab shadow-sm hover:shadow-md transition">
+                            <div class="text-xs font-bold text-blue-800 mb-1">Module Concept</div>
+                            <div class="text-sm text-gray-700">Intro to Queues</div>
+                        </div>
+                        <div
+                            class="p-3 bg-purple-50 border border-purple-200 rounded cursor-grab shadow-sm hover:shadow-md transition">
+                            <div class="text-xs font-bold text-purple-800 mb-1">Quiz Block</div>
+                            <div class="text-sm text-gray-700">Msg Broker Basics</div>
+                        </div>
+                        <div
+                            class="p-3 bg-green-50 border border-green-200 rounded cursor-grab shadow-sm hover:shadow-md transition">
+                            <div class="text-xs font-bold text-green-800 mb-1">Reading Material</div>
+                            <div class="text-sm text-gray-700">Kafka vs. RabbitMQ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Canvas -->
+                <div class="flex-1 p-8 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')]">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="bg-white p-6 rounded-xl shadow border border-gray-200 mb-6">
+                            <div class="flex justify-between items-center mb-4 border-b pb-4">
+                                <h2 class="text-xl font-bold">Course Structure: System Design</h2>
+                                <button class="text-sm bg-black text-white px-4 py-2 rounded">Save Changes</button>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Module 1 -->
+                                <div
+                                    class="border border-gray-300 rounded-lg p-4 bg-gray-50 flex items-center justify-between group">
+                                    <div class="flex items-center gap-4">
+                                        <i class="fa-solid fa-grip-vertical text-gray-400 cursor-move"></i>
+                                        <div>
+                                            <div class="font-bold text-gray-800">1. Monoliths vs Microservices</div>
+                                            <div class="text-xs text-gray-500">10 mins • Video + Quiz</div>
+                                        </div>
+                                    </div>
+                                    <i
+                                        class="fa-solid fa-pen text-gray-400 group-hover:text-blue-500 cursor-pointer"></i>
+                                </div>
+
+                                <!-- Module 2 -->
+                                <div
+                                    class="border-2 border-dashed border-indigo-300 bg-indigo-50 rounded-lg p-8 flex flex-col items-center justify-center text-indigo-500">
+                                    <i class="fa-solid fa-plus text-2xl mb-2"></i>
+                                    <span class="font-bold">Drop Module Here</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 11. DEMO: Course & Library -->
+    <div class="slide-container p-12 bg-slate-50">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <div class="text-sm font-bold text-blue-600 tracking-wider mb-1 uppercase">Live Demo 2</div>
+                <h2 class="text-3xl font-bold text-[#0F172A]">Library & Dashboard</h2>
+            </div>
+            <div class="bg-white px-4 py-2 rounded shadow-sm text-sm font-mono text-slate-500">/library</div>
+        </div>
+
+        <div class="flex-1 browser-window shadow-2xl">
+            <div class="browser-toolbar">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                </div>
+                <div
+                    class="flex-1 bg-white border border-slate-200 rounded px-3 py-1 text-xs text-slate-400 text-center font-mono">
+                    localhost:8000/library
+                </div>
+            </div>
+
+            <div class="browser-content bg-gray-50 flex flex-col font-sans">
+                <!-- Top Nav -->
+                <div class="top-nav">
+                    <div class="flex items-center gap-8">
+                        <span
+                            class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 text-xl font-black tracking-tight">ALPHA</span>
+                        <div class="flex space-x-4 text-sm font-semibold text-gray-600">
+                            <span class="text-indigo-600">Library</span>
+                            <span>My Learning</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 text-sm font-semibold text-red-500">Sign Out</div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-8 max-w-6xl mx-auto w-full">
+                    <div class="grid grid-cols-3 gap-6">
+                        <!-- Course Card 1 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="h-40 bg-blue-600 flex items-center justify-center text-white text-5xl"><i
+                                    class="fa-brands fa-python"></i></div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-gray-900 text-lg">Python Mastery</h3>
+                                <p class="text-sm text-gray-500 mt-1">6 Modules • 24 Quizzes</p>
+                                <button
+                                    class="mt-4 w-full bg-indigo-600 text-white py-2 rounded font-medium text-sm">Resume
+                                    Learning</button>
+                            </div>
+                        </div>
+                        <!-- Course Card 2 -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="h-40 bg-purple-600 flex items-center justify-center text-white text-5xl"><i
+                                    class="fa-solid fa-brain"></i></div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-gray-900 text-lg">AI Ethics 101</h3>
+                                <p class="text-sm text-gray-500 mt-1">4 Modules • 12 Readings</p>
+                                <button
+                                    class="mt-4 w-full bg-indigo-600 text-white py-2 rounded font-medium text-sm">Resume
+                                    Learning</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 11. DEMO: 3 Tools (Slide, Quiz, Readings) -->
+    <div class="slide-container p-12 bg-slate-50">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <div class="text-sm font-bold text-pink-600 tracking-wider mb-1 uppercase">Live Demo 3</div>
+                <h2 class="text-3xl font-bold text-[#0F172A]">AI Tools Suite</h2>
+            </div>
+            <div class="bg-white px-4 py-2 rounded shadow-sm text-sm font-mono text-slate-500">/tools/*</div>
+        </div>
+
+        <div class="flex-1 browser-window shadow-2xl">
+            <div class="browser-toolbar">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                </div>
+                <div
+                    class="flex-1 bg-white border border-slate-200 rounded px-3 py-1 text-xs text-slate-400 text-center font-mono">
+                    localhost:8000/tools
+                </div>
+            </div>
+
+            <div class="browser-content bg-gray-50 p-8">
+                <div class="grid grid-cols-3 gap-6 h-full">
+                    <!-- Slide Tool -->
+                    <div
+                        class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col items-center text-center">
+                        <div
+                            class="w-16 h-16 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 text-2xl mb-4">
+                            <i class="fa-solid fa-presentation-screen"></i>
+                        </div>
+                        <h3 class="font-bold text-lg">Slide Generator</h3>
+                        <p class="text-sm text-gray-500 mt-2 mb-4">Creates full decks styled with Tailwind.</p>
+                        <button class="px-4 py-2 rounded-lg bg-pink-600 text-white text-sm font-medium">Launch
+                            Tool</button>
+                    </div>
+
+                    <!-- Quiz Tool -->
+                    <div
+                        class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col items-center text-center">
+                        <div
+                            class="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-2xl mb-4">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <h3 class="font-bold text-lg">Quiz System</h3>
+                        <p class="text-sm text-gray-500 mt-2 mb-4">Adaptive difficulty assessment generation.</p>
+                        <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium">Launch
+                            Tool</button>
+                    </div>
+
+                    <!-- Reading Tool -->
+                    <div
+                        class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col items-center text-center">
+                        <div
+                            class="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 text-2xl mb-4">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <h3 class="font-bold text-lg">Reading Generator</h3>
+                        <p class="text-sm text-gray-500 mt-2 mb-4">RAG-verified academic articles.</p>
+                        <button class="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-medium">Launch
+                            Tool</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 12. Cost Analysis -->
+    <div class="slide-container p-16">
+        <!-- Decoration -->
+        <div class="absolute -right-20 -top-20 w-80 h-80 bg-green-50 rounded-full blur-3xl opacity-50 z-0"></div>
+
+        <div class="flex flex-col mb-12 relative z-10">
+            <h2 class="text-4xl font-bold text-[#0F172A] mb-2">Cost & Efficiency Analysis</h2>
+            <div class="text-slate-500 max-w-2xl">
+                Comparing the traditional production pipeline vs. our automated agentic workflow per 10-minute course
+                module.
+            </div>
+        </div>
+
+        <div class="flex-1 grid grid-cols-2 gap-12 text-slate-800 relative z-10">
+            <!-- Manual Column -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-8 relative overflow-hidden shadow-sm">
+                <div class="absolute top-0 right-0 p-4 opacity-5 text-9xl font-black text-slate-900 rotate-12">$$$</div>
+                <h3 class="text-xl font-bold mb-6 flex items-center gap-3">
+                    <span class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-600"><i
+                            class="fa-solid fa-user-group"></i></span>
+                    Traditional Studio
+                </h3>
+
+                <div class="space-y-4 mb-8">
+                    <div class="flex justify-between border-b border-dashed border-slate-200 pb-2">
+                        <span>Instructional Designer (4h)</span>
+                        <span class="font-mono">$200.00</span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-slate-200 pb-2">
+                        <span>Scriptwriter (4h)</span>
+                        <span class="font-mono">$160.00</span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-slate-200 pb-2">
+                        <span>Voice Actor (1h)</span>
+                        <span class="font-mono">$150.00</span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-slate-200 pb-2">
+                        <span>Video Editor (8h)</span>
+                        <span class="font-mono">$320.00</span>
+                    </div>
+                </div>
+
+                <div class="bg-red-50 text-red-700 p-4 rounded-xl flex justify-between items-center font-bold text-2xl">
+                    <span>Total Cost</span>
+                    <span>$830.00</span>
+                </div>
+                <div class="text-center mt-3 text-xs text-red-500 font-medium">Time to market: 17 Hours</div>
+            </div>
+
+            <!-- AutoGen Column -->
+            <div
+                class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-8 text-white relative overflow-hidden shadow-2xl transform scale-105 border-4 border-white">
+                <div class="absolute top-0 right-0 p-4 opacity-10 text-9xl font-black text-white rotate-12">%</div>
+                <h3 class="text-xl font-bold mb-6 flex items-center gap-3">
+                    <span class="w-8 h-8 rounded bg-white/20 flex items-center justify-center text-white"><i
+                            class="fa-solid fa-robot"></i></span>
+                    AutoGen Platform
+                </h3>
+
+                <div class="space-y-4 mb-8 text-indigo-100">
+                    <div class="flex justify-between border-b border-dashed border-indigo-400/30 pb-2">
+                        <span>Gemini 2.0 (Tokens)</span>
+                        <span class="font-mono">$0.02</span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-indigo-400/30 pb-2">
+                        <span>OpenAI TTS (HD)</span>
+                        <span class="font-mono">$0.36</span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-indigo-400/30 pb-2">
+                        <span>Cloud Run (Compute)</span>
+                        <span class="font-mono">$0.05</span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-indigo-400/30 pb-2">
+                        <span>Storage & Network</span>
+                        <span class="font-mono">$0.01</span>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white text-indigo-700 p-4 rounded-xl flex justify-between items-center font-bold text-2xl shadow-lg">
+                    <span>Total Cost</span>
+                    <span>$0.44</span>
+                </div>
+                <div
+                    class="text-center mt-3 text-xs text-indigo-200 font-medium flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bolt text-yellow-300"></i> Time to market: 15 Minutes
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center flex justify-center gap-4">
+            <span
+                class="inline-block bg-green-100 text-green-700 px-6 py-2 rounded-full font-bold text-sm border border-green-200 shadow-sm animate-pulse">
+                <i class="fa-solid fa-arrow-trend-down mr-2"></i>99.95% Cost Reduction
+            </span>
+            <span
+                class="inline-block bg-blue-100 text-blue-700 px-6 py-2 rounded-full font-bold text-sm border border-blue-200 shadow-sm">
+                <i class="fa-solid fa-clock mr-2"></i>68x Faster Production
+            </span>
+        </div>
+    </div>
+
+    <!-- 13. Future Roadmap -->
+    <div class="slide-container p-16">
+        <h2 class="text-4xl font-bold text-[#0F172A] mb-12">Future Roadmap</h2>
+
+        <div class="grid grid-cols-3 gap-8">
+            <div class="glass-card p-8 border-t-8 border-blue-500 shadow-xl">
+                <div class="text-6xl text-blue-200 mb-6"><i class="fa-solid fa-robot"></i></div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">AI Avatars</h3>
+                <p class="text-slate-500 leading-relaxed">Integration with HeyGen API to replace static slides with
+                    lip-synced photorealistic human presenters.</p>
+                <div class="mt-4 text-xs font-bold text-blue-500 uppercase tracking-wide">Q2 2026</div>
+            </div>
+
+            <div class="glass-card p-8 border-t-8 border-purple-500 shadow-xl">
+                <div class="text-6xl text-purple-200 mb-6"><i class="fa-solid fa-language"></i></div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">Voice Cloning</h3>
+                <p class="text-slate-500 leading-relaxed">Allowing professors to upload a voice sample, so the AI
+                    narrates the course in *their* voice.</p>
+                <div class="mt-4 text-xs font-bold text-purple-500 uppercase tracking-wide">Q3 2026</div>
+            </div>
+
+            <div class="glass-card p-8 border-t-8 border-pink-500 shadow-xl">
+                <div class="text-6xl text-pink-200 mb-6"><i class="fa-solid fa-graduation-cap"></i></div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">LMS Integration</h3>
+                <p class="text-slate-500 leading-relaxed">Direct SCORM/LTI export to Canvas and Blackboard Learning
+                    Management Systems.</p>
+                <div class="mt-4 text-xs font-bold text-pink-500 uppercase tracking-wide">Q4 2026</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 14. Closing -->
+    <div class="slide-container flex flex-col items-center justify-center p-16 text-center">
+        <div class="w-32 h-1 bg-gradient-to-r from-blue-500 to-pink-500 mb-12"></div>
+        <h1 class="text-8xl font-black text-[#0F172A] mb-8">Thank You</h1>
+
+        <div class="flex gap-8 mb-16">
+            <div
+                class="flex items-center gap-3 text-slate-600 bg-white px-6 py-3 rounded-full shadow-lg border border-slate-100">
+                <i class="fa-brands fa-github text-xl"></i>
+                <span class="font-mono">github.com/KorkmazPolat</span>
+            </div>
+            <div
+                class="flex items-center gap-3 text-slate-600 bg-white px-6 py-3 rounded-full shadow-lg border border-slate-100">
+                <i class="fa-solid fa-envelope text-xl"></i>
+                <span class="font-mono">polat.korkmaz@mef.edu.tr</span>
+            </div>
+        </div>
+
+        <div class="bg-indigo-50 text-indigo-900 px-8 py-4 rounded-xl border border-indigo-100 max-w-2xl cursor-pointer hover:bg-indigo-100 transition"
+            onclick="window.open('https://course-generator-715639765384.us-central1.run.app', '_blank')">
+            <div class="font-bold mb-1 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-globe"></i> Live at: course-generator-715639765384.us-central1.run.app
+            </div>
+            <div class="text-sm opacity-80">Ask me anything about the Agent Architecture or Video Pipeline.</div>
+        </div>
+    </div>
+
+</body>
+
+</html>
