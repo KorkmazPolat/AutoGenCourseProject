@@ -864,30 +864,50 @@ async def render_full_course_db(
             
             asset_map = {}
             for asset in assets:
+                # Parse content if string
+                content = asset.content
+                if isinstance(content, str):
+                    try:
+                        content = json.loads(content)
+                    except: pass
+                
                 if asset.asset_type == "video":
-                    # We might store script in asset.content or have a separate script asset
-                    # For now, let's just pass the video URL if it exists
-                    # Ensure we handle dict content 
-                    content = asset.content
-                    if isinstance(content, str):
-                        try:
-                            content = json.loads(content)
-                        except: pass
-                        
-                    asset_map["video_script"] = {
-                        "video_url": f"/videos/{Path(asset.file_path).name}" if asset.file_path else None,
-                        "content": content
+                    # Handle both video files and slideshows
+                    video_data = {
+                        "content": content,
+                        "player_mode": content.get("player_mode") if isinstance(content, dict) else "video",
+                        "slides_data": content.get("slides_data") if isinstance(content, dict) else None,
+                        "slides_ready": content.get("slides_ready") if isinstance(content, dict) else None,
                     }
-                elif asset.asset_type == "reading_material":
-                    asset_map["reading_material"] = {"content": asset.content}
-                elif asset.asset_type == "quiz":
-                    asset_map["quiz_questions"] = {"content": asset.content}
+                    
+                    if asset.file_path:
+                        # video_url should be relative to /static or use the /videos/ proxy
+                        filename = Path(asset.file_path).name
+                        video_data["video_url"] = f"/videos/{filename}"
+                    
+                    asset_map["video"] = video_data
+                    # For legacy compatibility in templates
+                    asset_map["video_script"] = video_data
+                    
+                elif asset.asset_type in ["reading_material", "reading"]:
+                    if isinstance(content, str):
+                        asset_map["reading_material"] = {"content": {"text": content}}
+                    else:
+                        asset_map["reading_material"] = {"content": content}
+                elif asset.asset_type in ["quiz", "quiz_questions"]:
+                    if isinstance(content, str):
+                         # If it's a string, it might be raw questions we need to parse, 
+                         # but usually it's already a list of dicts.
+                         asset_map["quiz_questions"] = {"content": content}
+                    else:
+                        asset_map["quiz_questions"] = {"content": content}
             
             lesson_list.append({
                 "info": {
-                    "number": lesson.order_index, # Use order index as number
+                    "number": lesson.order_index + 1, # 1-indexed for UI
                     "title": lesson.title,
                     "summary": lesson.content[:200] + "..." if lesson.content else "",
+                    "content": lesson.content,
                     "id": lesson.id
                 },
                 "assets": asset_map
@@ -1215,7 +1235,7 @@ def _generate_material_payload(
             VIDEO_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
             client = _get_openai_client()
             output_path = _build_video_output_path(payload.course_title)
-            video_path = generate_video_from_script(
+            video_path = await generate_video_from_script(
                 video_payload=response.content,
                 output_path=output_path,
                 client=client,
@@ -2241,7 +2261,7 @@ async def agentic_finalize_course(
 
     manager = AgentManager()
     # Run in threadpool to avoid blocking
-    result = await run_in_threadpool(manager.run, outcomes, skip_video=skip_video)
+    result = await manager.run(outcomes, skip_video=skip_video)
     
     # Save to DB
     saved_course = await save_course_to_db(db, result, outcomes, user_id)

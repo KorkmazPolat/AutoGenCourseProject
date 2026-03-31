@@ -993,7 +993,8 @@ async def get_course_view(
                 "id": lesson.id,
                 "number": global_lesson_index,
                 "title": lesson.title,
-                "summary": (lesson.content[:100] + "...") if lesson.content else ""
+                "summary": (lesson.content[:100] + "...") if lesson.content else "",
+                "content": lesson.content or ""
             }
             
             lessons_output.append({

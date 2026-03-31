@@ -57,7 +57,7 @@ class AgentManager:
         
         return guidance
 
-    def run(
+    async def run(
         self,
         learning_outcomes: List[str],
         skip_video: bool = False,
@@ -154,8 +154,8 @@ class AgentManager:
 
             lessons: List[Dict[str, Any]] = []
             scripts: List[Dict[str, Any]] = []
-            videos: List[Any] = []
             quizzes: List[Dict[str, Any]] = []
+            video_tasks = []
 
             total_lessons = sum(len(m.lessons or []) for m in course_plan.modules)
             lessons_seen = 0
@@ -234,12 +234,12 @@ class AgentManager:
                     )
 
                     if not skip_video:
-                        logger.info("Queueing video generation for lesson '%s'", lesson_name)
-                        self.workload_manager.submit_task(
-                            task_name=lesson_name,
-                            func=self.video_generator.generate,
-                            input_json=validated_script,
-                            engine=video_engine
+                        logger.info("Adding video generation task for lesson '%s'", lesson_name)
+                        video_tasks.append(
+                            self.video_generator.generate(
+                                validated_script, 
+                                engine=video_engine
+                            )
                         )
                         self._record_feedback("video_generation.queue", True, lesson=lesson_name)
                     else:
@@ -247,10 +247,14 @@ class AgentManager:
 
                     quizzes.append(validated_quiz)
 
-            if not skip_video:
-                video_results = self.workload_manager.collect_results()
-                for entry in video_results:
-                    videos.append(entry.get("result"))
+            if not skip_video and video_tasks:
+                video_results = await asyncio.gather(*video_tasks, return_exceptions=True)
+                for res in video_results:
+                    if isinstance(res, Exception):
+                         logger.error("Video generation task failed: %s", res)
+                         videos.append({"error": str(res)})
+                    else:
+                         videos.append(res)
                     self._record_feedback(
                         "video_generation.process",
                         entry.get("success", False),
@@ -294,7 +298,7 @@ class AgentManager:
         finally:
             if self.workload_manager is not None:
                 self.workload_manager.shutdown()
-    def generate_lesson_bundle(self, module_title: str, lesson_title: str, lesson_desc: str, skip_video: bool = False, video_engine: str = "openai", duration_minutes: int = 5) -> Dict[str, Any]:
+    async def generate_lesson_bundle(self, module_title: str, lesson_title: str, lesson_desc: str, skip_video: bool = False, video_engine: str = "openai", duration_minutes: int = 5) -> Dict[str, Any]:
         """
         Generates content for a single lesson (text, script, quiz, video) based on title and description.
         """
@@ -327,7 +331,7 @@ class AgentManager:
         # 4. Generate Video
         video_info = None
         if not skip_video:
-            video_info = self.video_generator.generate(validated_script, engine=video_engine, duration_minutes=duration_minutes)
+            video_info = await self.video_generator.generate(validated_script, engine=video_engine, duration_minutes=duration_minutes)
             
         return {
             "lesson": validated_lesson,

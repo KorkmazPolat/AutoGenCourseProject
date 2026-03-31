@@ -35,7 +35,7 @@ class SlideGeneratorService:
         try:
             # FORCE REST transport to bypass gRPC DNS failures
             genai.configure(api_key=self.api_key, transport="rest")
-            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            self.model = genai.GenerativeModel('gemini-2.0-flash')
         except Exception as exc:  # pragma: no cover - safety net for runtime env issues
             print(f"Warning: Failed to initialize Gemini model ({exc}). Using offline slides instead.")
             self.model = None

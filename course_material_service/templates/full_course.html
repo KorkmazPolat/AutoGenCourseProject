@@ -59,14 +59,15 @@
       {% for lesson in module.lessons %}
       {% set info = lesson.info %}
       {% set vpack = lesson.assets.get('video') or lesson.assets.get('video_script') or {} %}
-      {% set video = vpack.get('content') %}
+      {% set video = vpack %}
       {% set video_url = vpack.get('video_url') %}
       {% set captions_url = vpack.get('captions_url') %}
       {% set chapters_url = vpack.get('chapters_url') %}
-      {% set reading_asset = lesson.assets.get('reading_material') or {} %}
-      {% set reading = reading_asset.get('content') %}
-      {% set quiz_asset = lesson.assets.get('quiz_questions') or {} %}
-      {% set quiz = quiz_asset.get('content') %}
+      {% set reading_asset = lesson.assets.get('reading_material') or lesson.assets.get('reading') or {} %}
+      {% set reading = reading_asset.get('content') or reading_asset or None %}
+      {% set has_reading = reading and reading.get('text') %}
+      {% set quiz_asset = lesson.assets.get('quiz') or lesson.assets.get('quiz_questions') or {} %}
+      {% set quiz = quiz_asset.get('content') or quiz_asset %}
 
       <div id="page-module-{{ info.number }}"
         class="module-page rounded-2xl bg-white shadow-xl p-0 mb-8 border border-gray-100 overflow-hidden hidden">
@@ -82,11 +83,11 @@
             <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
               data-subpage="video">Video</button>
             {% endif %}
-            {% if reading and reading.text %}
+            {% if has_reading or info.content %}
             <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
               data-subpage="reading">Reading</button>
             {% endif %}
-            {% if quiz %}
+            {% if quiz and quiz.get('questions') %}
             <button type="button" class="subpage-tab hover:text-gray-900" data-module="{{ info.number }}"
               data-subpage="quiz">Quiz</button>
             {% endif %}
@@ -101,96 +102,84 @@
           <div id="subpage-video-{{ info.number }}" class="subpage-section mt-2 hidden" data-subpage="video"
             data-module="{{ info.number }}">
             <h3 class="text-lg font-semibold text-gray-900 mb-2">Video</h3>
-            <div class="video-container" id="video-container-{{ lesson.info.id }}">
+            <div class="video-container" id="video-container-{{ info.id }}">
               {% if video and video.get("player_mode") == "slideshow" %}
               <!-- SLIDESHOW PLAYER -->
               <div class="slideshow-player bg-black rounded-lg overflow-hidden relative" style="aspect-ratio: 16/9;">
-                <img id="slide-img-{{ lesson.info.id }}" class="w-full h-full object-contain" src="" alt="Slide">
+                <img id="slide-img-{{ info.id }}" class="w-full h-full object-contain" src="" alt="Slide">
 
                 <!-- Audio Player (Hidden or Minimal) -->
-                <audio id="slide-audio-{{ lesson.info.id }}" controls
+                <audio id="slide-audio-{{ info.id }}" controls
                   class="w-full absolute bottom-0 left-0 bg-white opacity-90"></audio>
 
                 <!-- Navigation Overlay -->
                 <div class="absolute inset-0 flex items-center justify-between px-4 pointer-events-none">
-                  <button onclick="prevSlide('{{ lesson.info.id }}')"
+                  <button onclick="window.slideshows['{{ info.id }}'].prevSlide()"
                     class="pointer-events-auto bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition">←</button>
-                  <button onclick="nextSlide('{{ lesson.info.id }}')"
+                  <button onclick="window.slideshows['{{ info.id }}'].nextSlide()"
                     class="pointer-events-auto bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition">→</button>
                 </div>
 
                 <!-- Slide Counter -->
                 <div class="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
-                  Slide <span id="slide-idx-{{ lesson.info.id }}">1</span> / <span
-                    id="slide-total-{{ lesson.info.id }}">?</span>
+                  Slide <span id="slide-idx-{{ info.id }}">1</span> / <span
+                    id="slide-total-{{ info.id }}">?</span>
                 </div>
               </div>
 
               <script>
                 (function () {
-                  const lessonId = "{{ lesson.info.id }}";
+                  const lessonId = "{{ info.id }}";
                   let slides = [];
-                  const rawSlidesData = {{ video.get("slides_data", {}) | tojson
-                }};
+                  const rawSlidesData = {{ (video.get("slides_data") or {}) | tojson }};
 
-                if (rawSlidesData && rawSlidesData.slides) {
-                  // New format from VideoGeneratorAgent
-                  const baseDir = rawSlidesData.base_dir;
-                  slides = rawSlidesData.slides.map(s => ({
-                    image_url: `/static/videos/${baseDir}/${s.image_file}`,
-                    audio_url: `/static/videos/${baseDir}/${s.audio_file}`,
-                    index: s.index
-                  }));
-                } else {
-                  // Fallback to legacy format
-                  slides = {{ video.get("slides_ready", []) | tojson }
-                };
-                }
-
-
-                let currentIndex = 0;
-
-                const imgEl = document.getElementById(`slide-img-${lessonId}`);
-                const audioEl = document.getElementById(`slide-audio-${lessonId}`);
-                const idxEl = document.getElementById(`slide-idx-${lessonId}`);
-                const totalEl = document.getElementById(`slide-total-${lessonId}`);
-
-                if (slides.length > 0) {
-                  document.getElementById(`slide-total-${lessonId}`).innerText = slides.length;
-                  loadSlide(0);
-                }
-
-                window.loadSlide = function (idx) {
-                  if (idx < 0 || idx >= slides.length) return;
-                  currentIndex = idx;
-                  const s = slides[idx];
-
-                  imgEl.src = s.image_url;
-                  audioEl.src = s.audio_url;
-                  idxEl.innerText = idx + 1;
-
-                  audioEl.play().catch(e => console.log("User interaction required for autoplay"));
-                }
-
-                window.nextSlide = function (lid) {
-                  if (lid !== lessonId) return;
-                  if (currentIndex < slides.length - 1) {
-                    loadSlide(currentIndex + 1);
+                  if (rawSlidesData && rawSlidesData.slides) {
+                    const baseDir = rawSlidesData.base_dir;
+                    slides = rawSlidesData.slides.map(s => ({
+                      image_url: `/static/videos/${baseDir}/${s.image_file}`,
+                      audio_url: `/static/videos/${baseDir}/${s.audio_file}`,
+                      index: s.index
+                    }));
+                  } else {
+                    slides = {{ (video.get("slides_ready") or []) | tojson }};
                   }
-                }
 
-                window.prevSlide = function (lid) {
-                  if (lid !== lessonId) return;
-                  if (currentIndex > 0) {
-                    loadSlide(currentIndex - 1);
+                  let currentIndex = 0;
+                  const imgEl = document.getElementById(`slide-img-${lessonId}`);
+                  const audioEl = document.getElementById(`slide-audio-${lessonId}`);
+                  const idxEl = document.getElementById(`slide-idx-${lessonId}`);
+                  const totalEl = document.getElementById(`slide-total-${lessonId}`);
+
+                  function loadSlide(idx) {
+                    if (idx < 0 || idx >= slides.length) return;
+                    currentIndex = idx;
+                    const s = slides[idx];
+                    imgEl.src = s.image_url;
+                    audioEl.src = s.audio_url;
+                    idxEl.innerText = idx + 1;
+                    if (idx > 0) audioEl.play().catch(e => console.log("User interaction required"));
                   }
-                }
 
-                // Auto-advance
-                audioEl.addEventListener('ended', () => {
-                  window.nextSlide(lessonId);
-                });
-                }) ();
+                  if (slides.length > 0) {
+                    totalEl.innerText = slides.length;
+                    loadSlide(0);
+                  }
+
+                  // Register slideshow in global namespace
+                  window.slideshows = window.slideshows || {};
+                  window.slideshows[lessonId] = {
+                    nextSlide: function() {
+                      if (currentIndex < slides.length - 1) loadSlide(currentIndex + 1);
+                    },
+                    prevSlide: function() {
+                      if (currentIndex > 0) loadSlide(currentIndex - 1);
+                    }
+                  };
+
+                  audioEl.addEventListener('ended', () => {
+                    window.slideshows[lessonId].nextSlide();
+                  });
+                })();
               </script>
 
               {% elif video_url %}
@@ -499,6 +488,11 @@
             </ul>
             {% endif %}
             {% endif %}
+            {% elif info.content %}
+            <!-- Fallback: render lesson content as reading material -->
+            <div class="prose max-w-none text-gray-800 leading-relaxed">
+              {{ info.content | markdown | safe }}
+            </div>
             {% else %}
             <p class="text-gray-600">No reading content for this module.</p>
             {% endif %}

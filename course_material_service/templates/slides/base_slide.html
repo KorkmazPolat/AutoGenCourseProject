@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide Renderer</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="accent-bar"></div>
+    <div class="slide-container">
+        <header>
+            <div class="badge">
+                {% if page_count %}
+                    {{ current_page|zfill(2) }} / {{ page_count|zfill(2) }}
+                {% else %}
+                    SLIDE
+                {% endif %}
+            </div>
+            <div class="course-title">{{ course_title|upper }}</div>
+        </header>
+
+        <main>
+            <h1>{{ heading }}</h1>
+            <div class="separator"></div>
+            
+            <div class="main-content">
+                {% if content_blocks %}
+                    {% for block in content_blocks %}
+                        {% if block.type == 'bullets' %}
+                            <ul>
+                                {% for item in block['items'] %}
+                                    <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% elif block.type == 'code' %}
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <div class="dot red"></div>
+                                    <div class="dot yellow"></div>
+                                    <div class="dot green"></div>
+                                </div>
+                                <pre><code>{{ block.code }}</code></pre>
+                            </div>
+                        {% elif block.type == 'callout' %}
+                            <div class="callout {{ block.style or 'info' }}">
+                                {{ block.text }}
+                            </div>
+                        {% elif block.type == 'key_takeaway' %}
+                            <div class="key-takeaway">
+                                <div class="takeaway-label">★ KEY TAKEAWAY</div>
+                                {{ block.text }}
+                            </div>
+                        {% elif block.type == 'subheading' %}
+                            <div class="subheading">{{ block.text }}</div>
+                        {% elif block.type == 'diagram' %}
+                            <div class="diagram-placeholder">
+                                <div class="diagram-icon">📊</div>
+                                <div class="diagram-caption">{{ block.caption or 'Visual Representation' }}</div>
+                            </div>
+                        {% elif block.type == 'quote' %}
+                            <div class="quote-block">
+                                <div class="quote-text">{{ block.text }}</div>
+                                {% if block.author %}
+                                    <div class="quote-author">— {{ block.author }}</div>
+                                {% endif %}
+                            </div>
+                        {% elif block.type == 'table' %}
+                            <div class="table-container">
+                                <table>
+                                    {% if block.headers %}
+                                        <thead>
+                                            <tr>
+                                                {% for header in block.headers %}
+                                                    <th>{{ header }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                    {% endif %}
+                                    <tbody>
+                                        {% for row in block.rows %}
+                                            <tr>
+                                                {% for cell in row %}
+                                                    <td>{{ cell }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% elif block.type == 'image' %}
+                            <div class="image-block">
+                                <img src="{{ block.url }}" alt="{{ block.alt or 'Slide Image' }}">
+                            </div>
+                        {% elif block.type == 'comparison' %}
+                            <div class="comparison-container">
+                                <div class="comparison-card">
+                                    <h3>{{ block.left_title or 'Option A' }}</h3>
+                                    <p>{{ block.left_text }}</p>
+                                </div>
+                                <div class="comparison-card">
+                                    <h3>{{ block.right_title or 'Option B' }}</h3>
+                                    <p>{{ block.right_text }}</p>
+                                </div>
+                            </div>
+                        {% elif block.type == 'step_by_step' %}
+                            <div class="steps-container">
+                                {% for step in block.steps %}
+                                    <div class="step-item">
+                                        <div class="step-number">{{ loop.index }}</div>
+                                        <div class="step-text">{{ step }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% elif block.type == 'metric' %}
+                            <div class="metric-container">
+                                {% for item in block['items'] %}
+                                    <div class="metric-card">
+                                        <div class="metric-value">{{ item.value }}</div>
+                                        <div class="metric-label">{{ item.label }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% elif block.type == 'pros_cons' %}
+                            <div class="pros-cons-container">
+                                <div class="pc-column pros">
+                                    <div class="pc-title">✅ {{ block.pros_title or 'Benefits' }}</div>
+                                    <ul class="pc-list">
+                                        {% for item in block.pros %}
+                                            <li class="pc-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="pc-column cons">
+                                    <div class="pc-title">❌ {{ block.cons_title or 'Challenges' }}</div>
+                                    <ul class="pc-list">
+                                        {% for item in block.cons %}
+                                            <li class="pc-item">{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        {% elif block.type == 'timeline' %}
+                            <div class="timeline-container">
+                                <div class="timeline-line"></div>
+                                {% for item in block['items'] %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-date">{{ item.date }}</div>
+                                        <div class="timeline-title">{{ item.title }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% elif block.type == 'flowchart' %}
+                            <div class="flowchart-container">
+                                {% for step in block.steps %}
+                                    <div class="flow-node">{{ step }}</div>
+                                    {% if not loop.last %}
+                                        <div class="flow-arrow"></div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% elif block.type == 'code_comparison' %}
+                            <div class="code-comp-container">
+                                <div class="code-comp-box">
+                                    <div class="comp-label">{{ block.left_label or 'Before' }}</div>
+                                    <pre><code>{{ block.left_code }}</code></pre>
+                                </div>
+                                <div class="code-comp-box">
+                                    <div class="comp-label">{{ block.right_label or 'After' }}</div>
+                                    <pre><code>{{ block.right_code }}</code></pre>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p>{{ content }}</p>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-line"></div>
+            <div class="footer-content">
+                <div>{{ course_title }}</div>
+                {% if page_count %}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ (current_page / page_count) * 100 }}%;"></div>
+                    </div>
+                {% endif %}
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

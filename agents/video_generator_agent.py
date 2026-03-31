@@ -18,7 +18,7 @@ except ImportError:
 class VideoGeneratorAgent(BaseAgent):
     name = "video_generator"
 
-    def generate(self, input_json: Dict[str, Any], engine: str = "openai", duration_minutes: int = 5) -> Dict[str, Any]:
+    async def generate(self, input_json: Dict[str, Any], engine: str = "openai", duration_minutes: int = 5) -> Dict[str, Any]:
         """
         Generates a video from the input script. 
         'engine' can be "openai" or "gemini".
@@ -79,9 +79,17 @@ class VideoGeneratorAgent(BaseAgent):
             - 'key_takeaway': {{ "type": "key_takeaway", "text": "..." }} 
             - 'callout': {{ "type": "callout", "text": "...", "style": "info|warning|tip" }}
             - 'diagram': {{ "type": "diagram", "caption": "..." }} 
-            - 'quote': {{ "type": "quote", "text": "..." }}
+            - 'quote': {{ "type": "quote", "text": "...", "author": "..." }}
             - 'code': {{ "type": "code", "code": "...", "language": "python" }}
-            - 'table': {{ "type": "table", "rows": [["Col1", "Col2"], ["Val1", "Val2"]] }}
+            - 'table': {{ "type": "table", "headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]] }}
+            - 'image': {{ "type": "image", "url": "https://picsum.photos/800/450", "alt": "..." }}
+            - 'comparison': {{ "type": "comparison", "left_title": "...", "left_text": "...", "right_title": "...", "right_text": "..." }}
+            - 'step_by_step': {{ "type": "step_by_step", "steps": ["Step 1", "Step 2"] }}
+            - 'metric': {{ "type": "metric", "items": [{{"value": "95%", "label": "Success Rate"}}] }}
+            - 'pros_cons': {{ "type": "pros_cons", "pros": ["Pro 1"], "cons": ["Con 1"] }}
+            - 'timeline': {{ "type": "timeline", "items": [{{"date": "2024", "title": "Launch"}}] }}
+            - 'flowchart': {{ "type": "flowchart", "steps": ["Step A", "Step B"] }}
+            - 'code_comparison': {{ "type": "code_comparison", "left_code": "...", "right_code": "..." }}
 
             Output JSON structure:
             {{
@@ -107,7 +115,7 @@ class VideoGeneratorAgent(BaseAgent):
 
                 # FORCE REST transport to avoid gRPC/DNS issues
                 genai.configure(api_key=api_key, transport="rest")
-                model = genai.GenerativeModel("gemini-2.0-flash-exp") 
+                model = genai.GenerativeModel("gemini-2.0-flash") 
                 
                 response = model.generate_content(
                     design_prompt,
@@ -180,11 +188,11 @@ class VideoGeneratorAgent(BaseAgent):
             lesson_id = uuid.uuid4().hex[:8]
             lesson_dir = output_dir / f"lesson_{lesson_id}"
             
-            result = generate_slides_and_audio(
+            result = await generate_slides_and_audio(
                 video_payload=video_payload,
                 output_dir=lesson_dir,
                 client=self._llm_client,
-                voice="alloy", 
+                voice="nova",
                 tts_model="gpt-4o-mini-tts"
             )
             
