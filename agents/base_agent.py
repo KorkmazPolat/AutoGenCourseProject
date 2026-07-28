@@ -108,8 +108,8 @@ class BaseAgent(ABC):
 
             # Configure and call
             genai.configure(api_key=api_key, transport="rest")
-            # Use a capable model
-            model = genai.GenerativeModel("gemini-2.0-flash") 
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+            model = genai.GenerativeModel(model_name)
             
             # Simple generation
             response = model.generate_content(prompt)

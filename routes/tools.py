@@ -11,9 +11,11 @@ from course_material_service.dependencies import get_session_user
 from course_material_service.database import get_db
 from course_material_service import models
 from course_material_service.slide_engine.service import SlideGeneratorService
+from course_material_service.template_utils import enable_legacy_template_response
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "course_material_service" / "templates"))
+enable_legacy_template_response(templates)
 
 def get_openai_client():
     api_key = os.getenv("OPENAI_API_KEY")

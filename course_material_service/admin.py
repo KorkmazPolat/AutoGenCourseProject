@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from course_material_service.database import get_db
 from course_material_service import models
 from course_material_service.dependencies import get_admin_user
+from course_material_service.template_utils import enable_legacy_template_response
 
 from pathlib import Path
 
@@ -18,6 +19,7 @@ router = APIRouter(
 )
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+enable_legacy_template_response(templates)
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(

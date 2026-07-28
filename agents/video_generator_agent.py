@@ -115,7 +115,8 @@ class VideoGeneratorAgent(BaseAgent):
 
                 # FORCE REST transport to avoid gRPC/DNS issues
                 genai.configure(api_key=api_key, transport="rest")
-                model = genai.GenerativeModel("gemini-2.0-flash") 
+                model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                model = genai.GenerativeModel(model_name)
                 
                 response = model.generate_content(
                     design_prompt,

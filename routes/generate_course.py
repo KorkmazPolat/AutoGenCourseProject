@@ -21,6 +21,7 @@ from manager.agent_manager import AgentManager
 from course_material_service.database import get_db
 from course_material_service.dependencies import get_session_user
 from course_material_service import models
+from course_material_service.template_utils import enable_legacy_template_response
 
 router = APIRouter()
 JOBS = {}  # In-memory storage for ephemeral jobs
@@ -267,6 +268,7 @@ async def start_finalize_job(
 
 
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "course_material_service" / "templates"))
+enable_legacy_template_response(templates)
 
 
 from course_material_service.dependencies import get_session_user
@@ -676,9 +678,7 @@ async def generate_course_content(
                     
                     try:
                         print(f"DEBUG: Generating video content for lesson {lesson.id} with {duration_mins} mins...")
-                        # Pass unpacked lesson_context via run_in_threadpool
-                        video_res = await run_in_threadpool(
-                            manager.generate_lesson_bundle,
+                        video_res = await manager.generate_lesson_bundle(
                             **lesson_context,
                             skip_video=False,
                             video_engine=video_engine,
@@ -699,8 +699,7 @@ async def generate_course_content(
                         if "lesson" not in bundle or not bundle["lesson"]:
                             try: 
                                 print("Attempting fallback text generation...")
-                                text_res = await run_in_threadpool(
-                                    manager.generate_lesson_bundle,
+                                text_res = await manager.generate_lesson_bundle(
                                     **lesson_context,
                                     skip_video=True,
                                     video_engine=video_engine,
@@ -717,8 +716,7 @@ async def generate_course_content(
 
                 else:
                     # If no video, run agent for text/script/quiz only
-                    text_res = await run_in_threadpool(
-                        manager.generate_lesson_bundle,
+                    text_res = await manager.generate_lesson_bundle(
                         **lesson_context,
                         skip_video=True,
                         video_engine=video_engine,

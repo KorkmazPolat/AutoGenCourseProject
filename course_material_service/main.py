@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -31,6 +32,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from course_material_service.rag_ingest import IngestError, ingest_pdf_into_qdrant
 from course_material_service.rag_retriever import RagRetrieverError, build_context as retrieve_rag_context
+from course_material_service.template_utils import enable_legacy_template_response
 from course_material_service.video_builder import VideoGenerationError, generate_video_from_script
 from course_material_service.job_manager import job_manager, Job
 from routes.generate_course import router as agent_course_router
@@ -181,6 +183,18 @@ EXPORTS_DIR = Path(__file__).resolve().parent / "exports"
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.filters['markdown'] = lambda text: markdown.markdown(text, extensions=['extra', 'codehilite'])
+enable_legacy_template_response(templates)
+
+
+def render_template(template_name: str, context: Dict[str, Any]) -> HTMLResponse:
+    """Compatibility wrapper for current Starlette/Jinja2 template rendering."""
+    request = context.get("request")
+    if request is None:
+        raise ValueError("Template context must include a request object")
+    template = templates.get_template(template_name)
+    html = template.render(context)
+    return HTMLResponse(content=html)
+
 
 logger = logging.getLogger(__name__)
 
@@ -579,10 +593,7 @@ def render_login_form(request: Request):
 def render_root(request: Request):
     """Serves the public landing page."""
     # Always show landing page at root, even if logged in.
-    return templates.TemplateResponse(
-        "landing_page.html",
-        {"request": request}
-    )
+    return render_template("landing_page.html", {"request": request})
 
 @app.post("/publish-course/{course_id}", tags=["web"])
 async def publish_course(course_id: int, db: AsyncSession = Depends(get_db), user_id: int = Depends(get_session_user)):
@@ -1235,15 +1246,17 @@ def _generate_material_payload(
             VIDEO_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
             client = _get_openai_client()
             output_path = _build_video_output_path(payload.course_title)
-            video_path = await generate_video_from_script(
-                video_payload=response.content,
-                output_path=output_path,
-                client=client,
-                voice=voice or "alloy",
-                tts_model=tts_model or "gpt-4o-mini-tts",
-                course_title=payload.course_title,
-                theme=(theme or "dark"),
-                logo_path=logo_path,
+            video_path = asyncio.run(
+                generate_video_from_script(
+                    video_payload=response.content,
+                    output_path=output_path,
+                    client=client,
+                    voice=voice or "alloy",
+                    tts_model=tts_model or "gpt-4o-mini-tts",
+                    course_title=payload.course_title,
+                    theme=(theme or "dark"),
+                    logo_path=logo_path,
+                )
             )
         except VideoGenerationError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
