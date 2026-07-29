@@ -51,6 +51,9 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const SNOW_ANIMATION_ENABLED = false;
+            if (!SNOW_ANIMATION_ENABLED) return;
+
             const snowContainer = document.createElement('div');
             snowContainer.id = 'snow-container';
             snowContainer.style.position = 'fixed';
